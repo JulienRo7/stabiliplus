@@ -46,18 +46,25 @@ void Edge::addFace(Face* face)
 
 void Edge::removeFace(Face* face)
 {
-    if (*face == *m_face1)
+    if (m_face1 != 0)
     {
-        m_face1 = 0;
+        if (*face == *m_face1)
+        {
+            m_face1 = 0;
+        }
     }
-    else if (*face == *m_face2)
+    else if (m_face2 != 0)
     {
-        m_face2 = 0;
+        if (*face == *m_face2)
+        {
+            m_face2 = 0;
+        }
     }
-    else
-    {
-        std::cerr << "Error: the face is not on the side of the edge" << '\n';
-    }
+    // else
+    // else
+    // {
+    //     std::cerr << "Error: the face is not on the side of the edge" << '\n';
+    // }
 }
 
 // ----------- operators overloading ----------

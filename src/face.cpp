@@ -33,11 +33,14 @@ Face::Face(Vertex* vertex1, Vertex* vertex2, Vertex* vertex3, Edge* edge1, Edge*
 
 Face::~Face()
 {
-    std::cout << "Hello " << '\n';
+    std::cout << "face: " << this << '\n';
+    std::cout << "edge1: " << m_edge1 << '\n';
     m_edge1->removeFace(this);
+    std::cout << "edge2: " << m_edge2 << '\n';
     m_edge2->removeFace(this);
+    std::cout << "edge3: " << m_edge3 << '\n';
     m_edge3->removeFace(this);
-    std::cout << "world!" << '\n';
+    std::cout << "Done!" << '\n';
 }
 
 bool Face::isSame(Face const& b) const
