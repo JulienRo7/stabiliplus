@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+import sys
+sys.path.append("/home/julien/Desktop/code-pyhton-hri/Stability")
+
+import robot_description
+import utils as ut
+
+
+def generate_robot(pos, fric=0.5):
+    masse = 1
+
+    # Feet
+    n_feet = 3
+    feet = [np.eye(4) for i in range(n_feet)]
+    mu = [fric for i in range(n_feet)]
+    if pos == 1:
+        feet[0][0:3, 3] = np.array([0, 1, 1])
+        feet[0][:3, :3] = ut.euler2RotMat(-np.pi/4, 0, 0)
+
+        feet[1][0:3, 3] = np.array([np.sqrt(3)/2, -1/2, 0])
+        feet[1][:3, :3] = ut.euler2RotMat(0, np.pi/3, np.pi/4)
+
+        feet[2][0:3, 3] = np.array([-np.sqrt(3)/2, -1/2, 0])
+        feet[2][:3, :3] = ut.euler2RotMat(0, -np.pi/3, np.pi/4)
+
+        robot = robot_description.Robot(masse, feet, mu)
+    if pos == 2:
+        feet[0][0:3, 3] = np.array([0, 1, 0])
+        feet[0][:3, :3] = ut.euler2RotMat(-np.pi/4, 0, 0)
+
+        feet[1][0:3, 3] = np.array([np.sqrt(3)/2, -1/2, 0])
+        feet[1][:3, :3] = ut.euler2RotMat(0, np.pi/3, np.pi/4)
+
+        feet[2][0:3, 3] = np.array([-np.sqrt(3)/2, -1/2, 0])
+        feet[2][:3, :3] = ut.euler2RotMat(0, -np.pi/3, np.pi/4)
+
+        robot = robot_description.Robot(masse, feet, mu)
+
+    if pos == 3:
+        feet[0][0:3, 3] = np.array([0, 1, 0])
+        feet[0][:3, :3] = ut.euler2RotMat(-3*np.pi/4, 0, 0)
+
+        feet[1][0:3, 3] = np.array([np.sqrt(3)/2, -1/2, 0])
+        feet[1][:3, :3] = ut.euler2RotMat(0, np.pi/3, np.pi/4)
+
+        feet[2][0:3, 3] = np.array([-np.sqrt(3)/2, -1/2, 0])
+        feet[2][:3, :3] = ut.euler2RotMat(0, -np.pi/3, np.pi/4)
+        robot = robot_description.Robot(masse, feet, mu)
+
+    if pos == 4:
+        feet[0][0:3, 3] = np.array([0, 1, 0])
+        feet[0][:3, :3] = ut.euler2RotMat(0, 0, 0)
+
+        feet[1][0:3, 3] = np.array([np.sqrt(3)/2, -1/2, 0])
+        feet[1][:3, :3] = ut.euler2RotMat(0, 0, 0)
+
+        feet[2][0:3, 3] = np.array([-np.sqrt(3)/2, -1/2, 0])
+        feet[2][:3, :3] = ut.euler2RotMat(0, 0, 0)
+
+        robot = robot_description.Robot(masse, feet, mu)
+
+    if pos == 5:
+        feet[0][0:3, 3] = np.array([1, 0, 1])
+        feet[0][:3, :3] = ut.euler2RotMat(0, 0, 0)
+
+        feet[1][0:3, 3] = np.array([-1/2, np.sqrt(3)/2, 0])
+        feet[1][:3, :3] = ut.euler2RotMat(0, 0, 0)
+
+        feet[2][0:3, 3] = np.array([-1/2, -np.sqrt(3)/2, 0])
+        feet[2][:3, :3] = ut.euler2RotMat(0, 0, 0)
+
+        robot = robot_description.Robot(masse, feet, mu)
+
+    if pos == 6:
+        n_feet = 8
+        feet = [np.eye(4) for i in range(n_feet)]
+        mu = [0.5 for i in range(n_feet)]
+        masse = 80
+
+        feet[0][0:3, 3] = np.array([-.6, .3, 0])
+        feet[1][0:3, 3] = np.array([-.4, .3, 0])
+        feet[2][0:3, 3] = np.array([-.6, -.3, 0])
+        feet[3][0:3, 3] = np.array([-.4, -.3, 0])
+        feet[4][0:3, 3] = np.array([.6, .3, 0])
+        feet[5][0:3, 3] = np.array([.4, .3, 0])
+        feet[6][0:3, 3] = np.array([.4, -.3, 0])
+        feet[7][0:3, 3] = np.array([.6, -.3, 0])
+
+        robot = robot_description.Robot(masse, feet, mu)
+
+    if pos == 7:
+        n_feet = 12
+        feet = [np.eye(4) for i in range(n_feet)]
+        mu = [1 for i in range(n_feet)]
+        masse = 80
+
+        feet[0][0:3, 3] = np.array([-0.25, 0.075, 0])
+        feet[1][0:3, 3] = np.array([-0.25, -0.075, 0])
+        feet[2][0:3, 3] = np.array([-0.35, 0.075, 0])
+        feet[3][0:3, 3] = np.array([-0.35, -0.075, 0])
+
+        feet[4][0:3, 3] = np.array([0.25, 0.075, 0])
+        feet[5][0:3, 3] = np.array([0.25, -0.075, 0])
+        feet[6][0:3, 3] = np.array([0.35, 0.075, 0])
+        feet[7][0:3, 3] = np.array([0.35, -0.075, 0])
+
+        feet[8][0:3, 3] = np.array([-0.075, .5, .9])
+        feet[8][:3, :3] = ut.euler2RotMat(np.pi/2-0.001, 0, 0)
+        feet[9][0:3, 3] = np.array([0.075, .5, .9])
+        feet[9][:3, :3] = ut.euler2RotMat(np.pi/2-0.001, 0, 0)
+        feet[10][0:3, 3] = np.array([-0.075, .5, 1.0])
+        feet[10][:3, :3] = ut.euler2RotMat(np.pi/2-0.001, 0, 0)
+        feet[11][0:3, 3] = np.array([0.075, .5, 1.0])
+        feet[11][:3, :3] = ut.euler2RotMat(np.pi/2-0.001, 0, 0)
+
+        robot = robot_description.Robot(masse, feet, mu)
+
+
+    if pos == 0:
+        n_feet = randint(3, 5)
+        robot = robot_description.Robot.generate_random_robot(1, n_feet)
+
+    return robot
+
+robot = generate_robot(4)
+
+file = open("src/vertices.txt", 'r')
+
+x = []
+y = []
+z = []
+
+u = []
+v = []
+w = []
+
+for line in file:
+    line = line.split(';')
+    x.append(float(line[0]))
+    y.append(float(line[1]))
+    z.append(float(line[2]))
+    u.append(float(line[3]))
+    v.append(float(line[4]))
+    w.append(float(line[5]))
+
+ax = robot.display_robot_configuration()
+
+ax.quiver(x, y, z, u, v, w, color="xkcd:kelly green")
+ax.plot(x, y, z, 'go')
+
+# for a,b,c,d,e,f in zip(x, y, z, u, v, w):
+#     ax.arrow(a, b, c, d, e, f)
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+
+plt.show()
+
+file.close()
