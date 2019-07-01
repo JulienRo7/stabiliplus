@@ -3,7 +3,7 @@ project(stabiliplus)
 find_package(Eigen3 REQUIRED)
 
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
-include_directories(${PROJECT_SOURCE_DIR}/includes)
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_executable(main
   ${PROJECT_SOURCE_DIR}/src/main.cpp
