@@ -12,11 +12,21 @@ public:
     Edge(Vertex* vertex1, Vertex* vertex2);
 
     ~Edge();
-    
+
     void addFace(Face* face);
     void removeFace(Face* Face);
 
-    bool isSame(Edge const& b) const;
+    bool isSame(const Edge& b) const;
+
+    // ----------- getters ----------
+    int get_index() const;
+    Face* get_otherFace(Face* Face) const;
+    
+    Vertex* get_vertex1() const;
+    Vertex* get_vertex2() const;
+
+    Face* get_face1() const;
+    Face* get_face2() const;
 
 private:
     static int GlobalEdgeCounter;

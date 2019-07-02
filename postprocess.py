@@ -8,6 +8,7 @@ import sys
 sys.path.append("/home/julien/Desktop/code-pyhton-hri/Stability")
 
 import robot_description
+import static_stability
 import utils as ut
 
 
@@ -127,7 +128,10 @@ def generate_robot(pos, fric=0.5):
 
     return robot
 
-robot = generate_robot(4)
+robot = generate_robot(2)
+
+poly_static = static_stability.static_stability_polyhedron(robot, 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
+poly_static.project_static_stability()
 
 file = open("src/vertices.txt", 'r')
 
@@ -139,19 +143,37 @@ u = []
 v = []
 w = []
 
+edges = []
+
 for line in file:
     line = line.split(';')
-    x.append(float(line[0]))
-    y.append(float(line[1]))
-    z.append(float(line[2]))
-    u.append(float(line[3]))
-    v.append(float(line[4]))
-    w.append(float(line[5]))
+    if line[0]=='v':
+        x.append(float(line[1]))
+        y.append(float(line[2]))
+        z.append(float(line[3]))
+        u.append(float(line[4]))
+        v.append(float(line[5]))
+        w.append(float(line[6]))
+
+    if line[0]=='e':
+        edges.append([[float(line[1]), float(line[4])],
+                      [float(line[2]), float(line[5])],
+                      [float(line[3]), float(line[6])]])
 
 ax = robot.display_robot_configuration()
 
-ax.quiver(x, y, z, u, v, w, color="xkcd:kelly green")
+x1 = [v[0] for v in poly_static.inner_vertices]
+x1.append(x1[0])
+y1 = [v[1] for v in poly_static.inner_vertices]
+y1.append(y1[0])
+
+ax.plot(x1, y1, color="xkcd:blue grey")
+
+# ax.quiver(x, y, z, u, v, w, color="xkcd:kelly green")
 ax.plot(x, y, z, 'go')
+
+for e in edges:
+    ax.plot(e[0], e[1], e[2], color="xkcd:kelly green")
 
 # for a,b,c,d,e,f in zip(x, y, z, u, v, w):
 #     ax.arrow(a, b, c, d, e, f)

@@ -17,12 +17,30 @@ public:
     ~Face();
 
     bool isSame(Face const& b) const;
+
     /*
     Note: it is considered that the normal is toward the outside
     */
-    bool pointInHalfSapce(Eigen::Vector3d const& point, double const eps = 0.0) const;
+    bool pointInHalfSpace(Eigen::Vector3d const& point, double const eps = 0.0) const;
+
     std::list<Face*> findNeighbors();
 
+    // ---------- getters ----------
+    int get_index() const;
+    double get_area() const;
+    double get_offset() const;
+
+    Eigen::Vector3d get_normal() const;
+    Edge* get_edge1() const;
+    Edge* get_edge2() const;
+    Edge* get_edge3() const;
+    std::list<Edge*> get_edges() const;
+
+    // ---------- setters ----------
+    void set_area_null();
+
+    // ---------- static functions ----------
+    static bool compareFacesArea(Face* faceA, Face* faceB);
 
 private:
 
@@ -31,6 +49,7 @@ private:
 
     Eigen::Vector3d m_normal;
     double m_offset;
+    double m_area;
 
     Vertex *m_vertex1;
     Vertex *m_vertex2;

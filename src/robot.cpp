@@ -3,14 +3,14 @@
 using namespace std;
 
 Robot::Robot() : m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(4), m_numberOfFrictionSides(8),
-m_numberOfAccelerations(0)
+m_numberOfAccelerations(0), m_numberOfIterations(0)
 {
     m_accelerations.push_back(m_gravity);
     m_lp = glp_create_prob();
 }
 
 Robot::Robot(string const& robot_file_name, int numFrictionSides) : m_gravity(0,0,-9.81),
-m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0)
+m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0), m_numberOfIterations(0)
 {
     loadRobot(robot_file_name);
     m_lp = glp_create_prob();
@@ -19,7 +19,28 @@ m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0)
 Robot::~Robot()
 {
     glp_delete_prob(m_lp);
+
+    for (std::vector<Face*>::iterator it = m_faces.begin(); it!=m_faces.end(); it++)
+    {
+        delete *it;
+        *it = 0;
+    }
+
+    for (std::vector<Edge*>::iterator it=  m_edges.begin();it!=m_edges.end(); it++)
+    {
+        delete *it;
+        *it = 0;
+    }
+
+    for (std::vector<Vertex*>::iterator it=m_vertices.begin(); it!=m_vertices.end(); it++)
+    {
+        delete *it;
+        *it = 0;
+    }
+
+
 }
+
 
 
 void Robot::loadRobot(string const& file_name)
@@ -120,16 +141,6 @@ void Robot::showRobot()
 {
     cout << "Mass of the robot: " << m_mass << endl;
     cout << "Number of feet of the robot: " << m_numberOfFeet << endl;
-}
-
-
-Eigen::Matrix3d Robot::skewSymmetric(Eigen::Vector3d const& vect)
-{
-    Eigen::Matrix3d vect_hat;
-    vect_hat << 0, -vect(2), vect(1),
-                vect(2), 0, -vect(0),
-                -vect(1), vect(0), 0;
-    return vect_hat;
 }
 
 Eigen::MatrixXd Robot::computeMatrixA1()
@@ -330,6 +341,9 @@ void Robot::projectionStabilityPolyhedron()
     Eigen::Vector3d dir;
     Eigen::Vector3d point;
 
+    Vertex* newVertex(0);
+    Face* dirFace(0);
+
     dir << 0,0,1;
     initialDirections[0] = dir;
     for (int i=1; i<4; ++i)
@@ -342,20 +356,46 @@ void Robot::projectionStabilityPolyhedron()
     for (int i=0; i<4; ++i)
     {
         point = solveStabilityProblem(initialDirections[i]);
-        m_vertices.push_back(Vertex(point, initialDirections[i]));
+        newVertex = new Vertex(point, initialDirections[i]);
+        m_vertices.push_back(newVertex);
     }
 
     buildInnerPoly();
 
+    while (m_numberOfIterations < 50)
+    {
+        m_numberOfIterations++;
+
+        dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesArea);
+        std::cout << "Next research face: " << dirFace->get_index() << '\n';
+
+        point = solveStabilityProblem(dirFace->get_normal());
+
+        double check = dirFace->get_normal().dot(point) - dirFace->get_offset();
+        std::cout << "Check: "<< check << '\n';
+        if (check > 0.001)
+        {
+            newVertex = new Vertex(point, dirFace->get_normal());
+            m_vertices.push_back(newVertex);
+
+            updateInnerPoly(newVertex, dirFace);
+        }
+        else
+        {
+            dirFace->set_area_null();
+        }
+
+
+    }
 }
 
 Eigen::Vector3d Robot::computeInnerPoint()
 {
     // Computation of the inner point: it is used to make sure that the normal of the faces are oriented toward the outside
     m_innerPoint = Eigen::Vector3d::Zero();
-    for (std::vector<Vertex>::iterator it=m_vertices.begin(); it != m_vertices.end(); it++)
+    for (std::vector<Vertex*>::iterator it=m_vertices.begin(); it != m_vertices.end(); it++)
     {
-        m_innerPoint += (*it).get_coordinates();
+        m_innerPoint += (*it)->get_coordinates();
     }
     m_innerPoint /= m_vertices.size();
 }
@@ -364,42 +404,205 @@ void Robot::buildInnerPoly()
 {
     computeInnerPoint();
     // std::cout << "Inner Point: " << m_innerPoint << '\n';
-    m_edges.push_back(Edge(&m_vertices[0], &m_vertices[1]));
-    m_edges.push_back(Edge(&m_vertices[0], &m_vertices[2]));
-    m_edges.push_back(Edge(&m_vertices[0], &m_vertices[3]));
-    m_edges.push_back(Edge(&m_vertices[1], &m_vertices[2]));
-    m_edges.push_back(Edge(&m_vertices[1], &m_vertices[3]));
-    m_edges.push_back(Edge(&m_vertices[2], &m_vertices[3]));
 
-    m_faces.push_back(Face(&m_vertices[0], &m_vertices[1], &m_vertices[2], &m_edges[0], &m_edges[1], &m_edges[2], m_innerPoint));
-    m_faces.push_back(Face(&m_vertices[0], &m_vertices[1], &m_vertices[3], &m_edges[0], &m_edges[3], &m_edges[4], m_innerPoint));
-    m_faces.push_back(Face(&m_vertices[0], &m_vertices[2], &m_vertices[3], &m_edges[2], &m_edges[3], &m_edges[5], m_innerPoint));
-    m_faces.push_back(Face(&m_vertices[1], &m_vertices[2], &m_vertices[3], &m_edges[1], &m_edges[4], &m_edges[5], m_innerPoint));
+    Edge* newEdge(0);
+
+    newEdge = new Edge(m_vertices[0], m_vertices[1]);
+    m_edges.push_back(newEdge);
+
+    newEdge = new Edge(m_vertices[0], m_vertices[2]);
+    m_edges.push_back(newEdge);
+
+    newEdge = new Edge(m_vertices[0], m_vertices[3]);
+    m_edges.push_back(newEdge);
+
+    newEdge = new Edge(m_vertices[1], m_vertices[2]);
+    m_edges.push_back(newEdge);
+
+    newEdge = new Edge(m_vertices[1], m_vertices[3]);
+    m_edges.push_back(newEdge);
+
+    newEdge = new Edge(m_vertices[2], m_vertices[3]);
+    m_edges.push_back(newEdge);
+
+    Face* newFace(0);
+    newFace = new Face(m_vertices[0], m_vertices[1], m_vertices[2], m_edges[0], m_edges[1], m_edges[3], m_innerPoint);
+    m_faces.push_back(newFace);
+    newFace = new Face(m_vertices[0], m_vertices[1], m_vertices[3], m_edges[0], m_edges[2], m_edges[4], m_innerPoint);
+    m_faces.push_back(newFace);
+    newFace = new Face(m_vertices[0], m_vertices[2], m_vertices[3], m_edges[1], m_edges[2], m_edges[5], m_innerPoint);
+    m_faces.push_back(newFace);
+    newFace = new Face(m_vertices[1], m_vertices[2], m_vertices[3], m_edges[3], m_edges[4], m_edges[5], m_innerPoint);
+    m_faces.push_back(newFace);
+
 
 
 }
 
 void Robot::updateInnerPoly(Vertex* newVertex, Face* dirFace)
 {
+    std::list<Face*> consideredFaces;
+    std::list<Face*> currentNeighbors;
+    std::list<Edge*> currentEdges;
+
+    consideredFaces.push_back(dirFace);
+
+    // currentNeighbors = dirFace->findNeighbors();
+    // consideredFaces.splice(consideredFaces.end(), currentNeighbors);
+
+    std::list<Face*> visibleFaces;
+    std::list<Edge*> visibleEdges;
+
+    std::list<Face*>::iterator currentFace = consideredFaces.begin();
+
+    while (currentFace!=consideredFaces.end())
+    {
+        // std::cout << "Current face: " << (*currentFace)->get_index() << '\n';
+        if (!(*currentFace)->pointInHalfSpace(newVertex->get_coordinates()))
+        {
+            // std::cout << "Visible face!" << '\n';
+            visibleFaces.push_back(*currentFace);
+
+            currentEdges = (*currentFace)->get_edges();
+            unionEdgeLists(visibleEdges, currentEdges);
+
+            currentNeighbors = (*currentFace)->findNeighbors();
+            unionFaceLists(consideredFaces, currentNeighbors);
+        }
+
+        currentFace++;
+
+    }
+
+    // the discrimination of the edges that should be remove could be done in the previous loop
+
+    std::list<Edge*> edges_to_keep;
+    std::list<Edge*> edges_to_delete;
+
+    for (std::list<Edge*>::iterator it=visibleEdges.begin(); it!=visibleEdges.end(); it++)
+    {
+        if (find(visibleFaces.begin(), visibleFaces.end(), (*it)->get_face1())!=visibleFaces.end() and
+            find(visibleFaces.begin(), visibleFaces.end(), (*it)->get_face2())!=visibleFaces.end())
+        {
+            std::cout << "Edge to delete: " << *it << '\n';
+            edges_to_delete.push_back(*it);
+        }
+        else
+        {
+            std::cout << "Edge to keep: " << *it << '\n';
+            edges_to_keep.push_back(*it);
+        }
+    }
+
+
+    //remove old faces
+    std::vector<Face*>::iterator posFace;
+    for (std::list<Face*>::iterator it = visibleFaces.begin(); it!=visibleFaces.end(); it++)
+    {
+        posFace = find(m_faces.begin(), m_faces.end(), *it);
+        if (posFace!= m_faces.end())
+        {
+            // std::cout << "Visible face found: " << (*it)->get_index() << '\n';
+            delete *posFace;
+            m_faces.erase(posFace);
+            *it = 0;
+        }
+        else
+        {
+            // std::cout << "Visible face not found!" << '\n';
+        }
+
+    }
+
+    // remove old edges:
+    std::vector<Edge*>::iterator posEdge;
+    for (std::list<Edge*>::iterator it = edges_to_delete.begin(); it!=edges_to_delete.end(); it++)
+    {
+        posEdge = find(m_edges.begin(), m_edges.end(), *it);
+        if (posEdge!= m_edges.end())
+        {
+            // std::cout << "Visible edge found: " << (*it)->get_index() << '\n';
+            delete *posEdge;
+            m_edges.erase(posEdge);
+            *it = 0;
+        }
+        else
+        {
+            std::cout << "Visible edge not found!" << '\n';
+        }
+
+    }
+
+    Face* newFace(0);
+    Edge* newEdge1(0);
+    Edge* newEdge2(0);
+
+    std::map<Vertex*, Edge*> processedVertex;
+
+    for (std::list<Edge*>::iterator it = edges_to_keep.begin(); it!=edges_to_keep.end(); it++)
+    {
+        if (processedVertex.find((*it)->get_vertex1())==processedVertex.end())
+        {
+            newEdge1 = new Edge(newVertex, (*it)->get_vertex1());
+            m_edges.push_back(newEdge1);
+            processedVertex[(*it)->get_vertex1()] = newEdge1;
+        }
+        else
+        {
+            newEdge1 = processedVertex.find((*it)->get_vertex1())->second;
+        }
+
+        if (processedVertex.find((*it)->get_vertex2())==processedVertex.end())
+        {
+            newEdge2 = new Edge(newVertex, (*it)->get_vertex2());
+            m_edges.push_back(newEdge2);
+            processedVertex[(*it)->get_vertex2()] = newEdge2;
+        }
+        else
+        {
+            newEdge2 = processedVertex.find((*it)->get_vertex2())->second;
+        }
+
+        // std::cout << "Old edge: "<< (*it)->get_index()<<", new edge 1: " << newEdge1->get_index() << ", new edge 2: "<< newEdge2->get_index() << '\n';
+        // showPoly();
+        newFace = new Face(newVertex, (*it)->get_vertex1(), (*it)->get_vertex2(), *it, newEdge1, newEdge2, m_innerPoint);
+        m_faces.push_back(newFace);
+    }
+
+    // showPoly();
 
 }
 
+
+// ----------- output and display functions ----------
 void Robot::exportVertices()
 {
+
     ofstream file_stream("vertices.txt");
 
     if (file_stream)
     {
-        std::vector<Vertex>::iterator it_vertices;
 
-        for (it_vertices = m_vertices.begin(); it_vertices!=m_vertices.end(); ++it_vertices)
+        for (std::vector<Vertex*>::iterator it_vertices = m_vertices.begin(); it_vertices!=m_vertices.end(); ++it_vertices)
         {
-            file_stream << (*it_vertices).get_coordinates()[0] << ';'
-                        << (*it_vertices).get_coordinates()[1] << ';'
-                        << (*it_vertices).get_coordinates()[2] << ';'
-                        << (*it_vertices).get_direction()[0] << ';'
-                        << (*it_vertices).get_direction()[1] << ';'
-                        << (*it_vertices).get_direction()[2] << ';' << endl;
+            file_stream << "v;"
+                        << (*it_vertices)->get_coordinates()[0] << ';'
+                        << (*it_vertices)->get_coordinates()[1] << ';'
+                        << (*it_vertices)->get_coordinates()[2] << ';'
+                        << (*it_vertices)->get_direction()[0] << ';'
+                        << (*it_vertices)->get_direction()[1] << ';'
+                        << (*it_vertices)->get_direction()[2] << ';' << endl;
+        }
+
+        for (std::vector<Edge*>::iterator it = m_edges.begin(); it!=m_edges.end(); it++)
+        {
+            file_stream << "e;"
+                        << (*it)->get_vertex1()->get_coordinates()[0] << ';'
+                        << (*it)->get_vertex1()->get_coordinates()[1] << ';'
+                        << (*it)->get_vertex1()->get_coordinates()[2] << ';'
+                        << (*it)->get_vertex2()->get_coordinates()[0] << ';'
+                        << (*it)->get_vertex2()->get_coordinates()[1] << ';'
+                        << (*it)->get_vertex2()->get_coordinates()[2] << ';' << endl;
         }
     }
     else
@@ -408,6 +611,25 @@ void Robot::exportVertices()
     }
 
     // glp_write_lp(m_lp, NULL, "export_lp.txt");
+}
+
+void Robot::showPoly()
+{
+    std::cout << "Current Vertices: ";
+    for (std::vector<Vertex*>::iterator it = m_vertices.begin(); it!=m_vertices.end()-1; it++)
+    {
+        std::cout << (*it)->get_index() << ", ";
+    }
+    std::cout << m_vertices.back()->get_index() << '\n';
+
+    std::cout << "Current Edges: " << '\n';
+    for (std::vector<Edge*>::iterator it = m_edges.begin(); it!=m_edges.end(); it++)
+    {
+        std::cout << "Edge: " << (*it)->get_index() << " has vertex " << (*it)->get_vertex1()->get_index()
+                  << " and "<< (*it)->get_vertex2()->get_index() << '\n';
+    }
+
+    std::cout << '\n';
 }
 
 // ------------------ Getters -----------------------
@@ -420,4 +642,37 @@ int Robot::get_numberOfFeet()
 int Robot::get_numberOfAcceletations()
 {
     return m_numberOfAccelerations;
+}
+
+// ---------- Static function -----------
+
+Eigen::Matrix3d Robot::skewSymmetric(Eigen::Vector3d const& vect)
+{
+    Eigen::Matrix3d vect_hat;
+    vect_hat << 0, -vect(2), vect(1),
+                vect(2), 0, -vect(0),
+                -vect(1), vect(0), 0;
+    return vect_hat;
+}
+
+void Robot::unionEdgeLists(std::list<Edge*>& listA, std::list<Edge*>& listB)
+{
+    for (std::list<Edge*>::iterator it=listB.begin(); it != listB.end(); it++)
+    {
+        if (find(listA.begin(), listA.end(), *it)==listA.end())
+        {
+            listA.push_back(*it);
+        }
+    }
+}
+
+void Robot::unionFaceLists(std::list<Face*>& listA, std::list<Face*>& listB)
+{
+    for (std::list<Face*>::iterator it=listB.begin(); it != listB.end(); it++)
+    {
+        if (find(listA.begin(), listA.end(), *it)==listA.end())
+        {
+            listA.push_back(*it);
+        }
+    }
 }

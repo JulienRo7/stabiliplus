@@ -13,7 +13,10 @@ Vertex::Vertex(Eigen::Vector3d coordinates, Eigen::Vector3d direction):
 
 Vertex::~Vertex()
 {
-
+    for (std::vector<Vertex*>::iterator it = m_innerNeighbors.begin(); it!=m_innerNeighbors.end(); it++)
+    {
+        *it = 0; // set the pointers to 0 -> I don't think it is usefull but anyway
+    }
 }
 
 void Vertex::addInnerNeighbor(Vertex* const neigh)
@@ -33,6 +36,11 @@ bool Vertex::isSame(Vertex const& b) const
 }
 
 // ----------- getters ----------
+int Vertex::get_index() const
+{
+    return m_index;
+}
+
 Eigen::Vector3d Vertex::get_coordinates() const
 {
     return m_coordinates;

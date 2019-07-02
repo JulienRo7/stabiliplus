@@ -19,8 +19,10 @@ public:
     bool isSame(Vertex const& b) const;
 
     // ----- Getters -----
+    int get_index() const;
     Eigen::Vector3d get_coordinates() const;
     Eigen::Vector3d get_direction() const;
+
 private:
 
     static int GlobalVertexCounter;
