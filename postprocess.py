@@ -133,7 +133,7 @@ robot = generate_robot(2)
 poly_static = static_stability.static_stability_polyhedron(robot, 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
 poly_static.project_static_stability()
 
-file = open("src/vertices.txt", 'r')
+file = open("build/vertices.txt", 'r')
 
 x = []
 y = []

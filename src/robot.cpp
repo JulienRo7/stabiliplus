@@ -273,11 +273,11 @@ void Robot::buildStabilityProblem()
         glp_set_obj_coef(m_lp, i+1, 0.0);
     }
     //
-    for (int i = 3*m_numberOfFeet*m_numberOfAccelerations; i<numberOfColumns; ++i)
-    {
-        glp_set_col_bnds(m_lp, i+1, GLP_DB, -1.0, 1.0); // Bounds on the COM position
-        // glp_set_obj_coef(m_lp, i+1, 1.0); // search direction -> this  will be modified for each call to solveStabilityProblem
-    }
+    int i = 3*m_numberOfFeet*m_numberOfAccelerations;
+    glp_set_col_bnds(m_lp, i+1, GLP_DB, -10.0, 10.0);
+    glp_set_col_bnds(m_lp, i+2, GLP_DB, -10.0, 10.0);
+    glp_set_col_bnds(m_lp, i+3, GLP_DB, -1.0, 1.0);
+
     // // ia[1] = 1, ja[1] = 1, ar[1] = 1.0;
     Eigen::MatrixXd A;
     A = buildMatrixA();
@@ -285,7 +285,7 @@ void Robot::buildStabilityProblem()
 
     Eigen::MatrixXd F;
     F = buildFrictionF();
-    // // std::cout << F << '\n';
+    std::cout << F << '\n';
     //
     int ia[1+numberOfRows*numberOfColumns], ja[1+numberOfRows*numberOfColumns];
     double ar[1+numberOfRows*numberOfColumns];
@@ -367,12 +367,12 @@ void Robot::projectionStabilityPolyhedron()
         m_numberOfIterations++;
 
         dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesArea);
-        std::cout << "Next research face: " << dirFace->get_index() << '\n';
+        // std::cout << "Next research face: " << dirFace->get_index() << '\n';
 
         point = solveStabilityProblem(dirFace->get_normal());
 
         double check = dirFace->get_normal().dot(point) - dirFace->get_offset();
-        std::cout << "Check: "<< check << '\n';
+        // std::cout << "Check: "<< check << '\n';
         if (check > 0.001)
         {
             newVertex = new Vertex(point, dirFace->get_normal());
@@ -484,12 +484,12 @@ void Robot::updateInnerPoly(Vertex* newVertex, Face* dirFace)
         if (find(visibleFaces.begin(), visibleFaces.end(), (*it)->get_face1())!=visibleFaces.end() and
             find(visibleFaces.begin(), visibleFaces.end(), (*it)->get_face2())!=visibleFaces.end())
         {
-            std::cout << "Edge to delete: " << *it << '\n';
+            // std::cout << "Edge to delete: " << *it << '\n';
             edges_to_delete.push_back(*it);
         }
         else
         {
-            std::cout << "Edge to keep: " << *it << '\n';
+            // std::cout << "Edge to keep: " << *it << '\n';
             edges_to_keep.push_back(*it);
         }
     }
@@ -528,7 +528,7 @@ void Robot::updateInnerPoly(Vertex* newVertex, Face* dirFace)
         }
         else
         {
-            std::cout << "Visible edge not found!" << '\n';
+            // std::cout << "Visible edge not found!" << '\n';
         }
 
     }
