@@ -82,7 +82,7 @@ void Robot::loadRobot(string const& file_name)
                     else if (std::strcmp(childType.c_str(), "ContactPoint")==0)
                     {
                         m_feet.push_back(ContactPoints(childXML));
-                        cout << childXML->Attribute("name") << " added" << endl;
+                        // cout << childXML->Attribute("name") << " added" << endl;
                     }
                     else {
                         std::cerr << "Un-Recognized child element name: " << childType << '\n';
@@ -94,10 +94,11 @@ void Robot::loadRobot(string const& file_name)
             else if (std::strcmp(mainType.c_str(), "ACCELERATIONS")==0)
             {
                 childXML = mainXML->FirstChildElement();
-                ++m_numberOfAccelerations;
 
                 while (childXML)
                 {
+                    ++m_numberOfAccelerations;
+                    // std::cout << "Add Acceleration!" << '\n';
                     childType = childXML->Value();
                     if (std::strcmp(childType.c_str(), "matrix")==0)
                     {
@@ -189,9 +190,8 @@ Eigen::MatrixXd Robot::buildMatrixA()
     A1 = computeMatrixA1();
 
     for (int i=0; i<m_numberOfAccelerations; ++i)
-
     {
-        A.block(6*i, m_numberOfAccelerations*i, 6, n_columnsA1) = A1;
+        A.block(6*i, n_columnsA1*i, 6, n_columnsA1) = A1;
         A.block<6, 3>(6*i, n_columnsA-3) = computeMatrixA2(m_accelerations[i]);
     }
 
@@ -212,11 +212,11 @@ Eigen::VectorXd Robot::buildVectorB()
 
 Eigen::MatrixXd Robot::buildFrictionF()
 {
-    int numberOfColumns = 3*m_numberOfFeet*m_numberOfAccelerations + 3;
-    int numberOfRows = m_numberOfFeet*(m_numberOfFrictionSides+1)*m_numberOfAccelerations;
+    int const numberOfColumns = 3*m_numberOfFeet*m_numberOfAccelerations + 3;
+    int const numberOfRows = m_numberOfFeet*(m_numberOfFrictionSides+2)*m_numberOfAccelerations + 6;
 
     Eigen::MatrixXd F = Eigen::MatrixXd::Zero(numberOfRows, numberOfColumns);
-    Eigen::MatrixXd F_contact((m_numberOfFrictionSides+1), 3);
+    Eigen::MatrixXd F_contact((m_numberOfFrictionSides+2), 3);
 
     for (int i=0; i<m_numberOfFeet; ++i)
     {
@@ -224,26 +224,65 @@ Eigen::MatrixXd Robot::buildFrictionF()
 
         for (int j=0; j<m_numberOfAccelerations; ++j)
         {
-            F.block(j*(m_numberOfFrictionSides+1)*m_numberOfFeet + i*(m_numberOfFrictionSides+1), j*3*m_numberOfFeet + i*3 ,(m_numberOfFrictionSides+1), 3) = F_contact;
+            F.block(j*(m_numberOfFrictionSides+2)*m_numberOfFeet + i*(m_numberOfFrictionSides+2), j*3*m_numberOfFeet + i*3 ,(m_numberOfFrictionSides+2), 3) = F_contact;
         }
     }
 
+    F.block<3,3>(numberOfRows-6,numberOfColumns-3) = Eigen::Matrix3d::Identity();
+    F.bottomRightCorner<3,3>() = -Eigen::Matrix3d::Identity();
+
     return F;
+}
+
+Eigen::VectorXd Robot::buildFrictionVectorf()
+{
+    int const numberOfRows = m_numberOfFeet*(m_numberOfFrictionSides+2)*m_numberOfAccelerations + 6;
+    Eigen::VectorXd f(numberOfRows);
+
+    double f_max = 10*m_mass;
+
+    for (int i=0; i<numberOfRows-6; i+=m_numberOfFrictionSides+2)
+    {
+        f[i] = f_max;
+        f[i+1] = 0;
+        for (int j=0; j<m_numberOfFrictionSides; ++j)
+        {
+            f[i+2+j]= 0.0;
+        }
+    }
+    for (int i=numberOfRows-6; i<numberOfRows; i++)
+    {
+        f[i] = 1; // CoM position limited to the unit cube
+    }
+
+    return f;
 }
 
 void Robot::buildStabilityProblem()
 {
 
 
-    int numberOfColumns = 3*m_numberOfFeet*m_numberOfAccelerations + 3;
-    int numberOfRows = 6*m_numberOfAccelerations + m_numberOfFeet*(m_numberOfFrictionSides+1)*m_numberOfAccelerations;
+    Eigen::MatrixXd A;
+    A = buildMatrixA();
+    // std::cout << "A:" << '\n' << A << '\n';
+
+    Eigen::VectorXd B = buildVectorB();
+    // std::cout << "b:" << '\n' << B << '\n';
+
+    Eigen::MatrixXd F;
+    F = buildFrictionF();
+    // std::cout << "F:" << '\n' << F << '\n';
+
+    Eigen::VectorXd f;
+    f = buildFrictionVectorf();
+    // std::cout << "f:" << '\n' << f << '\n';
+
+    int numberOfColumns = A.cols();
+    int numberOfRows = A.rows()+F.rows();
 
     // std::cout << "Number of Columns: " << numberOfColumns << '\n';
     // std::cout << "Number of Rows: " << numberOfRows << '\n';
 
-    Eigen::VectorXd B;
-    B = buildVectorB();
-    // std::cout << B << '\n';
 
     double const fmax(10*m_mass);
 
@@ -252,45 +291,33 @@ void Robot::buildStabilityProblem()
     //
     glp_add_rows(m_lp, numberOfRows);
 
-    for (int i=0; i<B.rows(); ++i)
+    for (int i=0; i<B.size(); ++i)
     {
         glp_set_row_bnds(m_lp, i+1, GLP_FX, B(i), B(i));
     }
 
-    for (int i=B.rows(); i<numberOfRows; i+= m_numberOfFrictionSides+1)
+    for (int i=B.size(); i<numberOfRows; i++)
     {
-        glp_set_row_bnds(m_lp, i+1, GLP_DB, 0.0, fmax);
-        for (int j=0; j<m_numberOfFrictionSides; ++j)
-        {
-            glp_set_row_bnds(m_lp, i+2+j, GLP_UP, 0.0, 0.0);
-        }
+        glp_set_row_bnds(m_lp, i+1, GLP_UP, 0.0, f[i-B.size()]);
     }
 
     glp_add_cols(m_lp, numberOfColumns);
-    for (int i = 0; i<3*m_numberOfFeet*m_numberOfAccelerations; ++i)
+    for (int i = 0; i<numberOfColumns; ++i)
     {
         glp_set_col_bnds(m_lp, i+1, GLP_FR, -100.0, 100.0);
         glp_set_obj_coef(m_lp, i+1, 0.0);
     }
-    //
-    int i = 3*m_numberOfFeet*m_numberOfAccelerations;
-    glp_set_col_bnds(m_lp, i+1, GLP_DB, -10.0, 10.0);
-    glp_set_col_bnds(m_lp, i+2, GLP_DB, -10.0, 10.0);
-    glp_set_col_bnds(m_lp, i+3, GLP_DB, -1.0, 1.0);
+
+    glp_set_col_bnds(m_lp, numberOfColumns-2, GLP_DB, -10.0, 10.0);
+    glp_set_col_bnds(m_lp, numberOfColumns-1, GLP_DB, -10.0, 10.0);
+    glp_set_col_bnds(m_lp, numberOfColumns-0, GLP_DB, -1.0, 1.0);
 
     // // ia[1] = 1, ja[1] = 1, ar[1] = 1.0;
-    Eigen::MatrixXd A;
-    A = buildMatrixA();
-    // std::cout << A << '\n';
 
-    Eigen::MatrixXd F;
-    F = buildFrictionF();
-    std::cout << F << '\n';
-    //
-    int ia[1+numberOfRows*numberOfColumns], ja[1+numberOfRows*numberOfColumns];
-    double ar[1+numberOfRows*numberOfColumns];
+    int ia[1+(numberOfRows-6)*numberOfColumns], ja[1+(numberOfRows-6)*numberOfColumns];
+    double ar[1+(numberOfRows-6)*numberOfColumns];
 
-    for (int i=0; i<6*m_numberOfAccelerations; ++i)
+    for (int i=0; i<A.rows(); ++i)
     {
         for (int j=0; j<numberOfColumns; ++j)
         {
@@ -300,22 +327,109 @@ void Robot::buildStabilityProblem()
             // std::cout << 1+i*numberOfColumns + j << " " << 1+i <<" " << 1+j <<" " << A(i,j) << '\n';
         }
     }
-    for (int i=6*m_numberOfAccelerations; i<numberOfRows; ++i)
+    for (int i=A.rows(); i<numberOfRows-6; ++i)
     {
         for (int j=0; j<numberOfColumns; ++j)
         {
             ia[1+i*numberOfColumns + j]=1+i;
             ja[1+i*numberOfColumns + j]=1+j;
-            ar[1+i*numberOfColumns + j]=F(i-6*m_numberOfAccelerations,j);
+            ar[1+i*numberOfColumns + j]=F(i-A.rows(),j);
             // ar[1+i*numberOfColumns + j]=0;
             // std::cout << 1+i*numberOfColumns + j << " " << 1+i <<" " << 1+j <<" " << F(i-6*m_numberOfAccelerations,j) << '\n';
         }
     }
-    // std::cout << ia << '\n';
-    glp_load_matrix(m_lp, numberOfRows*numberOfColumns, ia, ja, ar);
+
+    glp_load_matrix(m_lp, (numberOfRows-6)*numberOfColumns, ia, ja, ar);
+
+    glp_term_out(GLP_OFF);
 }
 
-Eigen::Vector3d Robot::solveStabilityProblem(Eigen::Vector3d const& direction)
+void Robot::buildReducedStabilityProblem()
+{
+
+    Eigen::VectorXd B = buildVectorB();
+
+    Eigen::MatrixXd A = buildMatrixA();
+    // std::cout << "A: "<< '\n' << A << '\n';
+
+    Eigen::MatrixXd F = buildFrictionF();
+
+    Eigen::VectorXd f = buildFrictionVectorf();
+
+
+
+    Eigen::HouseholderQR<Eigen::MatrixXd> qr(A.transpose());
+    // Eigen::MatrixXd P = qr.colsPermutation();
+    auto start = std::chrono::high_resolution_clock::now();
+    const Eigen::MatrixXd& Q = qr.householderQ();
+    m_Q_c = Q.leftCols(A.rows());//.setLength(qr.nonzeroPivots());
+    m_Q_u = Q.rightCols(A.cols()-A.rows());//.setLength(qr.nonzeroPivots());
+    m_R_inv_T_b = qr.matrixQR().topRows(A.rows()).transpose().triangularView<Eigen::Lower>().solve(B);
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    std::cout << "QR decomposition time: " << duration.count() << " microseconds"<< '\n';
+
+    // std::cout << "P matrix of A: " << '\n' << P << '\n';
+    // std::cout << "Qc matrix of A: " << '\n' << Q_c << '\n';
+    // std::cout << "Qu matrix of A: " << '\n' << m_Q_u << '\n';
+    // std::cout << "R matrix of A: " << '\n' << R << '\n';
+    // std::cout << "Inverse of R: " << '\n' << R_inv << '\n';
+
+    Eigen::MatrixXd F_bis = F*m_Q_u;
+
+    Eigen::VectorXd f_bis = f - (F*m_Q_c)*m_R_inv_T_b;
+
+    // std::cout << "F_bis: " << '\n' << F_bis << '\n';
+    // std::cout << "f_bis: " << '\n' << f_bis << '\n';
+
+    int const numberOfColumns = F_bis.cols();
+    int const numberOfRows = F_bis.rows();
+
+
+    glp_set_obj_dir(m_lp, GLP_MAX); // The objective here is to maximize
+    //
+    glp_add_rows(m_lp, numberOfRows);
+
+
+    for (int i = 0; i<numberOfRows; i++)
+    {
+        glp_set_row_bnds(m_lp, i+1, GLP_UP, 0.0, f_bis[i]);
+    }
+
+
+    glp_add_cols(m_lp, numberOfColumns);
+    for (int i = 0; i<numberOfColumns; ++i)
+    {
+        glp_set_col_bnds(m_lp, i+1, GLP_FR, -100.0, 100.0);
+        // glp_set_obj_coef(m_lp, i+1, 0.0);
+    }
+
+    int ia[1+numberOfRows*numberOfColumns], ja[1+numberOfRows*numberOfColumns];
+    double ar[1+numberOfRows*numberOfColumns];
+
+    for (int i=0; i<numberOfRows; ++i)
+    {
+        for (int j=0; j<numberOfColumns; ++j)
+        {
+            ia[1+i*numberOfColumns + j]=1+i;
+            ja[1+i*numberOfColumns + j]=1+j;
+            ar[1+i*numberOfColumns + j]=F_bis(i,j);
+            // std::cout << 1+i*numberOfColumns + j << " " << 1+i <<" " << 1+j <<" " << A(i,j) << '\n';
+        }
+    }
+
+    // std::cout << ia << '\n';
+    glp_load_matrix(m_lp, numberOfRows*numberOfColumns, ia, ja, ar);
+
+    glp_term_out(GLP_OFF);
+
+
+}
+
+
+void Robot::solveStabilityProblem(Eigen::Vector3d const& direction, Eigen::Vector3d &point)
 {
     int numberOfColumns = glp_get_num_cols(m_lp);
 
@@ -327,22 +441,52 @@ Eigen::Vector3d Robot::solveStabilityProblem(Eigen::Vector3d const& direction)
 
     glp_simplex(m_lp, NULL);
 
-    Eigen::Vector3d Vertex;
-    Vertex << glp_get_col_prim(m_lp, numberOfColumns-2),
+
+    point << glp_get_col_prim(m_lp, numberOfColumns-2),
               glp_get_col_prim(m_lp, numberOfColumns-1),
               glp_get_col_prim(m_lp, numberOfColumns-0);
     // std::cout << "Objective Function : " << glp_get_obj_val(m_lp) << '\n';
-    return Vertex;
+
+}
+
+void Robot::solveReducedStabilityProblem(Eigen::Vector3d const& direction, Eigen::Vector3d &point)
+{
+    Eigen::VectorXd c = Eigen::VectorXd::Zero(3*m_numberOfFeet*m_numberOfAccelerations+3);
+    c.tail(3)=direction;
+
+    const Eigen::VectorXd c_bis = m_Q_u.transpose()*c;
+
+    for (int i = 0; i<c_bis.size(); ++i)
+    {
+        glp_set_obj_coef(m_lp, i+1, c_bis[i]);
+    }
+    glp_simplex(m_lp, NULL);
+
+    Eigen::VectorXd z(c_bis.size());
+
+    for (int i = 0; i<c_bis.size(); ++i)
+    {
+        z[i]=glp_get_col_prim(m_lp, i+1);
+    }
+
+    const Eigen::VectorXd x = m_Q_c*m_R_inv_T_b + (m_Q_u*z);
+
+    // std::cout << "m_Q_c*m_R_inv_T_b=" << '\n' << (m_Q_c*m_R_inv_T_b).transpose() << '\n';
+
+    point = x.tail(3);
 }
 
 void Robot::projectionStabilityPolyhedron()
 {
-    Eigen::Vector3d initialDirections[4];
+    std::array<Eigen::Vector3d, 4> initialDirections;
     Eigen::Vector3d dir;
     Eigen::Vector3d point;
 
     Vertex* newVertex(0);
     Face* dirFace(0);
+
+    double lpMilis  = 0;
+    double convexMilis =0;
 
     dir << 0,0,1;
     initialDirections[0] = dir;
@@ -355,7 +499,14 @@ void Robot::projectionStabilityPolyhedron()
 
     for (int i=0; i<4; ++i)
     {
-        point = solveStabilityProblem(initialDirections[i]);
+        // solveReducedStabilityProblem(initialDirections[i], point);
+        auto start = std::chrono::high_resolution_clock::now();
+        solveReducedStabilityProblem(initialDirections[i], point);
+        // solveStabilityProblem(initialDirections[i], point);
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        lpMilis += duration.count();
+
         newVertex = new Vertex(point, initialDirections[i]);
         m_vertices.push_back(newVertex);
     }
@@ -367,18 +518,30 @@ void Robot::projectionStabilityPolyhedron()
         m_numberOfIterations++;
 
         dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesArea);
-        // std::cout << "Next research face: " << dirFace->get_index() << '\n';
 
-        point = solveStabilityProblem(dirFace->get_normal());
+        auto start = std::chrono::high_resolution_clock::now();
+        solveReducedStabilityProblem(dirFace->get_normal(), point);
+        // solveStabilityProblem(dirFace->get_normal(), point);
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        lpMilis += duration.count();
 
-        double check = dirFace->get_normal().dot(point) - dirFace->get_offset();
+        const double check = dirFace->get_normal().dot(point) - dirFace->get_offset();
         // std::cout << "Check: "<< check << '\n';
         if (check > 0.001)
         {
             newVertex = new Vertex(point, dirFace->get_normal());
             m_vertices.push_back(newVertex);
 
+            dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesArea);
+            // std::cout << "Next research face: " << dirFace->get_index() << '\n';
+            auto start = std::chrono::high_resolution_clock::now();
             updateInnerPoly(newVertex, dirFace);
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+            convexMilis+=duration.count();
+
         }
         else
         {
@@ -387,6 +550,8 @@ void Robot::projectionStabilityPolyhedron()
 
 
     }
+    std::cout << "Total LP time: " << lpMilis << " microseconds" << '\n';
+    std::cout << "Total convex time: " << convexMilis << " microseconds" << '\n';
 }
 
 Eigen::Vector3d Robot::computeInnerPoint()
@@ -573,6 +738,27 @@ void Robot::updateInnerPoly(Vertex* newVertex, Face* dirFace)
 
 }
 
+void Robot::buildOuterPoly()
+{
+    // Vertex* outerVertex(0);
+    // Eigen::Vector3d outerPoint;
+    // Eigen::Vector3d b;
+    // Eigen::Matrix3d A;
+    //
+    //
+    // for (auto it = m_faces.begin(); it!=m_faces.end(); it++)
+    // {
+    //     A << (*it)->get_vertex1()->get_direction().transpose(),
+    //       << (*it)->get_vertex2()->get_direction().transpose(),
+    //       << (*it)->get_vertex3()->get_direction().transpose();
+    //
+    //     b << (*it)->get_vertex1()->get_offset(),
+    //       << (*it)->get_vertex2()->get_offset(),
+    //       << (*it)->get_vertex3()->get_offset(),
+    //
+    //     outerPoint = A.solve(b);
+    }
+}
 
 // ----------- output and display functions ----------
 void Robot::exportVertices()
@@ -642,6 +828,11 @@ int Robot::get_numberOfFeet()
 int Robot::get_numberOfAcceletations()
 {
     return m_numberOfAccelerations;
+}
+
+int Robot::get_numberOfVertices()
+{
+    return m_vertices.size();
 }
 
 // ---------- Static function -----------

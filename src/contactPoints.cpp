@@ -124,12 +124,17 @@ void ContactPoints::showContactPoint()
 
 Eigen::MatrixXd ContactPoints::linearizedFrictionCone(int numberOfFrictionSides)
 {
-    Eigen::MatrixXd F(numberOfFrictionSides+1, 3);
+    Eigen::MatrixXd F(numberOfFrictionSides+2, 3);
     Eigen::RowVector3d line;
 
     line << 0, 0, 1;
     line = line*(m_rotation.transpose());
     F.row(0) = line;
+
+    line << 0, 0, -1;
+    line = line*(m_rotation.transpose());
+    F.row(1) = line;
+
 
     double Dtheta(2*M_PI/numberOfFrictionSides);
     // std::cout << "Dtheta: " << Dtheta << '\n';
@@ -138,7 +143,7 @@ Eigen::MatrixXd ContactPoints::linearizedFrictionCone(int numberOfFrictionSides)
         line << cos(i*Dtheta), sin(i*Dtheta), -m_frictionCoef*cos(Dtheta/2);
         // line << cos(i*Dtheta), sin(i*Dtheta), -m_frictionCoef;
         line = line*(m_rotation.transpose());
-        F.row(i+1) = line;
+        F.row(i+2) = line;
     }
 
     return F;

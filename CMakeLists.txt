@@ -8,6 +8,9 @@ endif(COMMAND cmake_policy)
 
 find_package(Eigen3 REQUIRED)
 
+set(CMAKE_CXX_FLAGS "-O2")
+add_compile_options(-std=c++11)
+
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 

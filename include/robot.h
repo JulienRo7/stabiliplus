@@ -14,11 +14,13 @@ The robot class contains the description of the robot. It can load it and make o
 #include <string>
 #include <vector>
 #include <map>
-#include "math.h"
+#include <cmath>
 #include <algorithm>
 
+#include <chrono>
+
 // libraries
-#include "tinyxml2.h"
+#include <tinyxml2.h>
 #include <Eigen/Dense>
 #include <glpk.h>
 
@@ -46,16 +48,20 @@ public:
     Eigen::MatrixXd buildMatrixA();
     Eigen::VectorXd buildVectorB();
     Eigen::MatrixXd buildFrictionF();
+    Eigen::VectorXd buildFrictionVectorf();
+
 
     void buildStabilityProblem();
-    Eigen::Vector3d solveStabilityProblem(Eigen::Vector3d const& direction);
+    void buildReducedStabilityProblem();
+    void solveStabilityProblem(Eigen::Vector3d const& direction, Eigen::Vector3d &point);
+    void solveReducedStabilityProblem(Eigen::Vector3d const& direction, Eigen::Vector3d &point);
 
     void projectionStabilityPolyhedron();
 
     Eigen::Vector3d computeInnerPoint();
     void buildInnerPoly();
     void updateInnerPoly(Vertex* newVertex, Face* dirFace);
-
+    void buildOuterPoly();
 
     // ----------- output and display functions ----------
     void exportVertices();
@@ -65,6 +71,8 @@ public:
     // ----------- getters ----------
     int get_numberOfFeet();
     int get_numberOfAcceletations();
+
+    int get_numberOfVertices();
 
     // ---------- static functions ---------
     static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const& vect);
@@ -84,6 +92,9 @@ private:
     // attributes used for the LP problem
     glp_prob *m_lp;
     int m_numberOfFrictionSides; // Number of sides of the approximation of the friction cones
+    Eigen::MatrixXd m_Q_u;
+    Eigen::MatrixXd m_Q_c;
+    Eigen::MatrixXd m_R_inv_T_b;
 
     int m_numberOfIterations;
     // inner polyhedron
@@ -93,6 +104,10 @@ private:
     std::vector<Edge*> m_edges;
     std::vector<Face*> m_faces;
 
+    // outer polyhedron
+    std::vector<Vertex*> m_outerVertices;
+    std::vector<Edge*> m_outerEdges;
+    std::vector<Face*> m_outerFaces;
 };
 
 #endif // ROBOT_H_INCLUDED
