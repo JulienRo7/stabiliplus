@@ -13,6 +13,7 @@ The robot class contains the description of the robot. It can load it and make o
 #include <fstream>
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 #include <cmath>
 #include <algorithm>
@@ -29,13 +30,16 @@ The robot class contains the description of the robot. It can load it and make o
 #include "vertex.h"
 #include "edge.h"
 #include "face.h"
+#include "outervertex.h"
+#include "outeredge.h"
+#include "outerface.h"
 
 class Robot
 {
 
 public:
     Robot();
-    Robot(std::string const& robot_file_name, int numFrictionSides=8);
+    Robot(std::string const& robot_file_name, int numFrictionSides=8, int maxNumberOfIteration = 50);
     ~Robot();
 
     void loadRobot(std::string const& file_name);
@@ -62,22 +66,32 @@ public:
     void buildInnerPoly();
     void updateInnerPoly(Vertex* newVertex, Face* dirFace);
     void buildOuterPoly();
+    void updateOuterPoly(Vertex* newVertex, Face* dirFace);
+
+    void computeSupportFunctions();
 
     // ----------- output and display functions ----------
     void exportVertices();
     void showPoly();
 
-
     // ----------- getters ----------
-    int get_numberOfFeet();
-    int get_numberOfAcceletations();
+    int get_numberOfFeet() const;
+    int get_numberOfAcceletations() const;
 
-    int get_numberOfVertices();
+    int get_numberOfVertices() const;
+
+    double get_lpMicro() const;
+    double get_innerConvexMicro() const;
+    double get_outerConvexMicro() const;
+    double get_supportFunctionMicro() const;
+
+    // ----------- setters ----------
+    void set_maxNumberOfIterations(int maxNumberOfIteration);
+
+
 
     // ---------- static functions ---------
     static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const& vect);
-    static void unionEdgeLists(std::list<Edge*> &listA, std::list<Edge*> &listB);
-    static void unionFaceLists(std::list<Face*> &listA, std::list<Face*> &listB);
 
 private:
     Eigen::Vector3d const m_gravity;
@@ -105,9 +119,20 @@ private:
     std::vector<Face*> m_faces;
 
     // outer polyhedron
-    std::vector<Vertex*> m_outerVertices;
-    std::vector<Edge*> m_outerEdges;
-    std::vector<Face*> m_outerFaces;
+    std::vector<OuterVertex*> m_outerVertices;
+    std::vector<OuterEdge*> m_outerEdges;
+    std::vector<OuterFace*> m_outerFaces;
+
+    std::map<Vertex*, OuterFace*> m_innerOuterLink;
+
+    // options
+    int m_maxNumberOfIteration;
+
+    // time measures
+    double m_lpMicro;
+    double m_innerConvexMicro;
+    double m_outerConvexMicro;
+    double m_supportFunctionMicro;
 };
 
 #endif // ROBOT_H_INCLUDED

@@ -2,9 +2,10 @@
 #define FACE_H_INCLUDED
 
 #include <iostream>
-#include <list>
+#include <vector>
 
 #include "vertex.h"
+#include "outervertex.h"
 
 #include <Eigen/Dense>
 
@@ -23,7 +24,7 @@ public:
     */
     bool pointInHalfSpace(Eigen::Vector3d const& point, double const eps = 0.0) const;
 
-    std::list<Face*> findNeighbors();
+    std::vector<Face*> findNeighbors();
 
     // ---------- getters ----------
     int get_index() const;
@@ -31,16 +32,27 @@ public:
     double get_offset() const;
 
     Eigen::Vector3d get_normal() const;
+
     Edge* get_edge1() const;
     Edge* get_edge2() const;
     Edge* get_edge3() const;
-    std::list<Edge*> get_edges() const;
+    std::vector<Edge*> get_edges() const;
+
+    Vertex* get_vertex1() const;
+    Vertex* get_vertex2() const;
+    Vertex* get_vertex3() const;
+
+    OuterVertex* get_supportPoint() const;
+    double get_supportFunction() const;
+
+    double get_measure() const;
 
     // ---------- setters ----------
     void set_area_null();
+    void set_supportPoint(OuterVertex* supportPoint);
 
     // ---------- static functions ----------
-    static bool compareFacesArea(Face* faceA, Face* faceB);
+    static bool compareFacesMeasure(Face* faceA, Face* faceB);
 
 private:
 
@@ -58,6 +70,9 @@ private:
     Edge *m_edge1;
     Edge *m_edge2;
     Edge *m_edge3;
+
+    OuterVertex* m_supportPoint;
+    double m_supportFunction;
 
 };
 

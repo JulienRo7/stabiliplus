@@ -22,6 +22,7 @@ public:
     int get_index() const;
     Eigen::Vector3d get_coordinates() const;
     Eigen::Vector3d get_direction() const;
+    double get_offset() const;
 
 private:
 

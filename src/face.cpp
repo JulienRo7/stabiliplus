@@ -3,6 +3,7 @@
 #include "edge.h" // Because of forward declaration
 
 int Face::GlobalFaceCounter = 0;
+
 Face::Face(Vertex* vertex1, Vertex* vertex2, Vertex* vertex3, Edge* edge1, Edge* edge2, Edge* edge3, Eigen::Vector3d innerPoint):
     m_index(GlobalFaceCounter),
     m_vertex1(vertex1), m_vertex2(vertex2), m_vertex3(vertex3),
@@ -47,6 +48,8 @@ Face::~Face()
     m_edge3->removeFace(this);
     m_edge3 = 0;
     // std::cout << "Done!" << '\n';
+
+    m_supportPoint = 0;
 }
 
 bool Face::isSame(Face const& b) const
@@ -59,9 +62,9 @@ bool Face::pointInHalfSpace(Eigen::Vector3d const& point, double const eps) cons
     return m_normal.dot(point)-m_offset <= eps;
 }
 
-std::list<Face*> Face::findNeighbors()
+std::vector<Face*> Face::findNeighbors()
 {
-    std::list<Face*> neighbors;
+    std::vector<Face*> neighbors;
 
     neighbors.push_back(m_edge1->get_otherFace(this));
     neighbors.push_back(m_edge2->get_otherFace(this));
@@ -106,15 +109,50 @@ Edge* Face::get_edge3() const
     return m_edge3;
 }
 
-std::list<Edge*> Face::get_edges() const
+std::vector<Edge*> Face::get_edges() const
 {
-    std::list<Edge*> edgesList;
+    std::vector<Edge*> edgesvector;
 
-    edgesList.push_back(get_edge1());
-    edgesList.push_back(get_edge2());
-    edgesList.push_back(get_edge3());
+    edgesvector.push_back(get_edge1());
+    edgesvector.push_back(get_edge2());
+    edgesvector.push_back(get_edge3());
 
-    return edgesList;
+    return edgesvector;
+}
+
+Vertex* Face::get_vertex1() const
+{
+    return m_vertex1;
+}
+Vertex* Face::get_vertex2() const
+{
+    return m_vertex2;
+}
+Vertex* Face::get_vertex3() const
+{
+    return m_vertex3;
+}
+
+OuterVertex* Face::get_supportPoint() const
+{
+    return m_supportPoint;
+}
+
+double Face::get_supportFunction() const
+{
+    return m_supportFunction;
+}
+
+double Face::get_measure() const
+{
+    if (m_area == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        return m_supportFunction;
+    }
 }
 
 // ----------- setters ----------
@@ -123,11 +161,16 @@ void Face::set_area_null()
     m_area = 0;
 }
 
+void Face::set_supportPoint(OuterVertex* supportPoint)
+{
+    m_supportPoint = supportPoint;
+    m_supportFunction = m_normal.dot(supportPoint->get_coordinates())-m_offset;
+}
 
 // ----------- static functions ----------
-bool Face::compareFacesArea(Face* faceA, Face* faceB)
+bool Face::compareFacesMeasure(Face* faceA, Face* faceB)
 {
-    return faceA->get_area() < faceB->get_area();
+    return faceA->get_measure() < faceB->get_measure();
 }
 
 // ----------- operators overloading ----------

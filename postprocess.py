@@ -145,9 +145,17 @@ w = []
 
 edges = []
 
+# outer points
+oX = []
+oY = []
+oZ = []
+
+# outer edges
+outerEdges = []
+
 for line in file:
     line = line.split(';')
-    if line[0]=='v':
+    if line[0]=='iv':
         x.append(float(line[1]))
         y.append(float(line[2]))
         z.append(float(line[3]))
@@ -155,13 +163,28 @@ for line in file:
         v.append(float(line[5]))
         w.append(float(line[6]))
 
-    if line[0]=='e':
+    elif line[0]=='ie':
         edges.append([[float(line[1]), float(line[4])],
                       [float(line[2]), float(line[5])],
                       [float(line[3]), float(line[6])]])
 
+    elif line[0]=='ov':
+        oX.append(float(line[1]));
+        oY.append(float(line[2]));
+        oZ.append(float(line[3]));
+
+    elif line[0]=='oe':
+        outerEdges.append([[float(line[1]), float(line[4])],
+                           [float(line[2]), float(line[5])],
+                           [float(line[3]), float(line[6])]])
+
+    else:
+        print("Unrecognise type :", line[0])
+
 ax = robot.display_robot_configuration()
 
+
+# ----------- display of static stability -----------
 x1 = [v[0] for v in poly_static.inner_vertices]
 x1.append(x1[0])
 y1 = [v[1] for v in poly_static.inner_vertices]
@@ -169,14 +192,21 @@ y1.append(y1[0])
 
 ax.plot(x1, y1, color="xkcd:blue grey")
 
-# ax.quiver(x, y, z, u, v, w, color="xkcd:kelly green")
+# ----------- displahy of inner polyhedron -----------
 ax.plot(x, y, z, 'go')
+scale = 0.2
+ax.quiver(x, y, z, u, v, w, color="xkcd:kelly green")
 
 for e in edges:
     ax.plot(e[0], e[1], e[2], color="xkcd:kelly green")
 
-# for a,b,c,d,e,f in zip(x, y, z, u, v, w):
-#     ax.arrow(a, b, c, d, e, f)
+# ----------- displahy of outer polyhedron -----------
+ax.plot(oX, oY, oZ, 'yo')
+
+for e in outerEdges:
+    ax.plot(e[0], e[1], e[2], color="xkcd:lemon yellow")
+
+
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 

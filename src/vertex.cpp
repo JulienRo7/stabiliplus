@@ -51,7 +51,10 @@ Eigen::Vector3d Vertex::get_direction() const
     return m_direction;
 }
 
-
+double Vertex::get_offset() const
+{
+    return m_offset;
+}
 // ----------- operators overloading ----------
 bool operator==(Vertex const& a, Vertex const& b)
 {

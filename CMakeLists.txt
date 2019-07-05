@@ -20,6 +20,9 @@ add_library(robot
   ${PROJECT_SOURCE_DIR}/src/vertex.cpp
   ${PROJECT_SOURCE_DIR}/src/edge.cpp
   ${PROJECT_SOURCE_DIR}/src/face.cpp
+  ${PROJECT_SOURCE_DIR}/src/outervertex.cpp
+  ${PROJECT_SOURCE_DIR}/src/outeredge.cpp
+  ${PROJECT_SOURCE_DIR}/src/outerface.cpp
   )
 target_link_libraries(robot glpk tinyxml2)
 
