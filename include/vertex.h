@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <memory>
 
 #include <Eigen/Dense>
 
@@ -13,8 +14,8 @@ public:
     Vertex(Eigen::Vector3d coordinates, Eigen::Vector3d direction);
     ~Vertex();
 
-    void addInnerNeighbor(Vertex* const neigh);
-    void removeInnerNeighbor(Vertex* const neigh);
+    void addInnerNeighbor(std::shared_ptr<Vertex> const neigh);
+    void removeInnerNeighbor(std::shared_ptr<Vertex> const neigh);
 
     bool isSame(Vertex const& b) const;
 
@@ -34,7 +35,7 @@ private:
     double m_offset;
 
     // inner polyhedron related stuff
-    std::vector<Vertex*> m_innerNeighbors;
+    std::vector<std::shared_ptr<Vertex>> m_innerNeighbors;
 };
 
 bool operator==(Vertex const& a, Vertex const& b);

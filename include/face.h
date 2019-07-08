@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include "vertex.h"
 #include "outervertex.h"
@@ -11,20 +12,22 @@
 
 class Edge; // Forward declaration
 
-class Face
+class Face: public std::enable_shared_from_this<Face>
 {
 public:
-    Face(Vertex* vertex1, Vertex* vertex2, Vertex* vertex3, Edge* edge1, Edge* edge2, Edge* edge3, Eigen::Vector3d innerPoint);
+    Face(std::shared_ptr<Vertex> vertex1, std::shared_ptr<Vertex> vertex2, std::shared_ptr<Vertex> vertex3, std::shared_ptr<Edge> edge1, std::shared_ptr<Edge> edge2, std::shared_ptr<Edge> edge3, Eigen::Vector3d innerPoint);
     ~Face();
 
-    bool isSame(Face const& b) const;
+    void init();
+    void finish();
 
+    bool isSame(Face const& b) const;
     /*
     Note: it is considered that the normal is toward the outside
     */
     bool pointInHalfSpace(Eigen::Vector3d const& point, double const eps = 0.0) const;
 
-    std::vector<Face*> findNeighbors();
+    std::vector<std::shared_ptr<Face>> findNeighbors();
 
     // ---------- getters ----------
     int get_index() const;
@@ -33,14 +36,14 @@ public:
 
     Eigen::Vector3d get_normal() const;
 
-    Edge* get_edge1() const;
-    Edge* get_edge2() const;
-    Edge* get_edge3() const;
-    std::vector<Edge*> get_edges() const;
+    std::shared_ptr<Edge> get_edge1() const;
+    std::shared_ptr<Edge> get_edge2() const;
+    std::shared_ptr<Edge> get_edge3() const;
+    std::vector<std::shared_ptr<Edge>> get_edges() const;
 
-    Vertex* get_vertex1() const;
-    Vertex* get_vertex2() const;
-    Vertex* get_vertex3() const;
+    std::shared_ptr<Vertex> get_vertex1() const;
+    std::shared_ptr<Vertex> get_vertex2() const;
+    std::shared_ptr<Vertex> get_vertex3() const;
 
     OuterVertex* get_supportPoint() const;
     double get_supportFunction() const;
@@ -52,7 +55,7 @@ public:
     void set_supportPoint(OuterVertex* supportPoint);
 
     // ---------- static functions ----------
-    static bool compareFacesMeasure(Face* faceA, Face* faceB);
+    static bool compareFacesMeasure(std::shared_ptr<Face> faceA, std::shared_ptr<Face> faceB);
 
 private:
 
@@ -63,13 +66,13 @@ private:
     double m_offset;
     double m_area;
 
-    Vertex *m_vertex1;
-    Vertex *m_vertex2;
-    Vertex *m_vertex3;
+    std::shared_ptr<Vertex> m_vertex1;
+    std::shared_ptr<Vertex> m_vertex2;
+    std::shared_ptr<Vertex> m_vertex3;
 
-    Edge *m_edge1;
-    Edge *m_edge2;
-    Edge *m_edge3;
+    std::shared_ptr<Edge> m_edge1;
+    std::shared_ptr<Edge> m_edge2;
+    std::shared_ptr<Edge> m_edge3;
 
     OuterVertex* m_supportPoint;
     double m_supportFunction;

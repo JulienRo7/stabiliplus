@@ -19,6 +19,7 @@ The robot class contains the description of the robot. It can load it and make o
 #include <algorithm>
 
 #include <chrono>
+#include <memory>
 
 // libraries
 #include <tinyxml2.h>
@@ -64,9 +65,9 @@ public:
 
     Eigen::Vector3d computeInnerPoint();
     void buildInnerPoly();
-    void updateInnerPoly(Vertex* newVertex, Face* dirFace);
+    void updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace);
     void buildOuterPoly();
-    void updateOuterPoly(Vertex* newVertex, Face* dirFace);
+    void updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace);
 
     void computeSupportFunctions();
 
@@ -112,18 +113,18 @@ private:
 
     int m_numberOfIterations;
     // inner polyhedron
-    std::vector<Vertex*> m_vertices;
+    std::vector<std::shared_ptr<Vertex>> m_vertices;
     Eigen::Vector3d m_innerPoint;
 
-    std::vector<Edge*> m_edges;
-    std::vector<Face*> m_faces;
+    std::vector<std::shared_ptr<Edge>> m_edges;
+    std::vector<std::shared_ptr<Face>> m_faces;
 
     // outer polyhedron
     std::vector<OuterVertex*> m_outerVertices;
     std::vector<OuterEdge*> m_outerEdges;
     std::vector<OuterFace*> m_outerFaces;
 
-    std::map<Vertex*, OuterFace*> m_innerOuterLink;
+    std::map<std::shared_ptr<Vertex>, OuterFace*> m_innerOuterLink;
 
     // options
     int m_maxNumberOfIteration;

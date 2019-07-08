@@ -13,18 +13,18 @@ Vertex::Vertex(Eigen::Vector3d coordinates, Eigen::Vector3d direction):
 
 Vertex::~Vertex()
 {
-    for (std::vector<Vertex*>::iterator it = m_innerNeighbors.begin(); it!=m_innerNeighbors.end(); it++)
+    for (auto it : m_innerNeighbors)
     {
-        *it = 0; // set the pointers to 0 -> I don't think it is usefull but anyway
+        it = nullptr; // set the pointers to 0 -> I don't think it is usefull but anyway
     }
 }
 
-void Vertex::addInnerNeighbor(Vertex* const neigh)
+void Vertex::addInnerNeighbor(std::shared_ptr<Vertex> const neigh)
 {
     m_innerNeighbors.push_back(neigh);
 }
 
-void Vertex::removeInnerNeighbor(Vertex* const neigh)
+void Vertex::removeInnerNeighbor(std::shared_ptr<Vertex> const neigh)
 {
     std::remove(m_innerNeighbors.begin(), m_innerNeighbors.end(), neigh);
 }

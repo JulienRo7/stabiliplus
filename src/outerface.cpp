@@ -6,7 +6,7 @@ int OuterFace::GlobalOuterFaceCounter = 0;
 
 // ---------- constructors ----------
 
-OuterFace::OuterFace(Vertex* innerVertex):
+OuterFace::OuterFace(std::shared_ptr<Vertex> innerVertex):
     m_index(GlobalOuterFaceCounter),
     m_innerVertex(innerVertex)
 {
@@ -41,7 +41,7 @@ int OuterFace::get_index() const
     return m_index;
 }
 
-Vertex* OuterFace::get_innerVertex() const
+std::shared_ptr<Vertex> OuterFace::get_innerVertex() const
 {
     return m_innerVertex;
 }

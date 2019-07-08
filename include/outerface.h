@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include "vertex.h"
 
@@ -15,7 +16,7 @@ class OuterFace
 public:
 
     // ---------- constructors ----------
-    OuterFace(Vertex* innerVertex);
+    OuterFace(std::shared_ptr<Vertex> innerVertex);
 
     // ---------- destructor ----------
     ~OuterFace();
@@ -25,7 +26,7 @@ public:
 
     // ---------- getters ----------
     int get_index() const;
-    Vertex* get_innerVertex() const;
+    std::shared_ptr<Vertex> get_innerVertex() const;
     Eigen::Vector3d get_normal() const;
     double get_offset() const;
 
@@ -36,7 +37,7 @@ private:
     static int GlobalOuterFaceCounter;
     int m_index;
 
-    Vertex* m_innerVertex; // inner vertex corresponding to that face
+    std::shared_ptr<Vertex> m_innerVertex; // inner vertex corresponding to that face
     // Eigen::Vector3d m_normal;
 
 

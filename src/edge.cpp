@@ -4,7 +4,7 @@
 
 int Edge::GlobalEdgeCounter = 0;
 
-Edge::Edge(Vertex* vertex1, Vertex* vertex2): m_index(GlobalEdgeCounter),
+Edge::Edge(std::shared_ptr<Vertex> vertex1, std::shared_ptr<Vertex> vertex2): m_index(GlobalEdgeCounter),
     m_vertex1(vertex1), m_vertex2(vertex2)
 {
 
@@ -12,8 +12,8 @@ Edge::Edge(Vertex* vertex1, Vertex* vertex2): m_index(GlobalEdgeCounter),
     m_vertex1->addInnerNeighbor(m_vertex2);
     m_vertex2->addInnerNeighbor(m_vertex1);
 
-    m_face1 = 0;
-    m_face2 = 0;
+    // m_face1 = 0;
+    // m_face2 = 0;
 
     // std::cout << "Vertex 1: " << m_vertex1->get_index() << '\n';
     // std::cout << "Vertex 2: " << m_vertex2->get_index() << '\n';
@@ -22,12 +22,12 @@ Edge::Edge(Vertex* vertex1, Vertex* vertex2): m_index(GlobalEdgeCounter),
 Edge::~Edge()
 {
     m_vertex1->removeInnerNeighbor(m_vertex2);
-    m_vertex1 = 0;
+    // m_vertex1 = 0;
     m_vertex2->removeInnerNeighbor(m_vertex1);
-    m_vertex2 = 0;
+    // m_vertex2 = 0;
 
-    m_face1 = 0;
-    m_face2 = 0;
+    // m_face1 = 0;
+    // m_face2 = 0;
 }
 
 bool Edge::isSame(const Edge& b) const
@@ -35,13 +35,14 @@ bool Edge::isSame(const Edge& b) const
     return m_index == b.m_index;
 }
 
-void Edge::addFace(Face* face)
+void Edge::addFace(std::shared_ptr<Face> face)
 {
-    if (m_face1 == 0)
+
+    if (!m_face1)
     {
         m_face1 = face;
     }
-    else if (m_face2 == 0)
+    else if (!m_face2)
     {
         m_face2 = face;
     }
@@ -53,16 +54,15 @@ void Edge::addFace(Face* face)
 
 }
 
-void Edge::removeFace(Face* face)
+void Edge::removeFace(std::shared_ptr<Face> face)
 {
-
     if (face == m_face1)
     {
-        m_face1 = 0;
+        m_face1 = nullptr;
     }
     else if (face == m_face2)
     {
-        m_face2 = 0;
+        m_face2 = nullptr;
     }
     // else
     // {
@@ -77,7 +77,7 @@ int Edge::get_index() const
     return m_index;
 }
 
-Face* Edge::get_otherFace(Face* face) const
+std::shared_ptr<Face> Edge::get_otherFace(std::shared_ptr<Face> face) const
 {
     if (face==m_face1)
     {
@@ -89,21 +89,21 @@ Face* Edge::get_otherFace(Face* face) const
     }
 }
 
-Vertex* Edge::get_vertex1() const
+std::shared_ptr<Vertex> Edge::get_vertex1() const
 {
     return m_vertex1;
 }
 
-Vertex* Edge::get_vertex2() const
+std::shared_ptr<Vertex> Edge::get_vertex2() const
 {
     return m_vertex2;
 }
 
-Face* Edge::get_face1() const
+std::shared_ptr<Face> Edge::get_face1() const
 {
     return m_face1;
 }
-Face* Edge::get_face2() const
+std::shared_ptr<Face> Edge::get_face2() const
 {
     return m_face2;
 }
