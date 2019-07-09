@@ -193,12 +193,12 @@ y1.append(y1[0])
 ax.plot(x1, y1, color="xkcd:blue grey")
 
 # ----------- displahy of inner polyhedron -----------
-ax.plot(x, y, z, 'go')
-scale = 0.2
-ax.quiver(x, y, z, u, v, w, color="xkcd:kelly green")
-
-for e in edges:
-    ax.plot(e[0], e[1], e[2], color="xkcd:kelly green")
+# ax.plot(x, y, z, 'go')
+# scale = 0.2
+# # ax.quiver(x, y, z, u, v, w, color="xkcd:kelly green")
+#
+# for e in edges:
+#     ax.plot(e[0], e[1], e[2], color="xkcd:kelly green")
 
 # ----------- displahy of outer polyhedron -----------
 ax.plot(oX, oY, oZ, 'yo')

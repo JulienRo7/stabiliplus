@@ -80,6 +80,7 @@ public:
     int get_numberOfAcceletations() const;
 
     int get_numberOfVertices() const;
+    int get_numberOfOuterVertices() const;
 
     double get_lpMicro() const;
     double get_innerConvexMicro() const;
@@ -120,11 +121,11 @@ private:
     std::vector<std::shared_ptr<Face>> m_faces;
 
     // outer polyhedron
-    std::vector<OuterVertex*> m_outerVertices;
-    std::vector<OuterEdge*> m_outerEdges;
-    std::vector<OuterFace*> m_outerFaces;
+    std::vector<std::shared_ptr<OuterVertex>> m_outerVertices;
+    std::vector<std::shared_ptr<OuterEdge>> m_outerEdges;
+    std::vector<std::shared_ptr<OuterFace>> m_outerFaces;
 
-    std::map<std::shared_ptr<Vertex>, OuterFace*> m_innerOuterLink;
+    std::map<std::shared_ptr<Vertex>, std::shared_ptr<OuterFace>> m_innerOuterLink;
 
     // options
     int m_maxNumberOfIteration;

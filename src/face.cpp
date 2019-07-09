@@ -143,7 +143,7 @@ std::shared_ptr<Vertex> Face::get_vertex3() const
     return m_vertex3;
 }
 
-OuterVertex* Face::get_supportPoint() const
+std::shared_ptr<OuterVertex> Face::get_supportPoint() const
 {
     return m_supportPoint;
 }
@@ -171,7 +171,7 @@ void Face::set_area_null()
     m_area = 0;
 }
 
-void Face::set_supportPoint(OuterVertex* supportPoint)
+void Face::set_supportPoint(std::shared_ptr<OuterVertex> supportPoint)
 {
     m_supportPoint = supportPoint;
     m_supportFunction = m_normal.dot(supportPoint->get_coordinates())-m_offset;

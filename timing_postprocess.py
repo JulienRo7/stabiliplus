@@ -22,17 +22,35 @@ for line in file:
     outer_times.append(float(line[3]))
     support_times.append(float(line[4]))
 
-ax = plt.subplot(111)
+ax1 = plt.subplot(221)
+ax1.plot(iterations, lp_times, label="time LP", color="xkcd:crimson")
+ax1.plot(iterations, inner_times, label="time Inner Convex Hull", color="xkcd:ochre")
+ax1.plot(iterations, outer_times, label="time Outer Double Description Method", color="xkcd:grass")
+ax1.plot(iterations, support_times, label="time Support Function", color="xkcd:electric blue")
 
-ax.plot(iterations, lp_times, label="time LP")
-ax.plot(iterations, inner_times, label="time Inner Convex")
-ax.plot(iterations, outer_times, label="time Outer Convex")
-ax.plot(iterations, support_times, label="time Support Function")
 
+ax1.set_xlabel("Number of Iterations")
+ax1.set_ylabel("Time (microseconds)")
+ax1.legend()
 
-ax.set_xlabel("Number of Iterations")
-ax.set_ylabel("Time (microseconds)")
-ax.legend()
+ax2 = plt.subplot(222)
+ax2.plot(iterations, inner_times, label="time Inner Convex Hull", color="xkcd:ochre")
+ax2.set_xlabel("Number of Iterations")
+ax2.set_ylabel("Time (microseconds)")
+ax2.legend()
+
+ax3 = plt.subplot(223)
+ax3.plot(iterations, outer_times, label="time Outer Double Description Method", color="xkcd:grass")
+ax3.set_xlabel("Number of Iterations")
+ax3.set_ylabel("Time (microseconds)")
+ax3.legend()
+
+ax4 = plt.subplot(224)
+ax4.plot(iterations, support_times, label="time Support Function", color="xkcd:electric blue")
+ax4.set_xlabel("Number of Iterations")
+ax4.set_ylabel("Time (microseconds)")
+ax4.legend()
+
 plt.show()
 
 file.close()

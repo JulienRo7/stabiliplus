@@ -5,7 +5,7 @@
 int OuterVertex::GlobalOuterVertexCounter = 0;
 
 // ---------- constructors ----------
-OuterVertex::OuterVertex(OuterFace* face1, OuterFace* face2, OuterFace* face3):
+OuterVertex::OuterVertex(std::shared_ptr<OuterFace> face1, std::shared_ptr<OuterFace> face2, std::shared_ptr<OuterFace> face3):
     m_index(GlobalOuterVertexCounter)
 {
     ++GlobalOuterVertexCounter;
@@ -49,17 +49,17 @@ void OuterVertex::computeCoordinates()
 
 }
 
-bool OuterVertex::strictlyContainedInHalfspace(OuterFace* outerFace, double const eps) const
+bool OuterVertex::strictlyContainedInHalfspace(std::shared_ptr<OuterFace> outerFace, double const eps) const
 {
     return outerFace->get_normal().dot(m_coordinates)-outerFace->get_offset() < eps;
 }
 
-std::vector<OuterVertex*> OuterVertex::findNeighbors()
+std::vector<std::shared_ptr<OuterVertex>> OuterVertex::findNeighbors()
 {
-    std::vector<OuterVertex*> neighbors;
+    std::vector<std::shared_ptr<OuterVertex>> neighbors;
     for (auto it : m_outerEdges)
     {
-        neighbors.push_back(it->get_otherOuterVertex(this));
+        neighbors.push_back(it->get_otherOuterVertex(shared_from_this()));
     }
     return neighbors;
 }
@@ -75,7 +75,7 @@ Eigen::Vector3d OuterVertex::get_coordinates() const
     return m_coordinates;
 }
 
-std::vector<OuterFace*> OuterVertex::get_outerFaces() const
+std::vector<std::shared_ptr<OuterFace>> OuterVertex::get_outerFaces() const
 {
     // std::cout << "Outer Vertex " << m_index << ": ";
     // for (auto it : m_outerFaces)
@@ -87,14 +87,14 @@ std::vector<OuterFace*> OuterVertex::get_outerFaces() const
     return m_outerFaces;
 }
 
-std::vector<OuterEdge*> OuterVertex::get_outerEdges() const
+std::vector<std::shared_ptr<OuterEdge>> OuterVertex::get_outerEdges() const
 {
     return m_outerEdges;
 }
 
 
 // ---------- setters ----------
-void OuterVertex::add_outerEdge(OuterEdge* outerEdge)
+void OuterVertex::add_outerEdge(std::shared_ptr<OuterEdge> outerEdge)
 {
     if (find(m_outerEdges.begin(), m_outerEdges.end(), outerEdge)==m_outerEdges.end())
     {
@@ -106,7 +106,7 @@ void OuterVertex::add_outerEdge(OuterEdge* outerEdge)
     }
 }
 
-void OuterVertex::remove_outerEdge(OuterEdge* outerEdge)
+void OuterVertex::remove_outerEdge(std::shared_ptr<OuterEdge> outerEdge)
 {
     auto pos_point = find(m_outerEdges.begin(), m_outerEdges.end(), outerEdge);
     if (pos_point!=m_outerEdges.end())
@@ -119,7 +119,7 @@ void OuterVertex::remove_outerEdge(OuterEdge* outerEdge)
     }
 }
 
-void OuterVertex::add_outerFace(OuterFace* outerFace)
+void OuterVertex::add_outerFace(std::shared_ptr<OuterFace> outerFace)
 {
     if (find(m_outerFaces.begin(), m_outerFaces.end(), outerFace)==m_outerFaces.end())
     {

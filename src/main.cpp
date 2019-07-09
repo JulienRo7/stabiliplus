@@ -14,27 +14,28 @@ Beginning of a new journey in the (scary) worlf of C++
 int main()
 {
 
-    clock_t start, end;
-    double cpu_time_used;
-
-    start = clock();
-    Robot robot("../robots/robot_2.xml", 16, 50);
+    // clock_t start, end;
+    // double cpu_time_used;
+    //
+    // start = clock();
+    // Robot robot("../robots/robot_2.xml", 16, 50);
     // robot.buildStabilityProblem();
-    robot.buildReducedStabilityProblem();
-    robot.projectionStabilityPolyhedron();
-
-    end = clock();
-
-    robot.exportVertices();
-
-    cpu_time_used = ((double) (end - start)) / (CLOCKS_PER_SEC/1000);
-
-    std::cout << "Computation time: " << cpu_time_used << "ms for " << robot.get_numberOfVertices() << " Vertices" << '\n';
-
-    std::cout << "LP time: " << robot.get_lpMicro() << " microseconds" << '\n';
-    std::cout << "inner time: " << robot.get_innerConvexMicro() << " microseconds" << '\n';
-    std::cout << "outer time: " << robot.get_outerConvexMicro() << " microseconds" << '\n';
-    std::cout << "support time: " << robot.get_supportFunctionMicro() << " microseconds" << '\n';
+    // // robot.buildReducedStabilityProblem();
+    // robot.projectionStabilityPolyhedron();
+    //
+    // end = clock();
+    //
+    // robot.exportVertices();
+    //
+    // cpu_time_used = ((double) (end - start)) / (CLOCKS_PER_SEC/1000);
+    //
+    // std::cout << "Computation time: " << cpu_time_used << "ms for " << robot.get_numberOfVertices() << " inner Vertices"
+    //           << " and " << robot.get_numberOfOuterVertices() << " outer vertices."<< '\n';
+    //
+    // std::cout << "LP time: " << robot.get_lpMicro() << " microseconds" << '\n';
+    // std::cout << "inner time: " << robot.get_innerConvexMicro() << " microseconds" << '\n';
+    // std::cout << "outer time: " << robot.get_outerConvexMicro() << " microseconds" << '\n';
+    // std::cout << "support time: " << robot.get_supportFunctionMicro() << " microseconds" << '\n';
 
     std::cout << "Testing stuff..." << '\n';
 
@@ -57,13 +58,14 @@ int main()
         outerTime = 0;
         supportTime = 0;
 
-        robot.set_maxNumberOfIterations(numIt);
-
+        // robot.set_maxNumberOfIterations(numIt);
+           // std::cout << "Reached here n!" << '\n';
         for (int numTrial = 0; numTrial<numberOfTrials; numTrial ++)
         {
-            // std::cout << "------------------"<< numIt<< " "<< numTrial << "--------------------" << '\n';
-            std::unique_ptr<Robot> testRobot(new Robot("../robots/robot_2.xml", 16, numIt));
+            std::cout << "------------------"<< numIt<< " "<< numTrial << "--------------------" << '\n';
+            std::unique_ptr<Robot> testRobot(new Robot("../robots/robot_2.xml", 4, numIt));
             testRobot->buildReducedStabilityProblem();
+            // testRobot->buildStabilityProblem();
             testRobot->projectionStabilityPolyhedron();
 
             lpTime += testRobot->get_lpMicro();

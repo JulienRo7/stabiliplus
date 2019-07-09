@@ -35,7 +35,7 @@ bool Edge::isSame(const Edge& b) const
     return m_index == b.m_index;
 }
 
-void Edge::addFace(std::shared_ptr<Face> face)
+void Edge::addFace(const std::shared_ptr<Face>& face)
 {
 
     if (!m_face1)
@@ -54,7 +54,7 @@ void Edge::addFace(std::shared_ptr<Face> face)
 
 }
 
-void Edge::removeFace(std::shared_ptr<Face> face)
+void Edge::removeFace(const std::shared_ptr<Face>& face)
 {
     if (face == m_face1)
     {

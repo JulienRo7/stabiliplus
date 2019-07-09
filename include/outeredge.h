@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include "outervertex.h"
 #include "outerface.h"
@@ -11,41 +12,46 @@
 
 // class Edge; // Forward declaration
 
-class OuterEdge
+class OuterEdge: public std::enable_shared_from_this<OuterEdge>
 {
 public:
 
     // ---------- constructors ----------
-    OuterEdge(OuterVertex* outerVertex1, OuterVertex* outerVertex2);
+    OuterEdge(std::shared_ptr<OuterVertex> outerVertex1, std::shared_ptr<OuterVertex> outerVertex2);
 
     // ---------- destructor ----------
     ~OuterEdge();
 
+    // ---------- other functions ----------
+    void init();
+    void finish();
+
+
     // ---------- getters ----------
     int get_index() const;
-    OuterVertex* get_outerVertex1() const;
-    OuterVertex* get_outerVertex2() const;
-    OuterVertex* get_otherOuterVertex(OuterVertex* OuterVertex) const;
+    std::shared_ptr<OuterVertex> get_outerVertex1() const;
+    std::shared_ptr<OuterVertex> get_outerVertex2() const;
+    std::shared_ptr<OuterVertex> get_otherOuterVertex(std::shared_ptr<OuterVertex> outerVertex) const;
 
-    OuterFace* get_outerFace1() const;
-    OuterFace* get_outerFace2() const;
-    void add_outerFacesToVector(std::vector<OuterFace*> *vectorOuterFaces);
+    std::shared_ptr<OuterFace> get_outerFace1() const;
+    std::shared_ptr<OuterFace> get_outerFace2() const;
+    void add_outerFacesToVector(std::vector<std::shared_ptr<OuterFace>> &vectorOuterFaces);
 
     // ---------- setters ----------
-    void set_outerVertice1(OuterVertex* outerVertex);
-    void set_outerVertice2(OuterVertex* outerVertex);
-    void switch_outerVertices(OuterVertex* oldVertex, OuterVertex* newVertex);
+    void set_outerVertice1(std::shared_ptr<OuterVertex> outerVertex);
+    void set_outerVertice2(std::shared_ptr<OuterVertex> outerVertex);
+    void switch_outerVertices(std::shared_ptr<OuterVertex> oldVertex, std::shared_ptr<OuterVertex> newVertex);
 
 private:
 
     static int GlobalOuterEdgeCounter;
     int m_index;
 
-    OuterVertex* m_outerVertex1;
-    OuterVertex* m_outerVertex2;
+    std::shared_ptr<OuterVertex> m_outerVertex1;
+    std::shared_ptr<OuterVertex> m_outerVertex2;
 
-    OuterFace* m_outerFace1;
-    OuterFace* m_outerFace2;
+    std::shared_ptr<OuterFace> m_outerFace1;
+    std::shared_ptr<OuterFace> m_outerFace2;
 
 };
 

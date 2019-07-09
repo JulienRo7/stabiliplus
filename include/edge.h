@@ -15,8 +15,8 @@ public:
 
     ~Edge();
 
-    void addFace(std::shared_ptr<Face> face);
-    void removeFace(std::shared_ptr<Face> face);
+    void addFace(const std::shared_ptr<Face>& face);
+    void removeFace(const std::shared_ptr<Face>& face);
 
     bool isSame(const Edge& b) const;
 

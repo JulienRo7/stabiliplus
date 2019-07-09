@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include "outerface.h"
 
@@ -10,12 +11,12 @@
 
 class OuterEdge; // Forward declaration
 
-class OuterVertex
+class OuterVertex: public std::enable_shared_from_this<OuterVertex>
 {
 public:
 
     // ---------- constructors ----------
-    OuterVertex(OuterFace* face1, OuterFace* face2, OuterFace* face3);
+    OuterVertex(std::shared_ptr<OuterFace> face1, std::shared_ptr<OuterFace> face2, std::shared_ptr<OuterFace> face3);
     OuterVertex(Eigen::Vector3d coordinates);
 
     // ---------- destructor ----------
@@ -23,19 +24,19 @@ public:
 
     // ---------- class methods ----------
     void computeCoordinates();
-    bool strictlyContainedInHalfspace(OuterFace* outerFace, double const eps=0.0) const;
+    bool strictlyContainedInHalfspace(std::shared_ptr<OuterFace> outerFace, double const eps=0.0) const;
 
-    std::vector<OuterVertex*> findNeighbors();
+    std::vector<std::shared_ptr<OuterVertex>> findNeighbors();
     // ---------- getters ----------
     int get_index() const;
     Eigen::Vector3d get_coordinates() const;
-    std::vector<OuterFace*> get_outerFaces() const;
-    std::vector<OuterEdge*> get_outerEdges() const;
+    std::vector<std::shared_ptr<OuterFace>> get_outerFaces() const;
+    std::vector<std::shared_ptr<OuterEdge>> get_outerEdges() const;
 
     // ---------- setters ----------
-    void add_outerEdge(OuterEdge* outerEgde);
-    void remove_outerEdge(OuterEdge* outerEdge);
-    void add_outerFace(OuterFace* outerFace);
+    void add_outerEdge(std::shared_ptr<OuterEdge> outerEgde);
+    void remove_outerEdge(std::shared_ptr<OuterEdge> outerEdge);
+    void add_outerFace(std::shared_ptr<OuterFace> outerFace);
 
 private:
 
@@ -44,8 +45,8 @@ private:
 
     Eigen::Vector3d m_coordinates;
 
-    std::vector<OuterFace*> m_outerFaces;
-    std::vector<OuterEdge*> m_outerEdges;
+    std::vector<std::shared_ptr<OuterFace>> m_outerFaces;
+    std::vector<std::shared_ptr<OuterEdge>> m_outerEdges;
 
 };
 

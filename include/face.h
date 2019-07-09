@@ -45,14 +45,14 @@ public:
     std::shared_ptr<Vertex> get_vertex2() const;
     std::shared_ptr<Vertex> get_vertex3() const;
 
-    OuterVertex* get_supportPoint() const;
+    std::shared_ptr<OuterVertex> get_supportPoint() const;
     double get_supportFunction() const;
 
     double get_measure() const;
 
     // ---------- setters ----------
     void set_area_null();
-    void set_supportPoint(OuterVertex* supportPoint);
+    void set_supportPoint(std::shared_ptr<OuterVertex> supportPoint);
 
     // ---------- static functions ----------
     static bool compareFacesMeasure(std::shared_ptr<Face> faceA, std::shared_ptr<Face> faceB);
@@ -74,7 +74,7 @@ private:
     std::shared_ptr<Edge> m_edge2;
     std::shared_ptr<Edge> m_edge3;
 
-    OuterVertex* m_supportPoint;
+    std::shared_ptr<OuterVertex> m_supportPoint;
     double m_supportFunction;
 
 };
