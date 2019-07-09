@@ -158,7 +158,7 @@ Eigen::MatrixXd Robot::computeMatrixA1()
 
 Eigen::MatrixXd Robot::computeMatrixA2(Eigen::Vector3d const& acceleration)
 {
-    Eigen::MatrixXd A2(6,3);
+    Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6,3);
     A2.block<3,3>(0,0) = Eigen::Matrix3d::Zero();
     A2.block<3,3>(3,0) = -skewSymmetric(acceleration);
 
@@ -234,7 +234,7 @@ Eigen::MatrixXd Robot::buildFrictionF()
 Eigen::VectorXd Robot::buildFrictionVectorf()
 {
     int const numberOfRows = m_numberOfFeet*(m_numberOfFrictionSides+2)*m_numberOfAccelerations + 6;
-    Eigen::VectorXd f = Eigen::VectorXd::Zero(numberOfRows);
+    Eigen::VectorXd f(numberOfRows);
 
     double f_max = 10*m_mass;
 
@@ -531,7 +531,7 @@ void Robot::projectionStabilityPolyhedron()
     {
 
         m_numberOfIterations++;
-        // std::cout << "Iteration number: " << m_numberOfIterations << '\n';
+        // std::cout << "----- Iteration number: " << m_numberOfIterations << " -----" << '\n';
         auto dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesMeasure);
 
 
@@ -548,7 +548,7 @@ void Robot::projectionStabilityPolyhedron()
         m_vertices.push_back(newVertex);
 
 
-        // std::cout << "Next research face: " << dirFace->get_index() << '\n';
+        // std::cout << "Next research face: " << dirFace->get_index() << " with measure: " << dirFace->get_measure() <<'\n';
         start = std::chrono::high_resolution_clock::now();
         updateInnerPoly(newVertex, dirFace);
         stop = std::chrono::high_resolution_clock::now();
@@ -562,7 +562,7 @@ void Robot::projectionStabilityPolyhedron()
         m_outerConvexMicro+=duration.count();
 
         start = std::chrono::high_resolution_clock::now();
-        computeSupportFunctions();
+        computeSupportFunctions(dirFace);
         stop = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
         m_supportFunctionMicro+=duration.count();
@@ -930,8 +930,7 @@ void Robot::updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<
 
     std::shared_ptr<OuterEdge> newOuterEdge;
 
-    // start = std::chrono::high_resolution_clock::now();
-
+    // start = std::chrono::high_resolution_clock::now()
     for (auto it : F_0)
     {
         std::shared_ptr<OuterVertex> outerVertex1, outerVertex2;
@@ -972,50 +971,99 @@ void Robot::updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<
 
 }
 
-void Robot::computeSupportFunctions()
+void Robot::computeSupportFunctions(std::shared_ptr<Face>& dirFace)
 {
-    for (auto it_face : m_faces)
+    // std::cout << "shared pointer on dirFace use count: " << dirFace.use_count() << '\n';
+    // std::cout << "Current Support Function: " << '\n';
+    // for (auto it: m_faces)
+    // {
+    //     std::cout << it->get_supportFunction() << ", ";
+    // }
+    // std::cout << '\n';
+
+    std::list<std::shared_ptr<Face>> consideredFaces;
+
+
+    // need to init with a first few considered faces
+    if (!dirFace.unique())
     {
-        if (it_face)
+        consideredFaces.push_back(dirFace);
+    }
+
+    consideredFaces.push_back(m_faces.back());
+
+    auto currentFace = consideredFaces.begin();
+
+    while (currentFace != consideredFaces.end())
+    {
+        // m_innerOuterLink[it_face->get_vertex1()]; -> gives an outer face but don't give a starting point
+        auto initPoint = m_outerVertices.at(0);
+        // std::cout << "Current Support Function: " << (*currentFace)->get_supportFunction() <<'\n';
+
+        if (computeSupportFunction(*currentFace, initPoint))
         {
-            // std::cout << "Reached Here 1" << '\n';
-            // std::cout << "Number of outer vertices: " << m_outerVertices.size() << '\n';
-            auto currentOuterVertex = m_outerVertices.at(0); // this has to be changed
-            // std::cout << "Reached Here 2" << '\n';
-            double currentDistance = it_face->get_normal().dot(currentOuterVertex->get_coordinates())-it_face->get_offset();
-            // std::cout << "Reached Here 3" << '\n';
-            double distance = 100;
-
-            // std::vector<OuterVertex*> currentNeighbors;
-            std::vector<std::shared_ptr<OuterVertex>> visitedPoints;
-            visitedPoints.push_back(currentOuterVertex);
-
-            bool currentIsSupport = false;
-
-            while (!currentIsSupport)
+            // add neighbors
+            auto currentNeighbors = (*currentFace)->findNeighbors();
+            for (auto it : currentNeighbors)
             {
-                currentIsSupport = true;
-                auto currentNeighbors = currentOuterVertex->findNeighbors();
-
-                for (auto it_v: currentNeighbors)
+                if (find(consideredFaces.begin(), consideredFaces.end(), it)==consideredFaces.end())
                 {
-                    if (find(visitedPoints.begin(), visitedPoints.end(),it_v)==visitedPoints.end())
-                    {
-                        visitedPoints.push_back(it_v);
-                        distance = it_face->get_normal().dot(it_v->get_coordinates())-it_face->get_offset();
-                        if (distance > currentDistance)
-                        {
-                            currentDistance = distance;
-                            currentOuterVertex = it_v;
-                            currentIsSupport = false;
-                        }
-                    }
+                    // std::cout << it->get_index() << '\n';
+                    consideredFaces.push_back(it);
                 }
             }
-            it_face->set_supportPoint(currentOuterVertex);
         }
+        // std::cout << "New Support Function: " << (*currentFace)->get_supportFunction() <<'\n';
+
+        currentFace++;
     }
 }
+
+bool Robot::computeSupportFunction(std::shared_ptr<Face>& face, const std::shared_ptr<OuterVertex>& initPoint)
+{
+    // std::cout << "Computing support function for face " << face->get_index() << '\n';
+    double prevSupportFunction = face->get_supportFunction();
+    auto currentOuterVertex = initPoint;
+    double currentDistance = face->get_normal().dot(currentOuterVertex->get_coordinates())-face->get_offset();
+    double distance = 100;
+
+    std::vector<std::shared_ptr<OuterVertex>> visitedPoints;
+    visitedPoints.push_back(currentOuterVertex);
+
+    bool currentIsSupport = false;
+
+    while (!currentIsSupport)
+    {
+        currentIsSupport = true;
+        auto currentNeighbors = currentOuterVertex->findNeighbors();
+
+        for (auto it_v: currentNeighbors)
+        {
+            if (find(visitedPoints.begin(), visitedPoints.end(),it_v)==visitedPoints.end())
+            {
+                visitedPoints.push_back(it_v);
+                distance = face->get_normal().dot(it_v->get_coordinates())-face->get_offset();
+                if (distance > currentDistance)
+                {
+                    currentDistance = distance;
+                    currentOuterVertex = it_v;
+                    currentIsSupport = false;
+                }
+            }
+        }
+    }
+    face->set_supportPoint(currentOuterVertex);
+
+    if (abs(prevSupportFunction-face->get_supportFunction())<0.00000001)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 
 // ----------- output and display functions ----------
 void Robot::exportVertices()
@@ -1111,9 +1159,19 @@ int Robot::get_numberOfVertices() const
     return m_vertices.size();
 }
 
+int Robot::get_numberOfFaces() const
+{
+    return m_faces.size();
+}
+
 int Robot::get_numberOfOuterVertices() const
 {
     return m_outerVertices.size();
+}
+
+int Robot::get_numberOfOuterFaces() const
+{
+    return m_outerFaces.size();
 }
 
 double Robot::get_lpMicro() const

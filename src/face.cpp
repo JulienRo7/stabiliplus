@@ -7,7 +7,8 @@ int Face::GlobalFaceCounter = 0;
 Face::Face(std::shared_ptr<Vertex> vertex1, std::shared_ptr<Vertex> vertex2, std::shared_ptr<Vertex> vertex3, std::shared_ptr<Edge> edge1, std::shared_ptr<Edge> edge2, std::shared_ptr<Edge> edge3, Eigen::Vector3d innerPoint):
     m_index(GlobalFaceCounter),
     m_vertex1(vertex1), m_vertex2(vertex2), m_vertex3(vertex3),
-    m_edge1(edge1), m_edge2(edge2), m_edge3(edge3)
+    m_edge1(edge1), m_edge2(edge2), m_edge3(edge3),
+    m_supportFunction(-1)
 {
     ++GlobalFaceCounter;
 

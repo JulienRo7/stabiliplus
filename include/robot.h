@@ -69,7 +69,8 @@ public:
     void buildOuterPoly();
     void updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace);
 
-    void computeSupportFunctions();
+    void computeSupportFunctions(std::shared_ptr<Face>& dirFace);
+    bool computeSupportFunction(std::shared_ptr<Face>& face, const std::shared_ptr<OuterVertex>& initPoint);
 
     // ----------- output and display functions ----------
     void exportVertices();
@@ -80,7 +81,9 @@ public:
     int get_numberOfAcceletations() const;
 
     int get_numberOfVertices() const;
+    int get_numberOfFaces() const;
     int get_numberOfOuterVertices() const;
+    int get_numberOfOuterFaces() const;
 
     double get_lpMicro() const;
     double get_innerConvexMicro() const;
