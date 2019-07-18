@@ -3,7 +3,7 @@
 using namespace std;
 
 Robot::Robot() : m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(4), m_numberOfFrictionSides(8),
-m_numberOfAccelerations(0), m_numberOfIterations(0)
+m_numberOfAccelerations(0), m_numberOfIterations(0), m_residual(10)
 {
     m_accelerations.push_back(m_gravity);
     m_lp = glp_create_prob();
@@ -11,7 +11,7 @@ m_numberOfAccelerations(0), m_numberOfIterations(0)
 
 Robot::Robot(string const& robot_file_name, int numFrictionSides, int maxNumberOfIteration) :
 m_gravity(0,0,-9.81), m_numberOfFrictionSides(numFrictionSides), m_maxNumberOfIteration(maxNumberOfIteration),
-m_numberOfAccelerations(0), m_numberOfIterations(0),
+m_numberOfAccelerations(0), m_numberOfIterations(0), m_residual(10),
 m_lpMicro(0), m_innerConvexMicro(0), m_outerConvexMicro(0), m_supportFunctionMicro(0)
 {
     loadRobot(robot_file_name);
@@ -526,12 +526,13 @@ void Robot::projectionStabilityPolyhedron()
     // m_supportFunctionMicro+=duration.count();
 
     // std::shared_ptr<Face> dirFace;
+    computeResidualFromScratch();
 
-    while (m_numberOfIterations < m_maxNumberOfIteration)
+    while (stopCriterion())
     {
 
         m_numberOfIterations++;
-        // std::cout << "----- Iteration number: " << m_numberOfIterations << " -----" << '\n';
+        std::cout << "Iteration number: " << m_numberOfIterations << ", residual: " << m_residual << '\n';
         auto dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesMeasure);
 
 
@@ -562,10 +563,12 @@ void Robot::projectionStabilityPolyhedron()
         m_outerConvexMicro+=duration.count();
 
         start = std::chrono::high_resolution_clock::now();
-        computeSupportFunctions(dirFace);
+        updateSupportFunctions(dirFace);
         stop = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
         m_supportFunctionMicro+=duration.count();
+
+        computeResidualFromScratch();
     }
 }
 
@@ -971,15 +974,8 @@ void Robot::updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<
 
 }
 
-void Robot::computeSupportFunctions(std::shared_ptr<Face>& dirFace)
+void Robot::updateSupportFunctions(std::shared_ptr<Face>& dirFace)
 {
-    // std::cout << "shared pointer on dirFace use count: " << dirFace.use_count() << '\n';
-    // std::cout << "Current Support Function: " << '\n';
-    // for (auto it: m_faces)
-    // {
-    //     std::cout << it->get_supportFunction() << ", ";
-    // }
-    // std::cout << '\n';
 
     std::list<std::shared_ptr<Face>> consideredFaces;
 
@@ -1060,10 +1056,24 @@ bool Robot::computeSupportFunction(std::shared_ptr<Face>& face, const std::share
     }
     else
     {
+        // m_residual += face->get_area()*(face->get_supportFunction()-prevSupportFunction);
         return true;
     }
 }
 
+double Robot::computeResidualFromScratch()
+{
+    m_residual = 0;
+    for (auto it: m_faces)
+    {
+        m_residual += it->get_area()*it->get_supportFunction();
+    }
+}
+
+bool Robot::stopCriterion()
+{
+    return m_numberOfIterations < m_maxNumberOfIteration && m_residual > 0.1;
+}
 
 // ----------- output and display functions ----------
 void Robot::exportVertices()

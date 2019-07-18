@@ -34,7 +34,7 @@ int main()
         double cpu_time_used;
 
         start = clock();
-        Robot robot("../robots/robot_2.xml", 16, 50);
+        Robot robot("../robots/robot_2.xml", 16, 100);
         // robot.buildStabilityProblem();
         robot.buildReducedStabilityProblem();
         robot.projectionStabilityPolyhedron();

@@ -69,9 +69,11 @@ public:
     void buildOuterPoly();
     void updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace);
 
-    void computeSupportFunctions(std::shared_ptr<Face>& dirFace);
+    void updateSupportFunctions(std::shared_ptr<Face>& dirFace);
     bool computeSupportFunction(std::shared_ptr<Face>& face, const std::shared_ptr<OuterVertex>& initPoint);
 
+    double computeResidualFromScratch();
+    bool stopCriterion();
     // ----------- output and display functions ----------
     void exportVertices();
     void showPoly();
@@ -116,6 +118,7 @@ private:
     Eigen::MatrixXd m_R_inv_T_b;
 
     int m_numberOfIterations;
+    double m_residual;
     // inner polyhedron
     std::vector<std::shared_ptr<Vertex>> m_vertices;
     Eigen::Vector3d m_innerPoint;

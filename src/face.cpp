@@ -12,8 +12,6 @@ Face::Face(std::shared_ptr<Vertex> vertex1, std::shared_ptr<Vertex> vertex2, std
 {
     ++GlobalFaceCounter;
 
-
-
     Eigen::Vector3d p, q;
     p = m_vertex3->get_coordinates()-m_vertex1->get_coordinates();
     q = m_vertex2->get_coordinates()-m_vertex1->get_coordinates();
