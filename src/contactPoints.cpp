@@ -22,6 +22,7 @@ ContactPoints::ContactPoints(tinyxml2::XMLElement* contactPointXML)
     tinyxml2::XMLElement* valueXML(0);
     std::string currentType;
 
+    m_name = contactPointXML->Attribute("name");
 
     while (currentXMLElement)
     {
@@ -149,12 +150,22 @@ Eigen::MatrixXd ContactPoints::linearizedFrictionCone(int numberOfFrictionSides)
     return F;
 }
 
-Eigen::Vector3d ContactPoints::get_position()
+std::string ContactPoints::get_name() const
+{
+    return m_name;
+}
+
+Eigen::Vector3d ContactPoints::get_position() const
 {
     return m_position;
 }
 
-Eigen::Matrix3d ContactPoints::get_rotation()
+Eigen::Matrix3d ContactPoints::get_rotation() const
 {
     return m_rotation;
+}
+
+void ContactPoints::translate(Eigen::Vector3d trans)
+{
+    m_position += trans;
 }

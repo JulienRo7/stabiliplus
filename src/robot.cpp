@@ -254,7 +254,17 @@ int Robot::get_numberOfAcceletations() const
 
 
 // ------------------ setter -----------------------
-
+void Robot::translateContact(int contactIndex, Eigen::Vector3d translation)
+{
+    if (contactIndex >= 0 && contactIndex < m_feet.size())
+    {
+        m_feet[contactIndex].translate(translation);
+    }
+    else
+    {
+        std::cerr << "Error: the contact index is not valid" << '\n';
+    }
+}
 // ---------- Static function -----------
 
 Eigen::Matrix3d Robot::skewSymmetric(Eigen::Vector3d const& vect)

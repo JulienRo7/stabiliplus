@@ -59,6 +59,7 @@ public:
     int get_numberOfAcceletations() const;
 
     // ----------- setters ----------
+    void translateContact(int contactIndex, Eigen::Vector3d translation);
 
     // ---------- static functions ---------
     static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const& vect);

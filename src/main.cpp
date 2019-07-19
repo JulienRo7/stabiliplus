@@ -26,8 +26,7 @@ int main()
 
     only robot_2.xml has 4 accelerations
     */
-    int mode = 2;
-
+    int mode = 1;
 
     if (mode == 1)
     {
@@ -35,7 +34,7 @@ int main()
         double cpu_time_used;
 
         start = clock();
-        Robot robot("../robots/robot_2.xml", 16);
+        Robot robot("../robots/robot_3.xml", 16);
         // robot.buildStabilityProblem();
         StabilityPolytope polytope(robot);
 
@@ -126,7 +125,10 @@ int main()
 
         std::cout << "Stuff tested, use timing_postprocess.py to check the results!" << '\n';
     }
+    else if (mode == 3)
+    {
 
+    }
 
     return 0;
 }

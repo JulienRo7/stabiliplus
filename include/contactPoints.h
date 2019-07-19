@@ -22,10 +22,14 @@ public:
     void showContactPoint();
     Eigen::MatrixXd linearizedFrictionCone(int numberOfFrictionSides);
 
-    Eigen::Vector3d get_position();
-    Eigen::Matrix3d get_rotation();
+    std::string get_name() const;
+    Eigen::Vector3d get_position() const;
+    Eigen::Matrix3d get_rotation() const;
+
+    void translate(Eigen::Vector3d trans);
 
 private:
+    std::string m_name;
     double m_frictionCoef;
     Eigen::Matrix3d m_rotation;
     Eigen::Vector3d m_position;
