@@ -1,4 +1,5 @@
 #include "robot.h"
+#include "stability_polytope.h"
 
 #include <time.h>
 #include <chrono>
@@ -25,7 +26,7 @@ int main()
 
     only robot_2.xml has 4 accelerations
     */
-    int mode = 1;
+    int mode = 2;
 
 
     if (mode == 1)
@@ -34,25 +35,27 @@ int main()
         double cpu_time_used;
 
         start = clock();
-        Robot robot("../robots/robot_2.xml", 16, 100);
+        Robot robot("../robots/robot_2.xml", 16);
         // robot.buildStabilityProblem();
-        robot.buildReducedStabilityProblem();
-        robot.projectionStabilityPolyhedron();
+        StabilityPolytope polytope(robot);
+
+        polytope.buildStabilityProblem();
+        polytope.projectionStabilityPolyhedron();
 
         end = clock();
 
-        robot.exportVertices();
+        polytope.exportVertices();
 
         cpu_time_used = ((double) (end - start)) / (CLOCKS_PER_SEC/1000);
 
-        std::cout << "Computation time: " << cpu_time_used << "ms for " << robot.get_numberOfVertices() << " inner Vertices"
-                  << " and " << robot.get_numberOfOuterVertices() << " outer vertices."<< '\n';
-        std::cout << "Number of Inner Faces: " << robot.get_numberOfFaces() << ", number of outer faces: " << robot.get_numberOfOuterFaces() << '\n';
+        std::cout << "Computation time: " << cpu_time_used << "ms for " << polytope.get_numberOfVertices() << " inner Vertices"
+                  << " and " << polytope.get_numberOfOuterVertices() << " outer vertices."<< '\n';
+        std::cout << "Number of Inner Faces: " << polytope.get_numberOfFaces() << ", number of outer faces: " << polytope.get_numberOfOuterFaces() << '\n';
 
-        std::cout << "LP time: " << robot.get_lpMicro() << " microseconds" << '\n';
-        std::cout << "inner time: " << robot.get_innerConvexMicro() << " microseconds" << '\n';
-        std::cout << "outer time: " << robot.get_outerConvexMicro() << " microseconds" << '\n';
-        std::cout << "support time: " << robot.get_supportFunctionMicro() << " microseconds" << '\n';
+        std::cout << "LP time: " << polytope.get_lpMicro() << " microseconds" << '\n';
+        std::cout << "inner time: " << polytope.get_innerConvexMicro() << " microseconds" << '\n';
+        std::cout << "outer time: " << polytope.get_outerConvexMicro() << " microseconds" << '\n';
+        std::cout << "support time: " << polytope.get_supportFunctionMicro() << " microseconds" << '\n';
 
     }
     else if (mode == 2)
@@ -71,6 +74,8 @@ int main()
 
         double lpTime, innerTime, outerTime, supportTime;
 
+        std::unique_ptr<Robot> testRobot(new Robot("../robots/robot_2.xml", 16));
+
         for (int numIt=0; numIt<maxNumberOfIterations; numIt++)
         {
             lpTime = 0;
@@ -78,20 +83,20 @@ int main()
             outerTime = 0;
             supportTime = 0;
 
-            // robot.set_maxNumberOfIterations(numIt);
+            // polytope.set_maxNumberOfIterations(numIt);
                // std::cout << "Reached here n!" << '\n';
             for (int numTrial = 0; numTrial<numberOfTrials; numTrial ++)
             {
                 std::cout << "------------------"<< numIt<< " "<< numTrial << "--------------------" << '\n';
-                std::unique_ptr<Robot> testRobot(new Robot("../robots/robot_2.xml", 16, numIt));
-                testRobot->buildReducedStabilityProblem();
-                // testRobot->buildStabilityProblem();
-                testRobot->projectionStabilityPolyhedron();
+                std::unique_ptr<StabilityPolytope> testPolytope(new StabilityPolytope(*testRobot, numIt));
+                testPolytope->buildStabilityProblem();
+                // testPolytope->buildStabilityProblem();
+                testPolytope->projectionStabilityPolyhedron();
 
-                lpTime += testRobot->get_lpMicro();
-                innerTime += testRobot->get_innerConvexMicro();
-                outerTime += testRobot->get_outerConvexMicro();
-                supportTime += testRobot->get_supportFunctionMicro();
+                lpTime += testPolytope->get_lpMicro();
+                innerTime += testPolytope->get_innerConvexMicro();
+                outerTime += testPolytope->get_outerConvexMicro();
+                supportTime += testPolytope->get_supportFunctionMicro();
 
             }
 

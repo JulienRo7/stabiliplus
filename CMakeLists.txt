@@ -14,19 +14,24 @@ add_compile_options(-std=c++11)
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+add_library(stability_polytope
+${PROJECT_SOURCE_DIR}/src/stability_polytope.cpp
+${PROJECT_SOURCE_DIR}/src/vertex.cpp
+${PROJECT_SOURCE_DIR}/src/edge.cpp
+${PROJECT_SOURCE_DIR}/src/face.cpp
+${PROJECT_SOURCE_DIR}/src/outervertex.cpp
+${PROJECT_SOURCE_DIR}/src/outeredge.cpp
+${PROJECT_SOURCE_DIR}/src/outerface.cpp
+)
+target_link_libraries(stability_polytope glpk)
+
 add_library(robot
-  ${PROJECT_SOURCE_DIR}/src/robot.cpp
-  ${PROJECT_SOURCE_DIR}/src/contactPoints.cpp
-  ${PROJECT_SOURCE_DIR}/src/vertex.cpp
-  ${PROJECT_SOURCE_DIR}/src/edge.cpp
-  ${PROJECT_SOURCE_DIR}/src/face.cpp
-  ${PROJECT_SOURCE_DIR}/src/outervertex.cpp
-  ${PROJECT_SOURCE_DIR}/src/outeredge.cpp
-  ${PROJECT_SOURCE_DIR}/src/outerface.cpp
-  )
-target_link_libraries(robot glpk tinyxml2)
+${PROJECT_SOURCE_DIR}/src/robot.cpp
+${PROJECT_SOURCE_DIR}/src/contactPoints.cpp
+)
+target_link_libraries(robot stability_polytope tinyxml2)
 
 add_executable(main
   ${PROJECT_SOURCE_DIR}/src/main.cpp
   )
-target_link_libraries(main robot)
+target_link_libraries(main robot stability_polytope)
