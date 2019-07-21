@@ -18,8 +18,6 @@ m_numberOfAccelerations(0)
 Robot::~Robot()
 {
     // std::cout << "Robot destructor called!" << '\n';
-
-
 }
 
 Eigen::MatrixXd Robot::computeMatrixA1()
@@ -144,9 +142,11 @@ void Robot::loadRobot(string const& file_name)
 
     if (doc.ErrorID() == 0)
     {
-        tinyxml2::XMLElement* mainXML = doc.FirstChildElement("ROBOT");
-        std::string mainType;
+
+        tinyxml2::XMLElement* root = doc.FirstChildElement("data");
+        tinyxml2::XMLElement* mainXML = root->FirstChildElement("robot");
         tinyxml2::XMLElement* childXML(0);
+        std::string mainType;
         std::string childType;
 
         string robot_name;
@@ -158,7 +158,7 @@ void Robot::loadRobot(string const& file_name)
         while(mainXML)
         {
             mainType = mainXML->Value();
-            if (std::strcmp(mainType.c_str(), "ROBOT")==0)
+            if (std::strcmp(mainType.c_str(), "robot")==0)
             {
                 robot_name=mainXML->Attribute("name");
                 childXML = mainXML->FirstChildElement();
@@ -185,7 +185,7 @@ void Robot::loadRobot(string const& file_name)
                 }
 
             }
-            else if (std::strcmp(mainType.c_str(), "ACCELERATIONS")==0)
+            else if (std::strcmp(mainType.c_str(), "accelerations")==0)
             {
                 childXML = mainXML->FirstChildElement();
 

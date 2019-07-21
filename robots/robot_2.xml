@@ -1,57 +1,60 @@
 <?xml version="1.0"?>
-<ROBOT name='robot_1'>
-    <Mass mass='1.0'/>
-    <NumFeet n_feet='3' />
+<data>
+    <robot name='robot_1'>
+        <Mass mass='1.0'/>
+        <NumFeet n_feet='3' />
 
-    <ContactPoint name='contact_1'>
-        <friction mu='0.5'/>
-        <matrix name='position' row='3' column='1'>
-            <line><v>0.0</v></line>
-            <line><v>1.0</v></line>
-            <line><v>0.0</v></line>
-        </matrix>
-        <rotation phi='-0.78540' theta='0' psi='0' />
-    </ContactPoint>
+        <ContactPoint name='contact_1'>
+            <friction mu='0.5'/>
+            <matrix name='position' row='3' column='1'>
+                <line><v>0.0</v></line>
+                <line><v>1.0</v></line>
+                <line><v>0.0</v></line>
+            </matrix>
+            <rotation phi='-0.78540' theta='0' psi='0' />
+        </ContactPoint>
 
-    <ContactPoint name='contact_2'>
-        <friction mu='0.5'/>
-        <matrix name='position' row='3' column='1'>
-            <line><v>0.86603</v></line>
-            <line><v>-0.5</v></line>
-            <line><v>0.0</v></line>
-        </matrix>
-        <rotation phi='0' theta='1.04720' psi='0.78540' />
-    </ContactPoint>
+        <ContactPoint name='contact_2'>
+            <friction mu='0.5'/>
+            <matrix name='position' row='3' column='1'>
+                <line><v>0.86603</v></line>
+                <line><v>-0.5</v></line>
+                <line><v>0.0</v></line>
+            </matrix>
+            <rotation phi='0' theta='1.04720' psi='0.78540' />
+        </ContactPoint>
 
-    <ContactPoint name='contact_3'>
-        <friction mu='0.5'/>
-        <matrix name='position' row='3' column='1'>
-            <line><v>-0.86603</v></line>
-            <line><v>-0.5</v></line>
+        <ContactPoint name='contact_3'>
+            <friction mu='0.5'/>
+            <matrix name='position' row='3' column='1'>
+                <line><v>-0.86603</v></line>
+                <line><v>-0.5</v></line>
+                <line><v>0.0</v></line>
+            </matrix>
+            <rotation phi='0' theta='-1.04720' psi='0.78540' />
+        </ContactPoint>
+
+    </robot>
+    <accelerations>
+        <matrix name='gravity' row='3' column='1'>
+            <line><v>-2.5</v></line>
             <line><v>0.0</v></line>
+            <line><v>-9.81</v></line>
         </matrix>
-        <rotation phi='0' theta='-1.04720' psi='0.78540' />
-    </ContactPoint>
-</ROBOT>
-<ACCELERATIONS>
-    <matrix name='gravity' row='3' column='1'>
-        <line><v>-2.5</v></line>
-        <line><v>0.0</v></line>
-        <line><v>-9.81</v></line>
-    </matrix>
-    <matrix name='gravity' row='3' column='1'>
-        <line><v>2.5</v></line>
-        <line><v>0.0</v></line>
-        <line><v>-9.81</v></line>
-    </matrix>
-    <matrix name='gravity' row='3' column='1'>
-        <line><v>0.0</v></line>
-        <line><v>-2.5</v></line>
-        <line><v>-9.81</v></line>
-    </matrix>
-    <matrix name='gravity' row='3' column='1'>
-        <line><v>0.0</v></line>
-        <line><v>2.5</v></line>
-        <line><v>-9.81</v></line>
-    </matrix>
-</ACCELERATIONS>
+        <matrix name='gravity' row='3' column='1'>
+            <line><v>2.5</v></line>
+            <line><v>0.0</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+        <matrix name='gravity' row='3' column='1'>
+            <line><v>0.0</v></line>
+            <line><v>-2.5</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+        <matrix name='gravity' row='3' column='1'>
+            <line><v>0.0</v></line>
+            <line><v>2.5</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+    </accelerations>
+</data>

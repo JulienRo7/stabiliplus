@@ -34,7 +34,7 @@ int main()
         double cpu_time_used;
 
         start = clock();
-        Robot robot("../robots/robot_3.xml", 16);
+        Robot robot("../robots/robot_8.xml", 16);
         // robot.buildStabilityProblem();
         StabilityPolytope polytope(robot);
 

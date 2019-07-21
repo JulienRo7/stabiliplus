@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 import sys
-sys.path.append("/home/julien/Desktop/code-pyhton-hri/Stability")
+sys.path.append("../Stability")
 
 from robot_description import Robot
 import static_stability
@@ -14,7 +14,7 @@ import utils as ut
 
 
 
-robot = Robot.load_from_file("../robot_8.xml")
+robot = Robot.load_from_file("robots/robot_8.xml")
 
 poly_static = static_stability.static_stability_polyhedron(robot, 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
 poly_static.project_static_stability()
@@ -69,14 +69,14 @@ for line in file:
 
 ax = robot.display_robot_configuration()
 
-
 # ----------- display of static stability -----------
 x1 = [v[0] for v in poly_static.inner_vertices]
 x1.append(x1[0])
 y1 = [v[1] for v in poly_static.inner_vertices]
 y1.append(y1[0])
 
-ax.plot(x1, y1, color="xkcd:blue grey")
+# ax.plot(x1, y1, color="xkcd:blue grey")
+ax.plot(x1, y1, color="r")
 
 # ----------- displahy of inner polyhedron -----------
 ax.plot(x, y, z, 'go')
