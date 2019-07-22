@@ -58,6 +58,8 @@ public:
     int get_numberOfFeet() const;
     int get_numberOfAcceletations() const;
 
+    std::string get_name() const;
+
     // ----------- setters ----------
     void translateContact(int contactIndex, Eigen::Vector3d translation);
 

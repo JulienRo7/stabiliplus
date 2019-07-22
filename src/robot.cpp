@@ -311,6 +311,10 @@ int Robot::get_numberOfAcceletations() const
     return m_numberOfAccelerations;
 }
 
+std::string Robot::get_name() const
+{
+    return m_name;
+}
 
 
 // ------------------ setter -----------------------

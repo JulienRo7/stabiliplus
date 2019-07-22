@@ -3,7 +3,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.animation import FuncAnimation
 import xml.etree.ElementTree as ET # phone home!
+
 
 import sys
 sys.path.append("../Stability")
@@ -70,7 +72,7 @@ class innerOuterPoly:
 
     def display_inner(self, ax, dispEdges=True, dispInnerNormals=False, color="xkcd:kelly green"):
         # ----------- display of inner polyhedron -----------
-        ax.plot(self.innerX, self.innerY, self.innerZ, 'go')
+        innerline = ax.plot(self.innerX, self.innerY, self.innerZ, 'go')
 
         if dispInnerNormals:
             scale = 0.2
@@ -84,6 +86,8 @@ class innerOuterPoly:
             for e in self.innerEdges:
                 ax.plot(e[0], e[1], e[2], color=color)
 
+        return innerline
+
     def display_outer(self, ax, dispEdges=True, color="xkcd:kelly green"):
         # ----------- display of outer polyhedron -----------
         ax.plot(self.outerX, self.outerY, self.outerZ, color=color, marker='o')
@@ -94,11 +98,14 @@ class innerOuterPoly:
 
 
     def display(self, ax, dispInner = True, dispOuter = False):
+        lines = []
         if dispInner:
-            self.display_inner(ax)
+            lines.extend(self.display_inner(ax))
 
         if dispOuter:
-            self.display_outer(ax)
+            lines.extend(self.display_outer(ax))
+
+        return lines
 
 
 
@@ -145,7 +152,7 @@ class PostProcessor:
         poly_static = static_stability.static_stability_polyhedron(self.robots[0], 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
         poly_static.project_static_stability()
 
-        ax = self.robots[0].display_robot_configuration()
+        ax, = self.robots[0].display_robot_configuration()
 
         # ----------- display of static stability -----------
         x1 = [v[0] for v in poly_static.inner_vertices]
@@ -162,10 +169,44 @@ class PostProcessor:
 
         plt.show()
 
+
+
+    def display_mode_3(self):
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        lines = []
+
+        # precomputing the static stability polyhedrons
+        print("Precomputing the static polyhedrons")
+        staticPolys = []
+        for rob in self.robots:
+            poly_static = static_stability.static_stability_polyhedron(rob, 0.01, 50, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
+            poly_static.project_static_stability()
+            staticPolys.append(poly_static)
+        print("Precomputation done!")
+
+        def update(frame, lines, ax):
+            ax.cla()
+            ax, lines = self.robots[frame].display_robot_configuration(ax)
+
+            x1 = [v[0] for v in staticPolys[frame].inner_vertices]
+            x1.append(x1[0])
+            y1 = [v[1] for v in staticPolys[frame].inner_vertices]
+            y1.append(y1[0])
+            lines.extend(ax.plot(x1, y1, color="xkcd:blue grey"))
+
+            lines.extend(self.polytopes[frame].display(ax))
+
+
+        ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax), interval=10, blit=False, repeat_delay=200, save_count=1)
+        plt.show()
+
     def display_results(self):
 
         if self.mode == 1:
             self.display_mode_1()
+        elif self.mode == 3:
+            self.display_mode_3()
         else:
             print("Unknown Mode {}".format(self.mode))
             assert False

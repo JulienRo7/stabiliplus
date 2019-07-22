@@ -3,8 +3,34 @@
 using namespace std;
 
 
-int main()
+int main(int argc, char *argv[])
 {
+    int mode = 1;
+    std::string file_robot = "../robots/robot_8.xml";
+    int numFrictionSides = 16;
+
+    for (int i=0; i<argc; i++)
+    {
+        // std::cout << "|" << argv[i] << "|" << '\n';
+        if (std::string(argv[i])=="--mode")
+        {
+            mode = std::atoi(argv[i+1]);
+        }
+        else if (std::string(argv[i])=="--robot")
+        {
+            file_robot = std::string(argv[i+1]);
+        }
+        else if (std::string(argv[i])=="--fric_sides")
+        {
+            numFrictionSides = std::atoi(argv[i+1]);
+        }
+    }
+
+    std::cout << "Mode: " << mode << '\n';
+    std::cout << "Robot file: " << file_robot << '\n';
+    std::cout << "Number of friction sides: " << numFrictionSides << '\n';
+    std::cout << '\n';
+
 
     /*
     mode 1 : generate one robot and compute its stability polyhedron
@@ -18,14 +44,14 @@ int main()
 
     only robot_2.xml has 4 accelerations
     */
-    int mode = 3;
 
-    Experimenter experience(mode, "../robots/robot_8.xml", 16);
+    Experimenter experience(mode, file_robot, numFrictionSides);
 
     experience.run();
 
     experience.save();
 
+    std::cout << '\n' << "Experiment Finnished! Run postprocess.py to display results" << '\n';
     // else if (mode == 2)
     // {
     //     std::cout << "Testing stuff..." << '\n';

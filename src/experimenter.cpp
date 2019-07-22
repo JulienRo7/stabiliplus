@@ -26,6 +26,9 @@ void Experimenter::run()
         case 2:
             run_exp2();
             break;
+        case 3:
+            run_exp3();
+            break;
         default:
             std::cerr << "Unknown mode" << '\n';
 
@@ -63,6 +66,33 @@ void Experimenter::run_exp2()
     std::cout << "Running Experiment for mode 2!" << '\n';
     std::cout << "Well... it has not been implemented yet!" << '\n';
 }
+
+void Experimenter::run_exp3()
+{
+    std::cout << "Running Experiment for mode 3!" << '\n';
+    if (m_robot.get_name()=="robot_8")
+    {
+        Eigen::Vector3d dx;
+        dx << 0.0,
+              0.01,
+              0.0;
+
+        for (int i=0; i<100; i++)
+        {
+            std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot));
+            polytope->buildStabilityProblem();
+            polytope->projectionStabilityPolyhedron();
+            m_polytopes.push_back(polytope);
+
+            m_robot.translateContact(3, dx);
+        }
+    }
+    else
+    {
+        std::cerr << "This experiment requires robot 8 to be loaded!" << '\n';
+    }
+}
+
 
 // ---------- outputs and getters -----------
 void Experimenter::save()

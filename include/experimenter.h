@@ -24,6 +24,7 @@ public:
     void run();
     void run_exp1();
     void run_exp2();
+    void run_exp3();
 
     // ---------- inputs and setters -----------
 
