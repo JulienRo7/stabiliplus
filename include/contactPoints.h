@@ -25,6 +25,7 @@ public:
     std::string get_name() const;
     Eigen::Vector3d get_position() const;
     Eigen::Matrix3d get_rotation() const;
+    tinyxml2::XMLElement* get_XMLContactPoint(tinyxml2::XMLDocument &doc) const;
 
     void translate(Eigen::Vector3d trans);
 

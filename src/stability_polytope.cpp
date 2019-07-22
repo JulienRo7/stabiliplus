@@ -721,10 +721,10 @@ bool StabilityPolytope::stopCriterion()
 }
 
 // ----------- output and display functions ----------
-void StabilityPolytope::exportVertices()
+void StabilityPolytope::exportVertices(std::string file_name)
 {
 
-    ofstream file_stream("vertices.txt");
+    ofstream file_stream(file_name);
 
     if (file_stream)
     {
@@ -838,6 +838,10 @@ double StabilityPolytope::get_supportFunctionMicro() const
     return m_supportFunctionMicro;
 }
 
+Robot* StabilityPolytope::get_robot()
+{
+    return &m_robot;
+}
 // ------------------ setter -----------------------
 
 void StabilityPolytope::set_maxNumberOfIterations(int maxNumberOfIteration)

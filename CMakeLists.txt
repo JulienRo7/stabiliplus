@@ -29,9 +29,14 @@ add_library(robot
 ${PROJECT_SOURCE_DIR}/src/robot.cpp
 ${PROJECT_SOURCE_DIR}/src/contactPoints.cpp
 )
-target_link_libraries(robot stability_polytope tinyxml2)
+target_link_libraries(robot tinyxml2)
+
+add_library(experimenter
+${PROJECT_SOURCE_DIR}/src/experimenter.cpp
+)
+target_link_libraries(experimenter robot stability_polytope tinyxml2)
 
 add_executable(main
   ${PROJECT_SOURCE_DIR}/src/main.cpp
   )
-target_link_libraries(main robot stability_polytope)
+target_link_libraries(main experimenter)

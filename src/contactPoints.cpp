@@ -165,6 +165,56 @@ Eigen::Matrix3d ContactPoints::get_rotation() const
     return m_rotation;
 }
 
+tinyxml2::XMLElement* ContactPoints::get_XMLContactPoint(tinyxml2::XMLDocument &doc) const
+{
+    tinyxml2::XMLElement *XMLContactPoint = doc.NewElement("ContactPoint");
+    XMLContactPoint->SetAttribute("name", m_name.c_str());
+
+    {
+        tinyxml2::XMLElement *XMLfriction = doc.NewElement("friction");
+        XMLfriction->SetAttribute("mu", m_frictionCoef);
+        XMLContactPoint->InsertEndChild(XMLfriction);
+
+        tinyxml2::XMLElement *XMLPosition = doc.NewElement("matrix");
+        XMLPosition->SetAttribute("name", "position");
+        XMLPosition->SetAttribute("row", 3);
+        XMLPosition->SetAttribute("column", 1);
+        {
+            for (int i=0; i<3; i++)
+            {
+                tinyxml2::XMLElement *XMLline = doc.NewElement("line");
+                tinyxml2::XMLElement *XMLv = doc.NewElement("v");
+                XMLv->SetText(m_position[i]);
+                XMLline->InsertEndChild(XMLv);
+                XMLPosition->InsertEndChild(XMLline);
+            }
+        }
+        XMLContactPoint->InsertEndChild(XMLPosition);
+
+        tinyxml2::XMLElement *XMLRotation = doc.NewElement("matrix");
+        XMLRotation->SetAttribute("name", "rotation");
+        XMLRotation->SetAttribute("row", 3);
+        XMLRotation->SetAttribute("column", 3);
+        {
+            for (int i=0; i<3; i++)
+            {
+                tinyxml2::XMLElement *XMLline = doc.NewElement("line");
+                for (int j=0; j<3; j++)
+                {
+                    tinyxml2::XMLElement *XMLv = doc.NewElement("v");
+                    XMLv->SetText(m_rotation(i,j));
+                    XMLline->InsertEndChild(XMLv);
+                }
+                XMLRotation->InsertEndChild(XMLline);
+            }
+        }
+        XMLContactPoint->InsertEndChild(XMLRotation);
+
+    }
+
+    return XMLContactPoint;
+}
+
 void ContactPoints::translate(Eigen::Vector3d trans)
 {
     m_position += trans;

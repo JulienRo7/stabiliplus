@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Robot::Robot() : m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(4), m_numberOfFrictionSides(8),
+Robot::Robot() : m_name(""), m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(4), m_numberOfFrictionSides(8),
 m_numberOfAccelerations(0)
 {
     m_accelerations.push_back(m_gravity);
@@ -149,8 +149,6 @@ void Robot::loadRobot(string const& file_name)
         std::string mainType;
         std::string childType;
 
-        string robot_name;
-
         Eigen::Vector3d acceleration;
         tinyxml2::XMLElement* lineXML(0);
 
@@ -160,7 +158,7 @@ void Robot::loadRobot(string const& file_name)
             mainType = mainXML->Value();
             if (std::strcmp(mainType.c_str(), "robot")==0)
             {
-                robot_name=mainXML->Attribute("name");
+                m_name=mainXML->Attribute("name");
                 childXML = mainXML->FirstChildElement();
 
                 while (childXML) {
@@ -237,6 +235,68 @@ void Robot::showRobot()
 {
     cout << "Mass of the robot: " << m_mass << endl;
     cout << "Number of feet of the robot: " << m_numberOfFeet << endl;
+}
+
+void Robot::saveRobot(const std::string &file_name)
+{
+    // creating new xml object
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLDeclaration * declaration = doc.NewDeclaration();
+    doc.InsertEndChild(declaration);
+
+    // creating root node
+    tinyxml2::XMLNode *root = doc.NewElement("data");
+    doc.InsertEndChild(root);
+
+    // building the robot element
+    tinyxml2::XMLElement *XMLRobot = doc.NewElement("robot");
+    XMLRobot->SetAttribute("name", m_name.c_str());
+
+    {
+        tinyxml2::XMLElement *XMLMass = doc.NewElement("Mass");
+        XMLMass->SetAttribute("mass", m_mass);
+        XMLRobot->InsertEndChild(XMLMass);
+
+        tinyxml2::XMLElement *XMLNumFeet = doc.NewElement("NumFeet");
+        XMLNumFeet->SetAttribute("n_feet", m_numberOfFeet);
+        XMLRobot->InsertEndChild(XMLNumFeet);
+
+        for (auto foot: m_feet)
+        {
+            XMLRobot->InsertEndChild(foot.get_XMLContactPoint(doc));
+        }
+    }
+    root->InsertEndChild(XMLRobot);
+
+    // building the accelerations element
+    tinyxml2::XMLElement *XMLAccelerations = doc.NewElement("accelerations");
+    std::string acc_name;
+
+    for (int i=0; i<m_numberOfAccelerations; i++)
+    {
+        tinyxml2::XMLElement *XMLAcc = doc.NewElement("matrix");
+        acc_name = "acceleration_"+std::to_string(i);
+        XMLAcc->SetAttribute("name", acc_name.c_str());
+        XMLAcc->SetAttribute("row", 3);
+        XMLAcc->SetAttribute("column", 1);
+        {
+            for (int j=0; j<3; j++)
+            {
+                tinyxml2::XMLElement *XMLline = doc.NewElement("line");
+                tinyxml2::XMLElement *XMLv = doc.NewElement("v");
+                XMLv->SetText(m_accelerations[i](j));
+                XMLline->InsertEndChild(XMLv);
+                XMLAcc->InsertEndChild(XMLline);
+            }
+        }
+        XMLAccelerations->InsertEndChild(XMLAcc);
+    }
+
+    root->InsertEndChild(XMLAccelerations);
+
+    // saving the robot description xml file.
+    doc.SaveFile(file_name.c_str());
+
 }
 
 // ------------------ Getters -----------------------

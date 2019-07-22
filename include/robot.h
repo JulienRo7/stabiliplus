@@ -21,7 +21,6 @@ The robot class contains the description of the robot. It can load it and make o
 // libraries
 #include <tinyxml2.h>
 #include <Eigen/Dense>
-#include <glpk.h>
 
 // custom libraries
 #include "contactPoints.h"
@@ -52,6 +51,7 @@ public:
 
     // ----------- output and display functions ----------
     void showRobot();
+    void saveRobot(const std::string &file_name);
 
 
     // ----------- getters ----------
@@ -65,6 +65,7 @@ public:
     static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const& vect);
 
 private:
+    std::string m_name;
     Eigen::Vector3d const m_gravity;
     double m_mass;
 

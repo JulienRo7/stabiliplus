@@ -58,7 +58,7 @@ public:
     bool stopCriterion();
 
     // ----------- output and display functions ----------
-    void exportVertices();
+    void exportVertices(std::string file_name);
     void showPoly();
 
     // ----------- getters ----------
@@ -71,6 +71,8 @@ public:
     double get_innerConvexMicro() const;
     double get_outerConvexMicro() const;
     double get_supportFunctionMicro() const;
+
+    Robot* get_robot();
 
     // ----------- setters ----------
     void set_maxNumberOfIterations(int maxNumberOfIteration);

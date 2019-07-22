@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import xml.etree.ElementTree as ET # phone home!
 
 import sys
 sys.path.append("../Stability")
@@ -11,91 +12,167 @@ from robot_description import Robot
 import static_stability
 import utils as ut
 
+class innerOuterPoly:
+    def __init__(self, file_name):
+        # coordinates of the inner points
+        self.innerX = []
+        self.innerY = []
+        self.innerZ = []
+
+        # Normals associated to the inner points
+        self.innerU = []
+        self.innerV = []
+        self.innerW = []
+
+        # list of inner edges, each edge is represented using a 2x3 matrix and each column gives the coordinates of one point
+        self.innerEdges = []
+
+        # coordinates of the outer points
+        self.outerX = []
+        self.outerY = []
+        self.outerZ = []
+
+        # list of outer edges, each edge is represented using a 2x3 matrix and each column gives the coordinates of one point
+        self.outerEdges = []
+
+        self.read_polytopeFile(file_name)
+
+    def read_polytopeFile(self, file_name):
+        file = open(file_name, 'r')
+
+        for line in file:
+            line = line.split(';')
+            if line[0]=='iv':
+                self.innerX.append(float(line[1]))
+                self.innerY.append(float(line[2]))
+                self.innerZ.append(float(line[3]))
+                self.innerU.append(float(line[4]))
+                self.innerV.append(float(line[5]))
+                self.innerW.append(float(line[6]))
+
+            elif line[0]=='ie':
+                self.innerEdges.append([[float(line[1]), float(line[4])],
+                                        [float(line[2]), float(line[5])],
+                                        [float(line[3]), float(line[6])]])
+
+            elif line[0]=='ov':
+                self.outerX.append(float(line[1]));
+                self.outerY.append(float(line[2]));
+                self.outerZ.append(float(line[3]));
+
+            elif line[0]=='oe':
+                self.outerEdges.append([[float(line[1]), float(line[4])],
+                                        [float(line[2]), float(line[5])],
+                                        [float(line[3]), float(line[6])]])
+
+            else:
+                print("Unrecognise type :", line[0])
+
+    def display_inner(self, ax, dispEdges=True, dispInnerNormals=False, color="xkcd:kelly green"):
+        # ----------- display of inner polyhedron -----------
+        ax.plot(self.innerX, self.innerY, self.innerZ, 'go')
+
+        if dispInnerNormals:
+            scale = 0.2
+            U = [scale*u for u in self.innerU]
+            V = [scale*v for v in self.innerV]
+            W = [scale*w for w in self.innerW]
+
+            ax.quiver(self.innerX, self.innerY, self.innerZ, U, V, W, color=color)
+
+        if dispEdges:
+            for e in self.innerEdges:
+                ax.plot(e[0], e[1], e[2], color=color)
+
+    def display_outer(self, ax, dispEdges=True, color="xkcd:kelly green"):
+        # ----------- display of outer polyhedron -----------
+        ax.plot(self.outerX, self.outerY, self.outerZ, color=color, marker='o')
+
+        if dispEdges:
+            for e in self.outerEdges:
+                ax.plot(e[0], e[1], e[2], color=color)
+
+
+    def display(self, ax, dispInner = True, dispOuter = False):
+        if dispInner:
+            self.display_inner(ax)
+
+        if dispOuter:
+            self.display_outer(ax)
 
 
 
-robot = Robot.load_from_file("robots/robot_8.xml")
+class PostProcessor:
+    def __init__(self, file_name="build/results/results.xml"):
+        self.mode = 0
+        self.numComputedPoints = 0
+        self.robots = []
+        self.polytopes = []
 
-poly_static = static_stability.static_stability_polyhedron(robot, 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
-poly_static.project_static_stability()
+        self.loadExperiment(file_name)
 
-file = open("build/vertices.txt", 'r')
+    def loadCompPoint(self, compPoint):
 
-x = []
-y = []
-z = []
+        for child in compPoint:
+            if child.tag == "poly":
+                self.polytopes.append(innerOuterPoly("build/"+child.attrib['file_name']))
 
-u = []
-v = []
-w = []
+            elif child.tag == "robot":
+                self.robots.append(Robot.load_from_file("build/"+child.attrib['file_name']))
 
-edges = []
+            else:
+                print("Unrecognise compPoint tag:", child.tag)
 
-# outer points
-oX = []
-oY = []
-oZ = []
+    def loadExperiment(self, file_name):
+        print("Loading experiment...")
+        tree = ET.parse(file_name)
+        root = tree.getroot()
 
-# outer edges
-outerEdges = []
+        for child in root:
+            if child.tag == 'mode':
+                self.mode = int(child.attrib['mode'])
+            elif child.tag == 'numComp':
+                self.numComputedPoints = int(child.attrib['numComputedPoints'])
+            elif child.tag == 'compPoint':
+                self.loadCompPoint(child)
+            else:
+                print("Unrecognise tag: ", child.tag)
 
-for line in file:
-    line = line.split(';')
-    if line[0]=='iv':
-        x.append(float(line[1]))
-        y.append(float(line[2]))
-        z.append(float(line[3]))
-        u.append(float(line[4]))
-        v.append(float(line[5]))
-        w.append(float(line[6]))
+        print("Experiment loaded, mode {} with {} computed points".format(self.mode, self.numComputedPoints))
 
-    elif line[0]=='ie':
-        edges.append([[float(line[1]), float(line[4])],
-                      [float(line[2]), float(line[5])],
-                      [float(line[3]), float(line[6])]])
+    def display_mode_1(self):
 
-    elif line[0]=='ov':
-        oX.append(float(line[1]));
-        oY.append(float(line[2]));
-        oZ.append(float(line[3]));
+        poly_static = static_stability.static_stability_polyhedron(self.robots[0], 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
+        poly_static.project_static_stability()
 
-    elif line[0]=='oe':
-        outerEdges.append([[float(line[1]), float(line[4])],
-                           [float(line[2]), float(line[5])],
-                           [float(line[3]), float(line[6])]])
+        ax = self.robots[0].display_robot_configuration()
 
-    else:
-        print("Unrecognise type :", line[0])
+        # ----------- display of static stability -----------
+        x1 = [v[0] for v in poly_static.inner_vertices]
+        x1.append(x1[0])
+        y1 = [v[1] for v in poly_static.inner_vertices]
+        y1.append(y1[0])
+        ax.plot(x1, y1, color="xkcd:blue grey")
+        # ax.plot(x1, y1, color="r")
 
-ax = robot.display_robot_configuration()
+        self.polytopes[0].display(ax)
 
-# ----------- display of static stability -----------
-x1 = [v[0] for v in poly_static.inner_vertices]
-x1.append(x1[0])
-y1 = [v[1] for v in poly_static.inner_vertices]
-y1.append(y1[0])
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
 
-# ax.plot(x1, y1, color="xkcd:blue grey")
-ax.plot(x1, y1, color="r")
+        plt.show()
 
-# ----------- displahy of inner polyhedron -----------
-ax.plot(x, y, z, 'go')
-scale = 0.2
-# ax.quiver(x, y, z, u, v, w, color="xkcd:kelly green")
+    def display_results(self):
 
-for e in edges:
-    ax.plot(e[0], e[1], e[2], color="xkcd:kelly green")
-
-# ----------- displahy of outer polyhedron -----------
-ax.plot(oX, oY, oZ, 'yo')
-
-for e in outerEdges:
-    ax.plot(e[0], e[1], e[2], color="xkcd:lemon yellow")
+        if self.mode == 1:
+            self.display_mode_1()
+        else:
+            print("Unknown Mode {}".format(self.mode))
+            assert False
 
 
-ax.set_xlabel("x")
-ax.set_ylabel("y")
 
-plt.show()
+if __name__ == '__main__':
+    postProcess = PostProcessor("build/results/results.xml")
 
-file.close()
+    postProcess.display_results()
