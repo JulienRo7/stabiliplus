@@ -7,14 +7,17 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+    roscpp
+    roslib
+    )
 find_package(Eigen3 REQUIRED)
 
 # set(CMAKE_CXX_FLAGS "-O2")
 
 catkin_package(
   # INCLUDE_DIRS include
-  #  LIBRARIES kuroiwa
+  #  LIBRARIES stabiliplus
   #  CATKIN_DEPENDS other_catkin_pkg
   #  DEPENDS system_lib
   )
@@ -47,7 +50,7 @@ add_library(experimenter
   )
 target_link_libraries(experimenter robot stability_polytope tinyxml2)
 
-add_executable(${PROJECT_NAME}_node
+add_executable(stabiliplus
   src/main.cpp
   )
-target_link_libraries(${PROJECT_NAME}_node experimenter)
+target_link_libraries(stabiliplus experimenter ${catkin_LIBRARIES})

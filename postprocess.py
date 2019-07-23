@@ -6,8 +6,9 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
 import xml.etree.ElementTree as ET # phone home!
 
-
 import sys
+
+
 sys.path.append("../Stability")
 
 from robot_description import Robot
@@ -110,7 +111,7 @@ class innerOuterPoly:
 
 
 class PostProcessor:
-    def __init__(self, file_name="build/results/results.xml"):
+    def __init__(self, file_name="/res/results.xml"):
         self.mode = 0
         self.numComputedPoints = 0
         self.robots = []
@@ -122,10 +123,10 @@ class PostProcessor:
 
         for child in compPoint:
             if child.tag == "poly":
-                self.polytopes.append(innerOuterPoly("build/"+child.attrib['file_name']))
+                self.polytopes.append(innerOuterPoly(child.attrib['file_name']))
 
             elif child.tag == "robot":
-                self.robots.append(Robot.load_from_file("build/"+child.attrib['file_name']))
+                self.robots.append(Robot.load_from_file(child.attrib['file_name']))
 
             else:
                 print("Unrecognise compPoint tag:", child.tag)
@@ -152,7 +153,7 @@ class PostProcessor:
         poly_static = static_stability.static_stability_polyhedron(self.robots[0], 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
         poly_static.project_static_stability()
 
-        ax, = self.robots[0].display_robot_configuration()
+        ax, lines = self.robots[0].display_robot_configuration()
 
         # ----------- display of static stability -----------
         x1 = [v[0] for v in poly_static.inner_vertices]
@@ -214,6 +215,6 @@ class PostProcessor:
 
 
 if __name__ == '__main__':
-    postProcess = PostProcessor("build/results/results.xml")
+    postProcess = PostProcessor("./res/results.xml")
 
     postProcess.display_results()

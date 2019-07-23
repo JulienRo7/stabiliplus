@@ -7,7 +7,7 @@ Experimenter::Experimenter(int mode, std::string const& robot_file_name, int num
     m_mode(mode),
     m_robot(robot_file_name, numFrictionSides)
 {
-
+    stabiliplus_path = ros::package::getPath("stabiliplus");
 }
 
 Experimenter::~Experimenter()
@@ -97,6 +97,10 @@ void Experimenter::run_exp3()
 // ---------- outputs and getters -----------
 void Experimenter::save()
 {
+
+    // if the res folder doesn't exist, create it
+    std::cout << system("mkdir -p `rospack find stabiliplus`/res") << '\n';
+
     // creating new xml object
     tinyxml2::XMLDocument doc;
     tinyxml2::XMLDeclaration * declaration = doc.NewDeclaration();
@@ -123,8 +127,8 @@ void Experimenter::save()
 
     for (auto poly: m_polytopes)
     {
-        poly_file_name = "results/polytope_"+std::to_string(poly_count)+".txt";
-        robot_file_name = "results/robot_"+std::to_string(poly_count)+".xml";
+        poly_file_name = stabiliplus_path+"/res/polytope_"+std::to_string(poly_count)+".txt";
+        robot_file_name = stabiliplus_path+"/res/robot_"+std::to_string(poly_count)+".xml";
         poly->exportVertices(poly_file_name);
         poly->get_robot()->saveRobot(robot_file_name);
 
@@ -146,7 +150,8 @@ void Experimenter::save()
 
 
     // save the xml to file
-    doc.SaveFile( "results/results.xml" );
+    std::string res_path = stabiliplus_path+"/res/results.xml";
+    doc.SaveFile( res_path.c_str() );
 
 
 

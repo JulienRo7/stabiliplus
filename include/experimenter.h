@@ -9,6 +9,7 @@
 #include <memory>
 
 #include <tinyxml2.h>
+#include <ros/package.h>
 
 #include "robot.h"
 #include "stability_polytope.h"
@@ -36,6 +37,7 @@ private:
     Robot m_robot;
     std::vector<std::shared_ptr<StabilityPolytope>> m_polytopes;
     int m_mode;
+    std::string stabiliplus_path;
 
 };
 
