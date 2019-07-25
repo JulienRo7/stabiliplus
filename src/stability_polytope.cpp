@@ -838,6 +838,26 @@ double StabilityPolytope::get_supportFunctionMicro() const
     return m_supportFunctionMicro;
 }
 
+std::vector<Eigen::Vector3d> StabilityPolytope::get_innerFaceNormals() const
+{
+    std::vector<Eigen::Vector3d> innerFaceNormals;
+    for (auto face: m_faces)
+    {
+        innerFaceNormals.push_back(face->get_normal());
+    }
+    return innerFaceNormals;
+}
+
+std::vector<double> StabilityPolytope::get_innerFaceOffsets() const
+{
+    std::vector<double> innerFaceOffsets;
+    for (auto face: m_faces)
+    {
+        innerFaceOffsets.push_back(face->get_offset());
+    }
+    return innerFaceOffsets;
+}
+
 Robot* StabilityPolytope::get_robot()
 {
     return &m_robot;

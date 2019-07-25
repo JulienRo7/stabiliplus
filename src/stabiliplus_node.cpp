@@ -5,6 +5,7 @@
 
 // ROS msgs
 #include "std_msgs/Float64.h"
+#include "geometry_msgs/Vector3.h"
 #include "stabiliplus/polytope.h"
 #include "stabiliplus/plane.h"
 
@@ -21,11 +22,9 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "stabiliplus_node");
     ros::NodeHandle n;
 
-    // ros::Publisher currentPolytopePublisher = n.advertise<stabiliplus::polytope>("current_polytope", 10);
-    ros::Publisher computingTime_Publisher = n.advertise<std_msgs::Float64>("computingTime", 1000);
+    ros::Publisher currentPolytopePublisher = n.advertise<stabiliplus::polytope>("current_stability_polytope", 10);
 
     ros::Rate loop_rate(10);
-    int count = 0;
 
     // init robot
     std::string stabiliplus_path = ros::package::getPath("stabiliplus");
@@ -33,6 +32,7 @@ int main(int argc, char *argv[])
     Robot robot(file_robot, 16);
 
 
+    int seq = 0;
     while (ros::ok())
     {
         // create and compute polytope:
@@ -45,18 +45,34 @@ int main(int argc, char *argv[])
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop-start);
 
-        std_msgs::Float64 msg;
+        auto faceNormals = polytope->get_innerFaceNormals();
+        auto faceOffsets = polytope->get_innerFaceOffsets();
 
-        msg.data = duration.count();
 
-        ROS_INFO("Computation time: %f us", msg.data);
+        // Publishing the result in ROS
 
-        computingTime_Publisher.publish(msg);
+        stabiliplus::polytope polytope_msg;
+        // filling the header
+        polytope_msg.header.seq=seq;
+        polytope_msg.header.stamp = ros::Time::now();
+        // filling the planes
+        for (int i=0; i<polytope->get_numberOfFaces(); i++)
+        {
+            stabiliplus::plane plane_msg;
+            plane_msg.normal.x = faceNormals[i][0];
+            plane_msg.normal.y = faceNormals[i][1];
+            plane_msg.normal.z = faceNormals[i][2];
+            plane_msg.offset = faceOffsets[i];
+
+            polytope_msg.planes.push_back(plane_msg);
+        }
+
+        currentPolytopePublisher.publish(polytope_msg);
         ros::spinOnce();
 
         loop_rate.sleep();
 
-        count++;
+        seq++;
 
     }
 

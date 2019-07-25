@@ -72,6 +72,9 @@ public:
     double get_outerConvexMicro() const;
     double get_supportFunctionMicro() const;
 
+    std::vector<Eigen::Vector3d> get_innerFaceNormals() const;
+    std::vector<double> get_innerFaceOffsets() const;
+
     Robot* get_robot();
 
     // ----------- setters ----------
