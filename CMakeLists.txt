@@ -10,15 +10,30 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     roslib
+    std_msgs
+    geometry_msgs
+    message_generation
     )
 find_package(Eigen3 REQUIRED)
 
 # set(CMAKE_CXX_FLAGS "-O2")
 
+add_message_files(
+    FILES
+    plane.msg
+    polytope.msg
+)
+
+generate_messages(
+    DEPENDENCIES
+    std_msgs
+    geometry_msgs
+)
+
 catkin_package(
   # INCLUDE_DIRS include
   #  LIBRARIES stabiliplus
-  #  CATKIN_DEPENDS other_catkin_pkg
+    CATKIN_DEPENDS message_runtime
   #  DEPENDS system_lib
   )
 
@@ -54,3 +69,8 @@ add_executable(stabiliplus
   src/main.cpp
   )
 target_link_libraries(stabiliplus experimenter ${catkin_LIBRARIES})
+
+add_executable(stabiliplus_node
+    src/stabiliplus_node.cpp
+)
+target_link_libraries(stabiliplus_node robot stability_polytope ${catkin_LIBRARIES})
