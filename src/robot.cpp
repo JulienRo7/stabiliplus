@@ -2,8 +2,8 @@
 
 using namespace std;
 
-Robot::Robot() : m_name(""), m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(4), m_numberOfFrictionSides(8),
-m_numberOfAccelerations(0)
+Robot::Robot() : m_name(""), m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(0), m_numberOfFrictionSides(8),
+m_numberOfAccelerations(1)
 {
     m_accelerations.push_back(m_gravity);
 }
@@ -39,7 +39,7 @@ Eigen::MatrixXd Robot::computeMatrixA2(Eigen::Vector3d const& acceleration)
 {
     Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6,3);
     A2.block<3,3>(0,0) = Eigen::Matrix3d::Zero();
-    A2.block<3,3>(3,0) = -skewSymmetric(acceleration);
+    A2.block<3,3>(3,0) = -skewSymmetric(m_mass*acceleration);
 
     return A2;
 }

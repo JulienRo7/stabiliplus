@@ -2,6 +2,7 @@
 
 // using namespace std;
 
+// ------- constructors and destructor -------
 ContactPoints::ContactPoints(): m_frictionCoef(1)
 {
     for (int i=0; i<3; i++)
@@ -73,6 +74,8 @@ ContactPoints::ContactPoints(tinyxml2::XMLElement* contactPointXML)
             currentXMLElement->QueryDoubleAttribute("theta", &theta);
             currentXMLElement->QueryDoubleAttribute("psi", &psi);
 
+            /* Proper Euler Angles X->Z->X */
+
             double const c1 = cos(phi);
             double const s1 = sin(phi);
 
@@ -109,6 +112,7 @@ ContactPoints::~ContactPoints()
 
 }
 
+// ------- class' main methods -------
 void ContactPoints::showContactPoint()
 {
     std::cout << "Contact Point Homogeneous Transform:" << '\n';
@@ -150,6 +154,7 @@ Eigen::MatrixXd ContactPoints::linearizedFrictionCone(int numberOfFrictionSides)
     return F;
 }
 
+// ------- getters -------
 std::string ContactPoints::get_name() const
 {
     return m_name;
@@ -163,6 +168,15 @@ Eigen::Vector3d ContactPoints::get_position() const
 Eigen::Matrix3d ContactPoints::get_rotation() const
 {
     return m_rotation;
+}
+
+Eigen::Matrix4d ContactPoints::get_homTrans() const
+{
+    Eigen::Matrix4d homTrans = Eigen::Matrix4d::Zero();
+    homTrans.topLeftCorner<3,3>() = m_rotation;
+    homTrans.rightCols<1>().head<3>() = m_position;
+
+    return homTrans;
 }
 
 tinyxml2::XMLElement* ContactPoints::get_XMLContactPoint(tinyxml2::XMLDocument &doc) const
@@ -215,7 +229,22 @@ tinyxml2::XMLElement* ContactPoints::get_XMLContactPoint(tinyxml2::XMLDocument &
     return XMLContactPoint;
 }
 
+// ------- setters -------
 void ContactPoints::translate(Eigen::Vector3d trans)
 {
     m_position += trans;
+}
+
+void ContactPoints::set_contact(Eigen::Matrix4d homTrans)
+{
+    m_rotation = homTrans.topLeftCorner<3,3>();
+    m_position = homTrans.rightCols<1>().head<3>();
+}
+
+void ContactPoints::set_friction(double frictionCoef)
+{
+    if (frictionCoef >= 0)
+    {
+        m_frictionCoef = frictionCoef;
+    }
 }

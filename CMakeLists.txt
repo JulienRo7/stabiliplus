@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     roslib
     std_msgs
+    tf2_msgs
+    tf2_ros
     geometry_msgs
     message_generation
     )

@@ -15,19 +15,27 @@
 class ContactPoints
 {
 public:
+    // ------- constructors and destructor -------
     ContactPoints();
     ContactPoints(tinyxml2::XMLElement* contactPointXML);
     ~ContactPoints();
 
+    // ------- class' main methods -------
     void showContactPoint();
     Eigen::MatrixXd linearizedFrictionCone(int numberOfFrictionSides);
 
+    // ------- getters -------
     std::string get_name() const;
     Eigen::Vector3d get_position() const;
     Eigen::Matrix3d get_rotation() const;
+    Eigen::Matrix4d get_homTrans() const;
     tinyxml2::XMLElement* get_XMLContactPoint(tinyxml2::XMLDocument &doc) const;
 
+
+    // ------- setters -------
     void translate(Eigen::Vector3d trans);
+    void set_contact(Eigen::Matrix4d homTrans);
+    void set_friction(double frictionCoef);
 
 private:
     std::string m_name;
