@@ -101,7 +101,7 @@ class innerOuterPoly:
     def display(self, ax, dispInner = True, dispOuter = False):
         lines = []
         if dispInner:
-            lines.extend(self.display_inner(ax))
+            lines.extend(self.display_inner(ax, dispInnerNormals=True))
 
         if dispOuter:
             lines.extend(self.display_outer(ax))

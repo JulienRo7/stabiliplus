@@ -41,7 +41,7 @@ void Experimenter::run_exp1()
     std::cout << "Running Experiment for mode 1!" << '\n';
 
     auto start = std::chrono::high_resolution_clock::now();
-    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot));
+    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,10));
 
     polytope->buildStabilityProblem();
     polytope->projectionStabilityPolyhedron();

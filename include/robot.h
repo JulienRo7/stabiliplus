@@ -62,6 +62,7 @@ public:
 
     // ----------- setters ----------
     void translateContact(int contactIndex, Eigen::Vector3d translation);
+    void set_contact(int contactIndex, Eigen::Matrix4d homTrans);
 
     // ---------- static functions ---------
     static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const& vect);

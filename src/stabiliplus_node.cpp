@@ -100,6 +100,26 @@ public:
     {
         updateHomogeneousTransforms();
 
+        set_contact(0, m_LArm_WRY*LHand_th1);
+        set_contact(1, m_LArm_WRY*LHand_th2);
+        set_contact(2, m_LArm_WRY*LHand_th3);
+        set_contact(3, m_LArm_WRY*LHand_th4);
+
+        set_contact(4, m_RArm_WRY*RHand_th1);
+        set_contact(5, m_RArm_WRY*RHand_th2);
+        set_contact(6, m_RArm_WRY*RHand_th3);
+        set_contact(7, m_RArm_WRY*RHand_th4);
+
+        set_contact(8, m_LLeg_3X*LFoot_th1);
+        set_contact(9, m_LLeg_3X*LFoot_th2);
+        set_contact(10, m_LLeg_3X*LFoot_th3);
+        set_contact(11, m_LLeg_3X*LFoot_th4);
+
+        set_contact(12, m_RLeg_3X*LFoot_th1);
+        set_contact(13, m_RLeg_3X*LFoot_th2);
+        set_contact(14, m_RLeg_3X*LFoot_th3);
+        set_contact(15, m_RLeg_3X*LFoot_th4);
+
     };
 
     void updateRobotContacts_callback(const tf2_msgs::TFMessage::ConstPtr& msg)
@@ -193,6 +213,7 @@ public:
 
 private:
     tf2_ros::Buffer* m_tfBuffer;
+
     Eigen::Matrix4d  m_LArm_WRY;
     Eigen::Matrix4d  m_RArm_WRY;
     Eigen::Matrix4d  m_LLeg_3X;
@@ -242,11 +263,11 @@ int main(int argc, char *argv[])
     while (ros::ok())
     {
         // update the robot position
-        robot.updateHomogeneousTransforms();
-        
+        robot.updateRobotContacts();
+
         // create and compute polytope:
         auto start = std::chrono::high_resolution_clock::now();
-        std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(robot));
+        std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(robot, 10));
 
         polytope->buildStabilityProblem();
         polytope->projectionStabilityPolyhedron();
@@ -257,6 +278,7 @@ int main(int argc, char *argv[])
         auto faceNormals = polytope->get_innerFaceNormals();
         auto faceOffsets = polytope->get_innerFaceOffsets();
 
+        std::cout << "Number of faces : " << faceOffsets.size() << '\n';
 
         // Publishing the result in ROS
 

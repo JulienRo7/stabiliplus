@@ -128,7 +128,7 @@ Eigen::VectorXd Robot::buildFrictionVectorf()
     }
     for (int i=numberOfRows-6; i<numberOfRows; i++)
     {
-        f[i] = 1; // CoM position limited to the unit cube
+        f[i] = 1.5; // CoM position limited to the unit cube
     }
 
     return f;
@@ -323,6 +323,18 @@ void Robot::translateContact(int contactIndex, Eigen::Vector3d translation)
     if (contactIndex >= 0 && contactIndex < m_feet.size())
     {
         m_feet[contactIndex].translate(translation);
+    }
+    else
+    {
+        std::cerr << "Error: the contact index is not valid" << '\n';
+    }
+}
+
+void Robot::set_contact(int contactIndex, Eigen::Matrix4d homTrans)
+{
+    if (contactIndex >= 0 && contactIndex < m_feet.size())
+    {
+        m_feet[contactIndex].set_contact(homTrans);
     }
     else
     {
