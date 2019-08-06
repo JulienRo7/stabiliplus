@@ -58,11 +58,21 @@ public:
     int get_numberOfFeet() const;
     int get_numberOfAcceletations() const;
 
+    int get_contactIndexFromName(std::string contactName) const;
+    std::vector<std::string> get_contactNames() const;
+
+    bool hasContactNamed(std::string contactName) const;
+    
     std::string get_name() const;
 
     // ----------- setters ----------
     void translateContact(int contactIndex, Eigen::Vector3d translation);
     void set_contact(int contactIndex, Eigen::Matrix4d homTrans);
+
+    void removeContact(int contactIndex);
+    void removeContact(std::string contactName);
+
+    void addContact(std::string contactName);
 
     // ---------- static functions ---------
     static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const& vect);

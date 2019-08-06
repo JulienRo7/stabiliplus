@@ -3,16 +3,20 @@
 // using namespace std;
 
 // ------- constructors and destructor -------
-ContactPoints::ContactPoints(): m_frictionCoef(1)
+ContactPoints::ContactPoints():
+m_name(""), m_frictionCoef(1),
+m_rotation(Eigen::Matrix3d::Zero()),
+m_position(0,0,0)
 {
-    for (int i=0; i<3; i++)
-    {
-        for (int j=0; j<3; j++)
-        {
-            m_rotation(i,j)=0.0;
-        }
-        m_position(i) = 0.0;
-    }
+
+}
+
+ContactPoints::ContactPoints(std::string name, double frictionCoef):
+m_name(name), m_frictionCoef(frictionCoef),
+m_rotation(Eigen::Matrix3d::Zero()),
+m_position(Eigen::Vector3d::Zero())
+{
+
 }
 
 ContactPoints::ContactPoints(tinyxml2::XMLElement* contactPointXML)

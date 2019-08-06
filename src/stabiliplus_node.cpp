@@ -17,6 +17,8 @@
 
 #include "stabiliplus/polytope.h"
 #include "stabiliplus/plane.h"
+#include "stabiliplus/contact.h"
+#include "stabiliplus/contactSet.h"
 
 // Stabiliplus includes
 #include "robot.h"
@@ -99,32 +101,159 @@ public:
     void updateRobotContacts()
     {
         updateHomogeneousTransforms();
+        if (hasContactNamed("LHand_1"))
+        {
+            set_contact(get_contactIndexFromName("LHand_1"), m_LArm_WRY*LHand_th1);
+        }
+        if (hasContactNamed("LHand_2"))
+        {
+            set_contact(get_contactIndexFromName("LHand_2"), m_LArm_WRY*LHand_th2);
+        }
+        if (hasContactNamed("LHand_3"))
+        {
+            set_contact(get_contactIndexFromName("LHand_3"), m_LArm_WRY*LHand_th3);
+        }
+        if (hasContactNamed("LHand_4"))
+        {
+            set_contact(get_contactIndexFromName("LHand_4"), m_LArm_WRY*LHand_th4);
+        }
 
-        set_contact(0, m_LArm_WRY*LHand_th1);
-        set_contact(1, m_LArm_WRY*LHand_th2);
-        set_contact(2, m_LArm_WRY*LHand_th3);
-        set_contact(3, m_LArm_WRY*LHand_th4);
+        if (hasContactNamed("RHand_1"))
+        {
+            set_contact(get_contactIndexFromName("RHand_1"), m_RArm_WRY*RHand_th1);
+        }
+        if (hasContactNamed("RHand_2"))
+        {
+            set_contact(get_contactIndexFromName("RHand_2"), m_RArm_WRY*RHand_th2);
+        }
+        if (hasContactNamed("RHand_3"))
+        {
+            set_contact(get_contactIndexFromName("RHand_3"), m_RArm_WRY*RHand_th3);
+        }
+        if (hasContactNamed("RHand_4"))
+        {
+            set_contact(get_contactIndexFromName("RHand_4"), m_RArm_WRY*RHand_th4);
+        }
 
-        set_contact(4, m_RArm_WRY*RHand_th1);
-        set_contact(5, m_RArm_WRY*RHand_th2);
-        set_contact(6, m_RArm_WRY*RHand_th3);
-        set_contact(7, m_RArm_WRY*RHand_th4);
+        if (hasContactNamed("LFoot_1"))
+        {
+            set_contact(get_contactIndexFromName("LFoot_1"), m_LLeg_3X*LFoot_th1);
+        }
+        if (hasContactNamed("LFoot_2"))
+        {
+            set_contact(get_contactIndexFromName("LFoot_2"), m_LLeg_3X*LFoot_th2);
+        }
+        if (hasContactNamed("LFoot_3"))
+        {
+            set_contact(get_contactIndexFromName("LFoot_3"), m_LLeg_3X*LFoot_th3);
+        }
+        if (hasContactNamed("LFoot_4"))
+        {
+            set_contact(get_contactIndexFromName("LFoot_4"), m_LLeg_3X*LFoot_th4);
+        }
 
-        set_contact(8, m_LLeg_3X*LFoot_th1);
-        set_contact(9, m_LLeg_3X*LFoot_th2);
-        set_contact(10, m_LLeg_3X*LFoot_th3);
-        set_contact(11, m_LLeg_3X*LFoot_th4);
-
-        set_contact(12, m_RLeg_3X*LFoot_th1);
-        set_contact(13, m_RLeg_3X*LFoot_th2);
-        set_contact(14, m_RLeg_3X*LFoot_th3);
-        set_contact(15, m_RLeg_3X*LFoot_th4);
-
+        if (hasContactNamed("RFoot_1"))
+        {
+            set_contact(get_contactIndexFromName("RFoot_1"), m_RLeg_3X*RFoot_th1);
+        }
+        if (hasContactNamed("RFoot_2"))
+        {
+            set_contact(get_contactIndexFromName("RFoot_2"), m_RLeg_3X*RFoot_th2);
+        }
+        if (hasContactNamed("RFoot_3"))
+        {
+            set_contact(get_contactIndexFromName("RFoot_3"), m_RLeg_3X*RFoot_th3);
+        }
+        if (hasContactNamed("RFoot_4"))
+        {
+            set_contact(get_contactIndexFromName("RFoot_4"), m_RLeg_3X*RFoot_th4);
+        }
     };
 
-    void updateRobotContacts_callback(const tf2_msgs::TFMessage::ConstPtr& msg)
+    void updateRobotContacts_callback(const stabiliplus::contactSet::ConstPtr& msg)
     {
+        std::vector<std::string> currentContactPoints, previousContactPoints;
+        for (auto contact: msg->contactSet)
+        {
+            for (auto name: get_currentContactNames(contact))
+            {
+                currentContactPoints.push_back(name);
+            }
+        }
+        previousContactPoints = get_contactNames();
 
+        std::vector<std::string> newContacts, oldContacts;
+        // finding contacts to add
+
+        for (auto contact: currentContactPoints)
+        {
+            if (find(previousContactPoints.begin(), previousContactPoints.end(), contact)==previousContactPoints.end())
+            {
+                newContacts.push_back(contact);
+            }
+        }
+        //finding contacts to remove
+        for (auto contact: previousContactPoints)
+        {
+            // std::cout << contact << '\n';
+            if (find(currentContactPoints.begin(), currentContactPoints.end(), contact)==currentContactPoints.end())
+            {
+                oldContacts.push_back(contact);
+            }
+        }
+
+        // std::cout << "new contacts: " << '\n';
+        for (auto name: newContacts)
+        {
+            // std::cout << name << '\n';
+            addContact(name);
+        }
+        // std::cout << "old contacts: " << '\n';
+        for (auto name: oldContacts)
+        {
+            // std::cout << name << '\n';
+            removeContact(name);
+        }
+    };
+
+    std::vector<std::string> get_currentContactNames(stabiliplus::contact contact) const
+    {
+        std::vector<std::string> contactNames;
+
+        if (contact.r1Surface == "LeftFoot" && contact.r2Surface == "AllGround")
+        {
+            contactNames.push_back("LFoot_1");
+            contactNames.push_back("LFoot_2");
+            contactNames.push_back("LFoot_3");
+            contactNames.push_back("LFoot_4");
+        }
+        else if (contact.r1Surface == "RightFoot" && contact.r2Surface == "AllGround")
+        {
+            contactNames.push_back("RFoot_1");
+            contactNames.push_back("RFoot_2");
+            contactNames.push_back("RFoot_3");
+            contactNames.push_back("RFoot_4");
+        }
+        else if (contact.r1Surface == "LeftHand" && contact.r2Surface == "minusXside")
+        {
+            contactNames.push_back("LHand_1");
+            contactNames.push_back("LHand_2");
+            contactNames.push_back("LHand_3");
+            contactNames.push_back("LHand_4");
+        }
+        else if (contact.r1Surface == "RightHand" && contact.r2Surface == "minusXside")
+        {
+            contactNames.push_back("RHand_1");
+            contactNames.push_back("RHand_2");
+            contactNames.push_back("RHand_3");
+            contactNames.push_back("RHand_4");
+        }
+        else
+        {
+            std::cerr << "Unrecognised contact!" << '\n';
+        }
+
+        return contactNames;
     };
 
     Eigen::Matrix3d Euler2RotMat(double phi, double theta, double psi) const
@@ -256,18 +385,20 @@ int main(int argc, char *argv[])
 
     // init publisher
     ros::Publisher currentPolytopePublisher = n.advertise<stabiliplus::polytope>("current_stability_polytope", 10);
-    // ros::Subscriber currentRobotPosition = n.subscribe("/tf", 1, &RosRobot::updateRobotContacts_callback, &robot);
+    ros::Subscriber currentRobotContacts = n.subscribe("current_contact_set", 1, &RosRobot::updateRobotContacts_callback, &robot);
     ros::Rate loop_rate(10);
 
+    std::string poly_file_name, robot_file_name;
     int seq = 0;
     while (ros::ok())
     {
+        // std::cout << "Computation: " << seq << '\n';
         // update the robot position
         robot.updateRobotContacts();
 
         // create and compute polytope:
         auto start = std::chrono::high_resolution_clock::now();
-        std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(robot, 10));
+        std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(robot, 50));
 
         polytope->buildStabilityProblem();
         polytope->projectionStabilityPolyhedron();
@@ -278,7 +409,12 @@ int main(int argc, char *argv[])
         auto faceNormals = polytope->get_innerFaceNormals();
         auto faceOffsets = polytope->get_innerFaceOffsets();
 
-        std::cout << "Number of faces : " << faceOffsets.size() << '\n';
+        // std::cout << "Number of faces : " << faceOffsets.size() << '\n';
+
+        // poly_file_name = "/tmp/polytopes/polytope_"+std::to_string(seq)+".txt";
+        // robot_file_name = "/tmp/robots/robot_"+std::to_string(seq)+".xml";
+        // polytope->exportVertices(poly_file_name);
+        // polytope->get_robot()->saveRobot(robot_file_name);
 
         // Publishing the result in ROS
 

@@ -126,10 +126,17 @@ Eigen::VectorXd Robot::buildFrictionVectorf()
             f[i+2+j]= 0.0;
         }
     }
-    for (int i=numberOfRows-6; i<numberOfRows; i++)
-    {
-        f[i] = 1.5; // CoM position limited to the unit cube
-    }
+    // for (int i=numberOfRows-6; i<numberOfRows; i++)
+    // {
+    //     f[i] = 0.9; // CoM position limited to the unit cube
+    // }
+    // Limitation of the CoM
+    f[numberOfRows-6] = 1000; // x_max
+    f[numberOfRows-5] = 1000; // y_max
+    f[numberOfRows-4] = 2; // z_max
+    f[numberOfRows-3] = 1000; // -x_min
+    f[numberOfRows-2] = 1000; // -y_min
+    f[numberOfRows-1] = 0; // -z_min
 
     return f;
 }
@@ -311,6 +318,36 @@ int Robot::get_numberOfAcceletations() const
     return m_numberOfAccelerations;
 }
 
+int Robot::get_contactIndexFromName(std::string contactName) const
+{
+    int i(0), index(0);
+    for (auto contact: m_feet)
+    {
+        if (contact.get_name()==contactName)
+        {
+            index=i;
+        }
+        i ++;
+    }
+    return index;
+}
+
+std::vector<std::string> Robot::get_contactNames() const
+{
+    std::vector<std::string> names;
+    for (auto contact : m_feet)
+    {
+        names.push_back(contact.get_name());
+    }
+    return names;
+}
+
+bool Robot::hasContactNamed(std::string contactName) const
+{
+    std::vector<std::string> names = get_contactNames();
+    return find(names.begin(), names.end(), contactName)!=names.end();
+}
+
 std::string Robot::get_name() const
 {
     return m_name;
@@ -340,6 +377,24 @@ void Robot::set_contact(int contactIndex, Eigen::Matrix4d homTrans)
     {
         std::cerr << "Error: the contact index is not valid" << '\n';
     }
+}
+
+void Robot::removeContact(int contactIndex)
+{
+    m_feet.erase(m_feet.begin()+contactIndex);
+    m_numberOfFeet --;
+}
+
+void Robot::removeContact(std::string contactName)
+{
+    int index = get_contactIndexFromName(contactName);
+    removeContact(index);
+}
+
+void Robot::addContact(std::string contactName)
+{
+    m_feet.push_back(ContactPoints(contactName, 0.5));
+    m_numberOfFeet ++;
 }
 // ---------- Static function -----------
 

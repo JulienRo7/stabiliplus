@@ -17,6 +17,7 @@ class ContactPoints
 public:
     // ------- constructors and destructor -------
     ContactPoints();
+    ContactPoints(std::string name, double frictionCoef);
     ContactPoints(tinyxml2::XMLElement* contactPointXML);
     ~ContactPoints();
 
@@ -30,6 +31,8 @@ public:
     Eigen::Matrix3d get_rotation() const;
     Eigen::Matrix4d get_homTrans() const;
     tinyxml2::XMLElement* get_XMLContactPoint(tinyxml2::XMLDocument &doc) const;
+
+    bool isContactNamed(std::string name) const;
 
 
     // ------- setters -------

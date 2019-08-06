@@ -41,7 +41,7 @@ void Experimenter::run_exp1()
     std::cout << "Running Experiment for mode 1!" << '\n';
 
     auto start = std::chrono::high_resolution_clock::now();
-    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,10));
+    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50));
 
     polytope->buildStabilityProblem();
     polytope->projectionStabilityPolyhedron();
@@ -77,7 +77,7 @@ void Experimenter::run_exp3()
               0.01,
               0.0;
 
-        for (int i=0; i<100; i++)
+        for (int i=0; i<500; i++)
         {
             std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot));
             polytope->buildStabilityProblem();
@@ -127,8 +127,10 @@ void Experimenter::save()
 
     for (auto poly: m_polytopes)
     {
-        poly_file_name = stabiliplus_path+"/res/polytope_"+std::to_string(poly_count)+".txt";
-        robot_file_name = stabiliplus_path+"/res/robot_"+std::to_string(poly_count)+".xml";
+        // poly_file_name = stabiliplus_path+"/res/polytope_"+std::to_string(poly_count)+".txt";
+        // robot_file_name = stabiliplus_path+"/res/robot_"+std::to_string(poly_count)+".xml";
+        poly_file_name = "/tmp/polytopes/polytope_"+std::to_string(poly_count)+".txt";
+        robot_file_name = "/tmp/robots/robot_"+std::to_string(poly_count)+".xml";
         poly->exportVertices(poly_file_name);
         poly->get_robot()->saveRobot(robot_file_name);
 

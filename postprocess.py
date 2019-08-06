@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, FFMpegWriter
 import xml.etree.ElementTree as ET # phone home!
 
 import sys
@@ -14,6 +14,27 @@ sys.path.append("../Stability")
 from robot_description import Robot
 import static_stability
 import utils as ut
+
+# Print iterations progress
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
+    # Print New Line on Complete
+    if iteration == total:
+        print()
 
 class innerOuterPoly:
     def __init__(self, file_name):
@@ -175,19 +196,25 @@ class PostProcessor:
     def display_mode_3(self):
         fig = plt.figure()
         ax = Axes3D(fig)
+
         lines = []
 
         # precomputing the static stability polyhedrons
         print("Precomputing the static polyhedrons")
         staticPolys = []
+        it = 0
         for rob in self.robots:
             poly_static = static_stability.static_stability_polyhedron(rob, 0.01, 50, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
             poly_static.project_static_stability()
             staticPolys.append(poly_static)
+            it+=1
+            printProgressBar( it, len(self.robots))
         print("Precomputation done!")
 
         def update(frame, lines, ax):
             ax.cla()
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
             ax, lines = self.robots[frame].display_robot_configuration(ax)
 
             x1 = [v[0] for v in staticPolys[frame].inner_vertices]
@@ -200,6 +227,13 @@ class PostProcessor:
 
 
         ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax), interval=10, blit=False, repeat_delay=200, save_count=1)
+
+        print("Saving the animation...")
+        # moviewriter = FFMpegWriter(fps=20)
+        # moviewriter.setup(fig=fig, outfile="res/video.mp4")
+        ani.save("res/video.mp4", fps=10, dpi=360)
+        # moviewriter.finnish()
+        print("Animation saved!")
         plt.show()
 
     def display_results(self):
@@ -211,6 +245,8 @@ class PostProcessor:
         else:
             print("Unknown Mode {}".format(self.mode))
             assert False
+
+
 
 
 
