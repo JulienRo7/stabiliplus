@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
         auto faceNormals = polytope->get_innerFaceNormals();
         auto faceOffsets = polytope->get_innerFaceOffsets();
 
-        // std::cout << "Number of faces : " << faceOffsets.size() << '\n';
+        std::cout << "Number of faces : " << faceOffsets.size() << '\n';
 
         // poly_file_name = "/tmp/polytopes/polytope_"+std::to_string(seq)+".txt";
         // robot_file_name = "/tmp/robots/robot_"+std::to_string(seq)+".xml";
