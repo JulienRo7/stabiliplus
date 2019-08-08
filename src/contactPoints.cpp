@@ -1,4 +1,4 @@
-#include "contactPoints.h"
+#include "stabiliplus/contactPoints.h"
 
 // using namespace std;
 

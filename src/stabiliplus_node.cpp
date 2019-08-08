@@ -21,8 +21,8 @@
 #include "stabiliplus/contactSet.h"
 
 // Stabiliplus includes
-#include "robot.h"
-#include "stability_polytope.h"
+#include "stabiliplus/robot.h"
+#include "stabiliplus/stability_polytope.h"
 
 // other includes
 #include <chrono>

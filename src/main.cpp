@@ -1,4 +1,4 @@
-#include "experimenter.h"
+#include "stabiliplus/experimenter.h"
 
 #include <ros/package.h>
 

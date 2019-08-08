@@ -1,6 +1,6 @@
-#include "outerface.h"
+#include "stabiliplus/outerface.h"
 
-// #include "outervertex.h"
+// #include "stabiliplus/outervertex.h"
 
 int OuterFace::GlobalOuterFaceCounter = 0;
 

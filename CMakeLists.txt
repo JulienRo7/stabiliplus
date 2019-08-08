@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
     )
 find_package(Eigen3 REQUIRED)
-find_package(mc_rtc_stab REQUIRED)
 
 # set(CMAKE_CXX_FLAGS "-O2")
 

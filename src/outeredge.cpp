@@ -1,4 +1,4 @@
-#include "outeredge.h"
+#include "stabiliplus/outeredge.h"
 
 int OuterEdge::GlobalOuterEdgeCounter = 0;
 

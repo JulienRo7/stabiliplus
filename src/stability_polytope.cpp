@@ -1,4 +1,4 @@
-#include "stability_polytope.h"
+#include "stabiliplus/stability_polytope.h"
 
 using namespace std;
 

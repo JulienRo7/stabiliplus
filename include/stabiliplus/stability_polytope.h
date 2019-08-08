@@ -23,14 +23,14 @@
 #include <glpk.h>
 
 // custom libraries
-#include "stabiliplus/robot.h"
+#include "robot.h"
 
-#include "stabiliplus/vertex.h"
-#include "stabiliplus/edge.h"
-#include "stabiliplus/face.h"
-#include "stabiliplus/outervertex.h"
-#include "stabiliplus/outeredge.h"
-#include "stabiliplus/outerface.h"
+#include "vertex.h"
+#include "edge.h"
+#include "face.h"
+#include "outervertex.h"
+#include "outeredge.h"
+#include "outerface.h"
 
 class StabilityPolytope
 {

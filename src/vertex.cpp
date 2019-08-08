@@ -1,4 +1,4 @@
-#include "vertex.h"
+#include "stabiliplus/vertex.h"
 
 int Vertex::GlobalVertexCounter = 0;
 
