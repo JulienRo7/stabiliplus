@@ -181,7 +181,7 @@ class PostProcessor:
         x1.append(x1[0])
         y1 = [v[1] for v in poly_static.inner_vertices]
         y1.append(y1[0])
-        ax.plot(x1, y1, color="xkcd:blue grey")
+        ax.plot(x1, y1, color="xkcd:red")
         # ax.plot(x1, y1, color="r")
 
         self.polytopes[0].display(ax)
@@ -221,7 +221,7 @@ class PostProcessor:
             x1.append(x1[0])
             y1 = [v[1] for v in staticPolys[frame].inner_vertices]
             y1.append(y1[0])
-            lines.extend(ax.plot(x1, y1, color="xkcd:blue grey"))
+            lines.extend(ax.plot(x1, y1, color="xkcd:red"))
 
             lines.extend(self.polytopes[frame].display(ax))
 

@@ -34,10 +34,32 @@
             <rotation phi='0' theta='0' psi='0' />
         </ContactPoint>
     </robot>
-    <accelerations>
+    <!-- <accelerations>
         <matrix name='gravity' row='3' column='1'>
             <line><v>0.0</v></line>
             <line><v>0.0</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+    </accelerations> -->
+    <accelerations>
+        <matrix name='gravity' row='3' column='1'>
+            <line><v>-2.5</v></line>
+            <line><v>0.0</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+        <matrix name='gravity' row='3' column='1'>
+            <line><v>2.5</v></line>
+            <line><v>0.0</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+        <matrix name='gravity' row='3' column='1'>
+            <line><v>0.0</v></line>
+            <line><v>-2.5</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+        <matrix name='gravity' row='3' column='1'>
+            <line><v>0.0</v></line>
+            <line><v>2.5</v></line>
             <line><v>-9.81</v></line>
         </matrix>
     </accelerations>
