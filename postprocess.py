@@ -231,7 +231,7 @@ class PostProcessor:
         print("Saving the animation...")
         # moviewriter = FFMpegWriter(fps=20)
         # moviewriter.setup(fig=fig, outfile="res/video.mp4")
-        ani.save("res/video.mp4", fps=10, dpi=360)
+        ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
         # moviewriter.finnish()
         print("Animation saved!")
         plt.show()
@@ -251,6 +251,6 @@ class PostProcessor:
 
 
 if __name__ == '__main__':
-    postProcess = PostProcessor("./res/results.xml")
+    postProcess = PostProcessor("/tmp/results.xml")
 
     postProcess.display_results()
