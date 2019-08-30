@@ -77,7 +77,7 @@ void Experimenter::run_exp3()
               0.01,
               0.0;
 
-        for (int i=0; i<500; i++)
+        for (int i=0; i<50; i++)
         {
             std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot));
             polytope->buildStabilityProblem();
