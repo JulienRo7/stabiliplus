@@ -99,7 +99,9 @@ void Experimenter::save()
 {
 
     // if the res folder doesn't exist, create it
-    std::cout << system("mkdir -p `rospack find stabiliplus`/res") << '\n';
+    // std::cout << system("mkdir -p `rospack find stabiliplus`/res") << '\n';
+    std::cout << system("mkdir -p /tmp/polytopes") << '\n';
+    std::cout << system("mkdir -p /tmp/robots") << '\n';
 
     // creating new xml object
     tinyxml2::XMLDocument doc;
@@ -152,7 +154,8 @@ void Experimenter::save()
 
 
     // save the xml to file
-    std::string res_path = stabiliplus_path+"/res/results.xml";
+    std::string res_path = "/tmp/results.xml";
+    // std::string res_path = stabiliplus_path+"/res/results.xml";
     doc.SaveFile( res_path.c_str() );
 
 

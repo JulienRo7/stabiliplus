@@ -222,6 +222,7 @@ void StabilityPolytope::projectionStabilityPolyhedron()
         duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
         m_supportFunctionMicro+=duration.count();
 
+        // à modifier -> à ne pas refaire de zéro
         computeResidualFromScratch();
     }
 }

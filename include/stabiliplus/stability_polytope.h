@@ -92,8 +92,10 @@ private:
     Eigen::MatrixXd m_Q_c;
     Eigen::MatrixXd m_R_inv_T_b;
 
+    // projection algorithm stop criterion
     int m_numberOfIterations;
     double m_residual;
+
     // inner polyhedron
     std::vector<std::shared_ptr<Vertex>> m_vertices;
     Eigen::Vector3d m_innerPoint;
