@@ -1,15 +1,13 @@
 #include "stabiliplus/experimenter.h"
 
-#include <ros/package.h>
-
 using namespace std;
 
 
 int main(int argc, char *argv[])
 {
     int mode = 1;
-    std::string stabiliplus_path = ros::package::getPath("stabiliplus");
-    std::string file_robot = stabiliplus_path + "/robots/robot_8.xml";
+
+    std::string file_robot = "../robots/robot_8.xml";
     int numFrictionSides = 16;
 
     for (int i=0; i<argc; i++)

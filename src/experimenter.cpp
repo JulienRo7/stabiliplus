@@ -7,7 +7,7 @@ Experimenter::Experimenter(int mode, std::string const& robot_file_name, int num
     m_mode(mode),
     m_robot(robot_file_name, numFrictionSides)
 {
-    stabiliplus_path = ros::package::getPath("stabiliplus");
+    stabiliplus_path = "";
 }
 
 Experimenter::~Experimenter()

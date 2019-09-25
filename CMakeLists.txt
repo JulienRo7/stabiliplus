@@ -1,80 +1,42 @@
-cmake_minimum_required(VERSION 2.8.3)
 project(stabiliplus)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+cmake_minimum_required(VERSION 2.8)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    roslib
-    std_msgs
-    tf2_msgs
-    tf2_ros
-    geometry_msgs
-    message_generation
-    )
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
 find_package(Eigen3 REQUIRED)
 
-# set(CMAKE_CXX_FLAGS "-O2")
+set(CMAKE_CXX_FLAGS "-O2")
+add_compile_options(-std=c++11)
 
-add_message_files(
-    FILES
-    plane.msg
-    polytope.msg
-    contact.msg
-    contactSet.msg
-)
-
-generate_messages(
-    DEPENDENCIES
-    std_msgs
-    geometry_msgs
-)
-
-catkin_package(
-  # INCLUDE_DIRS include
-  #  LIBRARIES stabiliplus
-    CATKIN_DEPENDS message_runtime
-  #  DEPENDS system_lib
-  )
-
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
-  )
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_library(stability_polytope
-  src/stability_polytope.cpp
-  src/vertex.cpp
-  src/edge.cpp
-  src/face.cpp
-  src/outervertex.cpp
-  src/outeredge.cpp
-  src/outerface.cpp
-  )
+${PROJECT_SOURCE_DIR}/src/stability_polytope.cpp
+${PROJECT_SOURCE_DIR}/src/vertex.cpp
+${PROJECT_SOURCE_DIR}/src/edge.cpp
+${PROJECT_SOURCE_DIR}/src/face.cpp
+${PROJECT_SOURCE_DIR}/src/outervertex.cpp
+${PROJECT_SOURCE_DIR}/src/outeredge.cpp
+${PROJECT_SOURCE_DIR}/src/outerface.cpp
+)
 target_link_libraries(stability_polytope glpk)
 
 add_library(robot
-  src/robot.cpp
-  src/contactPoints.cpp
-  )
+${PROJECT_SOURCE_DIR}/src/robot.cpp
+${PROJECT_SOURCE_DIR}/src/contactPoints.cpp
+)
 target_link_libraries(robot tinyxml2)
 
 add_library(experimenter
-  src/experimenter.cpp
-  )
+${PROJECT_SOURCE_DIR}/src/experimenter.cpp
+)
 target_link_libraries(experimenter robot stability_polytope tinyxml2)
 
-add_executable(stabiliplus
-  src/main.cpp
+add_executable(main
+  ${PROJECT_SOURCE_DIR}/src/main.cpp
   )
-target_link_libraries(stabiliplus experimenter ${catkin_LIBRARIES})
-
-add_executable(stabiliplus_node
-    src/stabiliplus_node.cpp
-)
-target_link_libraries(stabiliplus_node robot stability_polytope ${catkin_LIBRARIES})
+target_link_libraries(main experimenter)

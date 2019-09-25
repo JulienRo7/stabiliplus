@@ -9,7 +9,6 @@
 #include <memory>
 
 #include <tinyxml2.h>
-// #include <ros/package.h>
 
 #include "robot.h"
 #include "stability_polytope.h"
