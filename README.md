@@ -8,14 +8,17 @@ apt install libeigen3-dev libglpk-dev libtinyxml2-dev
 
 To build this, the repository has to be cloned in the src folder of a catkin workspace then use:
 ```bash
-catkin_make
+mkdir build
+cd build
+cmake ..
+make
 ```
 
 ## running
 
 Run the code in the build folder using:
 ```bash
-rosrun stabiliplus stabiliplus [OPTIONS]
+./build/main [OPTIONS]
 ```
 The options are:
 * --mode : choose the experiment mode for now the modes are:
