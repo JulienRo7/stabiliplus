@@ -290,12 +290,17 @@ void StabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std:
 
     auto currentFace = consideredFaces.begin();
 
+    // consider all the faces to be considered
     while (currentFace!=consideredFaces.end())
     {
+        // if the current face does not put the new point inside the inner polyhedron
+        // then  it has to be removed
         if (!(*currentFace)->pointInHalfSpace(newVertex->get_coordinates()))
         {
             visibleFaces.push_back(*currentFace);
 
+            // some edges sould be removed, for now it is done later after the
+            // while loop
             auto currentEdges = (*currentFace)->get_edges();
             for (auto it_e : currentEdges)
             {
@@ -305,6 +310,8 @@ void StabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std:
                 }
             }
 
+            // the faces neighbor of the current visible face should be tested as
+            // potential visible faces
             auto currentNeighbors = (*currentFace)->findNeighbors();
             for (auto it_f : currentNeighbors)
             {
@@ -323,6 +330,7 @@ void StabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std:
     std::vector<std::shared_ptr<Edge>> edges_to_keep;
     std::vector<std::shared_ptr<Edge>> edges_to_delete;
 
+    // an edge is said to be visible if both the faces it belongs to are visible
     for (auto it : visibleEdges)
     {
         if (find(visibleFaces.begin(), visibleFaces.end(), it->get_face1())!=visibleFaces.end() and
@@ -373,6 +381,7 @@ void StabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std:
 
     }
 
+    // ---- create and add the new faces and edges of the inner polyhedron
     std::shared_ptr<Face> newFace;
     std::shared_ptr<Edge> newEdge1;
     std::shared_ptr<Edge> newEdge2;
@@ -490,6 +499,11 @@ void StabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std:
     // std::cout << "dot 1" << '\n';
     auto currentPoint = consideredPoints.begin();
 
+    // find the vertex of the previous outer approximation that are cut out by
+    // the new plane. Then cut the adjacent edages and faces.
+    // The vertex that are now out are found using a neigbor search:
+    // To be proven (or not) there is a path of edges that goes from any vertex
+    // that is cut out to any other vertex that is cut out
     while (currentPoint != consideredPoints.end())
     {
         // std::cout << "Current point: " << *currentPoint << '\n';
@@ -576,6 +590,10 @@ void StabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std:
     // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     // std::cout << "Number of considered points: " << consideredPoints.size() << " with " << U_minus.size() << " points out" << '\n';
     // std::cout << "First part duration: " << duration.count() << " microseconds" << '\n';
+
+    // ---- creating the new stuff: 1 new face, some new edges and as many new vertex.
+    // by construction 1 outer face may have any number of edges but each outer
+    // vertex has only 3 edges that reach it.
 
     std::shared_ptr<OuterEdge> newOuterEdge;
 
