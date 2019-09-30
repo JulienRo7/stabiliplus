@@ -1,4 +1,5 @@
 #include "stabiliplus/stability_polytope.h"
+#include <array>
 
 using namespace std;
 

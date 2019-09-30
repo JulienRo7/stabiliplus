@@ -35,5 +35,7 @@ roscd stabiliplus
 python3 postprocess.py
 ```
 Required libraries:
-* numpy;
-* matplotlib.
+* numpy
+* matplotlib
+* cvxopt
+* scipy
