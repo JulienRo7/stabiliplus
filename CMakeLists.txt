@@ -14,6 +14,12 @@ add_compile_options(-std=c++11)
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+add_library(wrappers
+  ${PROJECT_SOURCE_DIR}/src/wrapper/solver_wrapper.cpp
+  ${PROJECT_SOURCE_DIR}/src/wrapper/glpk_wrapper.cpp
+  )
+target_link_libraries(wrappers glpk)
+
 add_library(stability_polytope
 ${PROJECT_SOURCE_DIR}/src/stability_polytope.cpp
 ${PROJECT_SOURCE_DIR}/src/vertex.cpp
@@ -23,7 +29,7 @@ ${PROJECT_SOURCE_DIR}/src/outervertex.cpp
 ${PROJECT_SOURCE_DIR}/src/outeredge.cpp
 ${PROJECT_SOURCE_DIR}/src/outerface.cpp
 )
-target_link_libraries(stability_polytope glpk)
+target_link_libraries(stability_polytope wrappers)
 
 add_library(robot
 ${PROJECT_SOURCE_DIR}/src/robot.cpp

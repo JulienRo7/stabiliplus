@@ -1,5 +1,5 @@
 #include "stabiliplus/stability_polytope.h"
-#include <array>
+
 
 using namespace std;
 
@@ -8,134 +8,54 @@ m_robot(robot),
 m_numberOfIterations(0), m_maxNumberOfIteration(maxNumberOfIteration), m_residual(1000),
 m_lpMicro(0), m_innerConvexMicro(0), m_outerConvexMicro(0), m_supportFunctionMicro(0)
 {
-    m_lp = glp_create_prob();
+  m_lp = new GlpkWrapper;
 }
 
 
 StabilityPolytope::~StabilityPolytope()
 {
-    glp_delete_prob(m_lp);
+  // glp_delete_prob(m_lp);
+  delete m_lp;
 
-    for (auto it: m_outerEdges)
-    {
-        it->finish();
-    }
+  for (auto it: m_outerEdges)
+  {
+    it->finish();
+  }
 
-    for (auto it: m_faces)
-    {
-        it->finish();
-    }
+  for (auto it: m_faces)
+  {
+    it->finish();
+  }
 }
 
 
 // ----------- main class methods ----------
 void StabilityPolytope::buildStabilityProblem()
 {
+  m_lp->buildProblem(m_robot.buildVectorB(),
+		     m_robot.buildMatrixA(),
+		     m_robot.buildFrictionF(),
+		     m_robot.buildFrictionVectorf());
 
-    Eigen::VectorXd B = m_robot.buildVectorB();
-
-    Eigen::MatrixXd A = m_robot.buildMatrixA();
-    // std::cout << "A: "<< '\n' << A << '\n';
-    Eigen::MatrixXd F = m_robot.buildFrictionF();
-    // std::cout << "F: "<< '\n' << F << '\n';
-
-    Eigen::VectorXd f = m_robot.buildFrictionVectorf();
-
-    Eigen::HouseholderQR<Eigen::MatrixXd> qr(A.transpose());
-    // Eigen::MatrixXd P = qr.colsPermutation();
-    auto start = std::chrono::high_resolution_clock::now();
-    const Eigen::MatrixXd& Q = qr.householderQ();
-    m_Q_c = Q.leftCols(A.rows());//.setLength(qr.nonzeroPivots());
-    m_Q_u = Q.rightCols(A.cols()-A.rows());//.setLength(qr.nonzeroPivots());
-    m_R_inv_T_b = qr.matrixQR().topRows(A.rows()).transpose().triangularView<Eigen::Lower>().solve(B);
-
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-    // std::cout << "QR decomposition time: " << duration.count() << " microseconds"<< '\n';
-
-    // std::cout << "P matrix of A: " << '\n' << P << '\n';
-    // std::cout << "Qc matrix of A: " << '\n' << Q_c << '\n';
-    // std::cout << "Q matrix of A: " << '\n' << Q << '\n';
-    // std::cout << "R matrix of A: " << '\n' << R << '\n';
-    // std::cout << "Inverse of R: " << '\n' << R_inv << '\n';
-
-    Eigen::MatrixXd F_bis = F*m_Q_u;
-
-    Eigen::VectorXd f_bis = f - (F*m_Q_c)*m_R_inv_T_b;
-
-    // std::cout << "F_bis: " << '\n' << F_bis << '\n';
-    // std::cout << "f_bis: " << '\n' << f_bis << '\n';
-
-    int const numberOfColumns = F_bis.cols();
-    int const numberOfRows = F_bis.rows();
+  // Eigen::VectorXd B = m_robot.buildVectorB();
+  // Eigen::MatrixXd A = m_robot.buildMatrixA();
+  // std::cout << "A: "<< '\n' << A << '\n';
+  // Eigen::MatrixXd F = m_robot.buildFrictionF();
+  // std::cout << "F: "<< '\n' << F << '\n';
+  // Eigen::VectorXd f = m_robot.buildFrictionVectorf();
 
 
-    glp_set_obj_dir(m_lp, GLP_MAX); // The objective here is to maximize
-    //
-    glp_add_rows(m_lp, numberOfRows);
-
-    for (int i = 0; i<numberOfRows; i++)
-    {
-        glp_set_row_bnds(m_lp, i+1, GLP_UP, 0.0, f_bis[i]);
-    }
-
-
-    glp_add_cols(m_lp, numberOfColumns);
-    for (int i = 0; i<numberOfColumns; ++i)
-    {
-        glp_set_col_bnds(m_lp, i+1, GLP_FR, -100.0, 100.0);
-        // glp_set_obj_coef(m_lp, i+1, 0.0);
-    }
-
-    int ia[1+numberOfRows*numberOfColumns], ja[1+numberOfRows*numberOfColumns];
-    double ar[1+numberOfRows*numberOfColumns];
-
-    for (int i=0; i<numberOfRows; ++i)
-    {
-        for (int j=0; j<numberOfColumns; ++j)
-        {
-            ia[1+i*numberOfColumns + j]=1+i;
-            ja[1+i*numberOfColumns + j]=1+j;
-            ar[1+i*numberOfColumns + j]=F_bis(i,j);
-            // std::cout << 1+i*numberOfColumns + j << " " << 1+i <<" " << 1+j <<" " << A(i,j) << '\n';
-        }
-    }
-
-    // std::cout << ia << '\n';
-    glp_load_matrix(m_lp, numberOfRows*numberOfColumns, ia, ja, ar);
-
-    glp_term_out(GLP_OFF);
-    // std::cout << "Reduced Stability Problem built!" << '\n';
-    // glp_write_lp(m_lp, NULL, "export_lp.txt");
 }
 
 
 void StabilityPolytope::solveStabilityProblem(Eigen::Vector3d const& direction, Eigen::Vector3d &point)
 {
-    Eigen::VectorXd c = Eigen::VectorXd::Zero(3*m_robot.get_numberOfFeet()*m_robot.get_numberOfAcceletations()+3);
-    c.tail(3)=direction;
 
-    const Eigen::VectorXd c_bis = m_Q_u.transpose()*c;
+  m_lp->set_searchDirection(direction);
 
-    for (int i = 0; i<c_bis.size(); ++i)
-    {
-        glp_set_obj_coef(m_lp, i+1, c_bis[i]);
-    }
-    glp_simplex(m_lp, NULL);
-
-    Eigen::VectorXd z(c_bis.size());
-
-    for (int i = 0; i<c_bis.size(); ++i)
-    {
-        z[i]=glp_get_col_prim(m_lp, i+1);
-    }
-
-    const Eigen::VectorXd x = m_Q_c*m_R_inv_T_b + (m_Q_u*z);
-
-    // std::cout << "m_Q_c*m_R_inv_T_b=" << '\n' << (m_Q_c*m_R_inv_T_b).transpose() << '\n';
-
-    point = x.tail(3);
+  m_lp->solveProblem();
+  
+  point = m_lp->get_result();
 }
 
 void StabilityPolytope::projectionStabilityPolyhedron()

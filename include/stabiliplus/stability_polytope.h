@@ -20,9 +20,10 @@
 
 // libraries
 #include <Eigen/Dense>
-#include <glpk.h>
+// #include <glpk.h>
 
 // custom libraries
+#include "wrapper/glpk_wrapper.h"
 #include "robot.h"
 
 #include "vertex.h"
@@ -87,10 +88,12 @@ private:
     Robot m_robot; // the robot should not change
 
     // attributes used for the LP problem
-    glp_prob *m_lp;
-    Eigen::MatrixXd m_Q_u;
-    Eigen::MatrixXd m_Q_c;
-    Eigen::MatrixXd m_R_inv_T_b;
+    SolverWrapper *m_lp;
+
+    // glp_prob *m_lp;
+    // Eigen::MatrixXd m_Q_u;
+    // Eigen::MatrixXd m_Q_c;
+    // Eigen::MatrixXd m_R_inv_T_b;
 
     // projection algorithm stop criterion
     int m_numberOfIterations;
