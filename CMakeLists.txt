@@ -14,11 +14,14 @@ add_compile_options(-std=c++11)
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+link_directories(${PROJECT_SOURCE_DIR}/lib/lp_solve)
+
 add_library(wrappers
   ${PROJECT_SOURCE_DIR}/src/wrapper/solver_wrapper.cpp
   ${PROJECT_SOURCE_DIR}/src/wrapper/glpk_wrapper.cpp
+  ${PROJECT_SOURCE_DIR}/src/wrapper/lpsolve_wrapper.cpp
   )
-target_link_libraries(wrappers glpk)
+target_link_libraries(wrappers glpk lpsolve55)
 
 add_library(stability_polytope
 ${PROJECT_SOURCE_DIR}/src/stability_polytope.cpp

@@ -29,7 +29,7 @@ void GlpkWrapper::buildProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::Matr
 
   Eigen::MatrixXd F_bis = F*m_Q_u;
   Eigen::VectorXd f_bis = f - (F*m_Q_c)*m_R_inv_T_b;
-
+    
   int const numberOfColumns = F_bis.cols();
   int const numberOfRows = F_bis.rows();
 

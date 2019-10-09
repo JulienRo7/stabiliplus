@@ -3,18 +3,26 @@
 
 using namespace std;
 
-StabilityPolytope::StabilityPolytope(Robot robot, int maxNumberOfIteration):
+StabilityPolytope::StabilityPolytope(Robot robot, int maxNumberOfIteration, Solver solver):
 m_robot(robot),
 m_numberOfIterations(0), m_maxNumberOfIteration(maxNumberOfIteration), m_residual(1000),
 m_lpMicro(0), m_innerConvexMicro(0), m_outerConvexMicro(0), m_supportFunctionMicro(0)
 {
-  m_lp = new GlpkWrapper;
+  switch(solver)
+  {
+    case GLPK:
+      m_lp = new GlpkWrapper;
+      break;
+
+    case LP_SOLVE:
+      m_lp = new LPSolveWrapper;
+      break;
+  }
 }
 
 
 StabilityPolytope::~StabilityPolytope()
 {
-  // glp_delete_prob(m_lp);
   delete m_lp;
 
   for (auto it: m_outerEdges)

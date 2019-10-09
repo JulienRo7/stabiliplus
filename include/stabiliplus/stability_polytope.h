@@ -24,6 +24,7 @@
 
 // custom libraries
 #include "wrapper/glpk_wrapper.h"
+#include "wrapper/lpsolve_wrapper.h"
 #include "robot.h"
 
 #include "vertex.h"
@@ -33,12 +34,18 @@
 #include "outeredge.h"
 #include "outerface.h"
 
+enum Solver {
+  GLPK,
+  LP_SOLVE
+};
+
+
 class StabilityPolytope
 {
 public:
     // ----------- constructors and destructor ----------
-    StabilityPolytope(Robot robot, int maxNumberOfIteration = 50);
-    ~StabilityPolytope();
+  StabilityPolytope(Robot robot, int maxNumberOfIteration = 50, Solver solver = GLPK);
+  ~StabilityPolytope();
 
     // ----------- main class methods ----------
     void buildStabilityProblem(); // compute the reduced stability problem
