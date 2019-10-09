@@ -7,6 +7,7 @@
 #include <string>
 #include <chrono>
 #include <memory>
+#include <string>
 
 #include <tinyxml2.h>
 
@@ -35,6 +36,7 @@ public:
 private:
     Robot m_robot;
     std::vector<std::shared_ptr<StabilityPolytope>> m_polytopes;
+    std::vector<int> m_total_times_ms;
     int m_mode;
     std::string stabiliplus_path;
 

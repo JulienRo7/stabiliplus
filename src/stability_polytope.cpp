@@ -6,9 +6,10 @@ using namespace std;
 StabilityPolytope::StabilityPolytope(Robot robot, int maxNumberOfIteration, Solver solver):
 m_robot(robot),
 m_numberOfIterations(0), m_maxNumberOfIteration(maxNumberOfIteration), m_residual(1000),
-m_lpMicro(0), m_innerConvexMicro(0), m_outerConvexMicro(0), m_supportFunctionMicro(0)
+m_lpMicro(0), m_innerConvexMicro(0), m_outerConvexMicro(0), m_supportFunctionMicro(0),
+m_solver(solver)
 {
-  switch(solver)
+  switch(m_solver)
   {
     case GLPK:
       m_lp = new GlpkWrapper;
@@ -809,6 +810,11 @@ std::vector<double> StabilityPolytope::get_innerFaceOffsets() const
 Robot* StabilityPolytope::get_robot()
 {
     return &m_robot;
+}
+
+Solver StabilityPolytope::get_solver() const
+{
+  return m_solver;
 }
 // ------------------ setter -----------------------
 

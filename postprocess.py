@@ -138,6 +138,14 @@ class PostProcessor:
         self.robots = []
         self.polytopes = []
 
+        self.solvers = []
+        self.total_times = []
+        self.LP_times = []
+        self.inner_times = []
+        self.outer_times = []
+        self.support_times = []
+
+        
         self.loadExperiment(file_name)
 
     def loadCompPoint(self, compPoint):
@@ -149,6 +157,16 @@ class PostProcessor:
             elif child.tag == "robot":
                 self.robots.append(Robot.load_from_file(child.attrib['file_name']))
 
+            elif child.tag == "times":
+                self.total_times.append(int(child.attrib['total']))
+                self.LP_times.append(int(child.attrib['LP']))
+                self.inner_times.append(int(child.attrib['inner']))
+                self.outer_times.append(int(child.attrib['outer']))
+                self.support_times.append(int(child.attrib['support']))
+
+            elif child.tag == "solver":
+                self.solvers.append(child.attrib['name'])
+            
             else:
                 print("Unrecognise compPoint tag:", child.tag)
 
@@ -191,7 +209,9 @@ class PostProcessor:
 
         plt.show()
 
-
+    def display_mode_2(self):
+        print("Work In Progress...")
+        pass
 
     def display_mode_3(self):
         fig = plt.figure()
@@ -240,6 +260,8 @@ class PostProcessor:
 
         if self.mode == 1:
             self.display_mode_1()
+        elif self.mode == 2:
+            self.display_mode_2()
         elif self.mode == 3:
             self.display_mode_3()
         else:

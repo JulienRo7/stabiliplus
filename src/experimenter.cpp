@@ -47,9 +47,10 @@ void Experimenter::run_exp1()
     polytope->projectionStabilityPolyhedron();
 
     auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
     m_polytopes.push_back(polytope);
+    m_total_times_ms.push_back(duration.count());
 
     std::cout << "Computation time: " << duration.count() << "ms for " << polytope->get_numberOfVertices() << " inner Vertices"
               << " and " << polytope->get_numberOfOuterVertices() << " outer vertices."<< '\n';
@@ -64,7 +65,34 @@ void Experimenter::run_exp1()
 void Experimenter::run_exp2()
 {
     std::cout << "Running Experiment for mode 2!" << '\n';
-    std::cout << "Well... it has not been implemented yet!" << '\n';
+
+    std::string robot_names[4] = {"./robots/robot_1.xml", "./robots/robot_2.xml", "./robots/robot_3.xml", "./robots/robot_4.xml"};
+    int numTrials = 10;
+    Solver solvers[2] = {GLPK, LP_SOLVE};
+    
+    for (auto solver: solvers)
+      {
+	for (auto rob_file: robot_names)
+	  {
+	    m_robot.loadRobot(rob_file);
+	    for (int i = 0; i<numTrials; i++)
+	      {
+		std::cout << "Solver: " << solver << " Robot: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
+		auto start = std::chrono::high_resolution_clock::now();
+
+		std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50, solver));
+		polytope->buildStabilityProblem();
+		polytope->projectionStabilityPolyhedron();
+
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+		m_polytopes.push_back(polytope);
+		m_total_times_ms.push_back(duration.count());
+	      }
+	  }
+      }
+    
 }
 
 void Experimenter::run_exp3()
@@ -79,12 +107,19 @@ void Experimenter::run_exp3()
 
         for (int i=0; i<50; i++)
         {
-            std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot));
-            polytope->buildStabilityProblem();
-            polytope->projectionStabilityPolyhedron();
-            m_polytopes.push_back(polytope);
+	  auto start = std::chrono::high_resolution_clock::now();
 
-            m_robot.translateContact(3, dx);
+	  std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50));
+	  polytope->buildStabilityProblem();
+	  polytope->projectionStabilityPolyhedron();
+
+	  auto stop = std::chrono::high_resolution_clock::now();
+	  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+	  m_polytopes.push_back(polytope);
+	  m_total_times_ms.push_back(duration.count());
+
+	  m_robot.translateContact(3, dx);
         }
     }
     else
@@ -148,7 +183,27 @@ void Experimenter::save()
         robotXML->SetAttribute("file_name", robot_file_name.c_str());
         compPoint->InsertEndChild(robotXML);
 
+	tinyxml2::XMLElement *timeXML = doc.NewElement("times");
+	timeXML->SetAttribute("total", m_total_times_ms.at(poly_count));
+	timeXML->SetAttribute("LP", poly->get_lpMicro());
+	timeXML->SetAttribute("inner", poly->get_innerConvexMicro());
+	timeXML->SetAttribute("outer", poly->get_outerConvexMicro());
+	timeXML->SetAttribute("support", poly->get_supportFunctionMicro());
+	compPoint->InsertEndChild(timeXML);
 
+	tinyxml2::XMLElement *solverXML = doc.NewElement("solver");
+	switch(poly->get_solver())
+	  {
+	  case GLPK:
+	    solverXML->SetAttribute("name","GLPK");
+	    break;
+
+	  case LP_SOLVE:
+	    solverXML->SetAttribute("name","LP_SOLVE");
+	    break;
+	  }
+	compPoint->InsertEndChild(solverXML);
+	
         poly_count++;
     }
 

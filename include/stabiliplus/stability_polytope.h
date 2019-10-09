@@ -85,6 +85,8 @@ public:
 
     Robot* get_robot();
 
+    Solver get_solver() const;
+
     // ----------- setters ----------
     void set_maxNumberOfIterations(int maxNumberOfIteration);
 
@@ -95,6 +97,7 @@ private:
     Robot m_robot; // the robot should not change
 
     // attributes used for the LP problem
+    Solver m_solver;
     SolverWrapper *m_lp;
 
     // glp_prob *m_lp;
