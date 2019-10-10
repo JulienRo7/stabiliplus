@@ -67,7 +67,7 @@ void Experimenter::run_exp2()
     std::cout << "Running Experiment for mode 2!" << '\n';
 
     std::string robot_names[4] = {"./robots/robot_1.xml", "./robots/robot_2.xml", "./robots/robot_3.xml", "./robots/robot_4.xml"};
-    int numTrials = 10;
+    int numTrials = 100;
     Solver solvers[2] = {GLPK, LP_SOLVE};
 
     

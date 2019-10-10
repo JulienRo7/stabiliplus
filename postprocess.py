@@ -230,17 +230,59 @@ class PostProcessor:
 
         assert numPts != 0, "No point found for solver {} and robot {}".format(solver_name, robot_name)
         return (numPts, int(total/numPts), int(LP/numPts), int(inner/numPts), int(outer/numPts), int(support/numPts))
-    
-    
+
     def display_mode_2(self):
         solvers = set(self.solvers)
         # robots = ["robot_1", "robot_2", "robot_3", "robot_4"]
         robots = set(self.robot_names)
 
+        total_avg_per_sol = dict()
         for sol in solvers:
+            sol_times = []
             for rob in robots:
                 timings = self.extract_timings_mode2(sol, rob)
+                sol_times.append(timings[1])
                 print(sol, rob, timings)
+            total_avg_per_sol[sol]=sol_times
+
+        print(total_avg_per_sol)
+
+        x = np.arange(len(robots))  # the label locations
+        width = 0.35  # the width of the bars
+
+        fig, ax = plt.subplots()
+        rects = []
+
+        total_num_solvers = len(solvers)
+        num_sol = 0
+        
+        for sol in solvers:
+            rect = ax.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_avg_per_sol[sol] , width, label=sol)
+            rects.append(rect)
+            num_sol += 1
+            
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Average total computing time (µs)')
+        ax.set_title('Time comparision of the different solvers')
+        ax.set_xticks(x)
+        ax.set_xticklabels(robots)
+        ax.legend()
+
+        def autolabel(rects):
+            """Attach a text label above each bar in *rects*, displaying its height."""
+            for rect in rects:
+                height = rect.get_height()
+                ax.annotate('{}'.format(height),
+                            xy=(rect.get_x() + rect.get_width() / 2, height),
+                            xytext=(0, 3),  # 3 points vertical offset
+                            textcoords="offset points",
+                            ha='center', va='bottom')
+                
+        for rect in rects:
+            autolabel(rect)
+            
+        fig.tight_layout()
+        plt.show()
     
     def display_mode_3(self):
         fig = plt.figure()
