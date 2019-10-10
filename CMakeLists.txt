@@ -14,7 +14,7 @@ add_compile_options(-std=c++11)
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-link_directories(${PROJECT_SOURCE_DIR}/lib/lp_solve)
+add_subdirectory(lpsolve55 EXCLUDE_FROM_ALL)
 
 add_library(wrappers
   ${PROJECT_SOURCE_DIR}/src/wrapper/solver_wrapper.cpp
