@@ -35,9 +35,12 @@ public:
 
 private:
     Robot m_robot;
+    int m_mode;
+    int m_numFrictionSides;
+    
     std::vector<std::shared_ptr<StabilityPolytope>> m_polytopes;
     std::vector<int> m_total_times_ms;
-    int m_mode;
+    
     std::string stabiliplus_path;
 
 };

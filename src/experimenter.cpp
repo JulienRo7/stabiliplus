@@ -4,7 +4,7 @@
 // ---------- constructors and destructor -----------
 
 Experimenter::Experimenter(int mode, std::string const& robot_file_name, int numFrictionSides):
-    m_mode(mode),
+  m_mode(mode), m_numFrictionSides(numFrictionSides),
     m_robot(robot_file_name, numFrictionSides)
 {
     stabiliplus_path = "";
@@ -69,18 +69,19 @@ void Experimenter::run_exp2()
     std::string robot_names[4] = {"./robots/robot_1.xml", "./robots/robot_2.xml", "./robots/robot_3.xml", "./robots/robot_4.xml"};
     int numTrials = 10;
     Solver solvers[2] = {GLPK, LP_SOLVE};
+
     
     for (auto solver: solvers)
       {
 	for (auto rob_file: robot_names)
 	  {
-	    m_robot.loadRobot(rob_file);
+	    Robot rob(rob_file, m_numFrictionSides);
 	    for (int i = 0; i<numTrials; i++)
 	      {
 		std::cout << "Solver: " << solver << " Robot: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
 		auto start = std::chrono::high_resolution_clock::now();
 
-		std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50, solver));
+		std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(rob, 50, solver));
 		polytope->buildStabilityProblem();
 		polytope->projectionStabilityPolyhedron();
 
