@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <data>
-    <robot name='robot_1'>
+    <robot name='robot_4'>
         <Mass mass='1.0'/>
         <NumFeet n_feet='3' />
 
@@ -34,33 +34,33 @@
             <rotation phi='0' theta='0' psi='0' />
         </ContactPoint>
     </robot>
-    <!-- <accelerations>
-        <matrix name='gravity' row='3' column='1'>
-            <line><v>0.0</v></line>
-            <line><v>0.0</v></line>
-            <line><v>-9.81</v></line>
-        </matrix>
-    </accelerations> -->
     <accelerations>
         <matrix name='gravity' row='3' column='1'>
-            <line><v>-2.5</v></line>
             <line><v>0.0</v></line>
-            <line><v>-9.81</v></line>
-        </matrix>
-        <matrix name='gravity' row='3' column='1'>
-            <line><v>2.5</v></line>
             <line><v>0.0</v></line>
-            <line><v>-9.81</v></line>
-        </matrix>
-        <matrix name='gravity' row='3' column='1'>
-            <line><v>0.0</v></line>
-            <line><v>-2.5</v></line>
-            <line><v>-9.81</v></line>
-        </matrix>
-        <matrix name='gravity' row='3' column='1'>
-            <line><v>0.0</v></line>
-            <line><v>2.5</v></line>
             <line><v>-9.81</v></line>
         </matrix>
     </accelerations>
+    <!-- <accelerations> -->
+    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--         <line><v>-2.5</v></line> -->
+    <!--         <line><v>0.0</v></line> -->
+    <!--         <line><v>-9.81</v></line> -->
+    <!--     </matrix> -->
+    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--         <line><v>2.5</v></line> -->
+    <!--         <line><v>0.0</v></line> -->
+    <!--         <line><v>-9.81</v></line> -->
+    <!--     </matrix> -->
+    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--         <line><v>0.0</v></line> -->
+    <!--         <line><v>-2.5</v></line> -->
+    <!--         <line><v>-9.81</v></line> -->
+    <!--     </matrix> -->
+    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--         <line><v>0.0</v></line> -->
+    <!--         <line><v>2.5</v></line> -->
+    <!--         <line><v>-9.81</v></line> -->
+    <!--     </matrix> -->
+    <!-- </accelerations> -->
 </data>

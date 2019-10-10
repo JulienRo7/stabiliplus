@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <data>
-    <robot name='robot_1'>
+    <robot name='robot_2'>
         <Mass mass='1.0'/>
         <NumFeet n_feet='3' />
 

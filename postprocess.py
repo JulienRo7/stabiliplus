@@ -136,6 +136,7 @@ class PostProcessor:
         self.mode = 0
         self.numComputedPoints = 0
         self.robots = []
+        self.robot_names = []
         self.polytopes = []
 
         self.solvers = []
@@ -156,6 +157,7 @@ class PostProcessor:
 
             elif child.tag == "robot":
                 self.robots.append(Robot.load_from_file(child.attrib['file_name']))
+                self.robot_names.append(child.attrib['name'])
 
             elif child.tag == "times":
                 self.total_times.append(int(child.attrib['total']))
@@ -209,10 +211,37 @@ class PostProcessor:
 
         plt.show()
 
-    def display_mode_2(self):
-        print("Work In Progress...")
-        pass
+    def extract_timings_mode2(self, solver_name, robot_name):
+        numPts = 0
+        total = 0
+        LP = 0
+        inner = 0
+        outer = 0
+        support = 0
 
+        for i in range(self.numComputedPoints):
+            if (self.solvers[i]==solver_name and self.robot_names[i]==robot_name):
+                numPts+=1
+                total+=self.total_times[i]
+                LP+=self.LP_times[i]
+                inner+=self.inner_times[i]
+                outer+=self.outer_times[i]
+                support+=self.support_times[i]
+
+        assert numPts != 0, "No point found for solver {} and robot {}".format(solver_name, robot_name)
+        return (numPts, int(total/numPts), int(LP/numPts), int(inner/numPts), int(outer/numPts), int(support/numPts))
+    
+    
+    def display_mode_2(self):
+        solvers = set(self.solvers)
+        # robots = ["robot_1", "robot_2", "robot_3", "robot_4"]
+        robots = set(self.robot_names)
+
+        for sol in solvers:
+            for rob in robots:
+                timings = self.extract_timings_mode2(sol, rob)
+                print(sol, rob, timings)
+    
     def display_mode_3(self):
         fig = plt.figure()
         ax = Axes3D(fig)

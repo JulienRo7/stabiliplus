@@ -41,7 +41,7 @@ void Experimenter::run_exp1()
     std::cout << "Running Experiment for mode 1!" << '\n';
 
     auto start = std::chrono::high_resolution_clock::now();
-    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50));
+    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50, LP_SOLVE));
 
     polytope->buildStabilityProblem();
     polytope->projectionStabilityPolyhedron();
@@ -180,6 +180,7 @@ void Experimenter::save()
         compPoint->InsertEndChild(polyXML);
 
         tinyxml2::XMLElement *robotXML = doc.NewElement("robot");
+	robotXML->SetAttribute("name", poly->get_robot()->get_name().c_str());
         robotXML->SetAttribute("file_name", robot_file_name.c_str());
         compPoint->InsertEndChild(robotXML);
 
