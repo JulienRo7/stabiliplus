@@ -41,7 +41,7 @@ void Experimenter::run_exp1()
     std::cout << "Running Experiment for mode 1!" << '\n';
 
     auto start = std::chrono::high_resolution_clock::now();
-    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50, LP_SOLVE));
+    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot, 50, GUROBI));
 
     polytope->buildStabilityProblem();
     polytope->projectionStabilityPolyhedron();
@@ -68,7 +68,7 @@ void Experimenter::run_exp2()
 
     std::string robot_names[4] = {"./robots/robot_1.xml", "./robots/robot_2.xml", "./robots/robot_3.xml", "./robots/robot_4.xml"};
     int numTrials = 100;
-    Solver solvers[2] = {GLPK, LP_SOLVE};
+    Solver solvers[3] = {GLPK, LP_SOLVE, GUROBI};
 
     
     for (auto solver: solvers)

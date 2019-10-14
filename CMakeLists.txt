@@ -1,27 +1,45 @@
 project(stabiliplus)
 
 cmake_minimum_required(VERSION 2.8)
+message(${CMAKE_VERSION})
 
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
+foreach(loop_var ${CMAKE_MODULE_PATH})
+  message(path: ${loop_var})
+endforeach(loop_var)
+
 find_package(Eigen3 REQUIRED)
+find_package(libgurobi_c++ REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-O2")
 add_compile_options(-std=c++11)
 
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(/opt/gurobi811/linux64/include)
 
 add_subdirectory(lpsolve55 EXCLUDE_FROM_ALL)
+find_file(gurobi_lib libgurobi81.so
+  PATH /opt/gurobi811/linux64/lib/
+  )
+message(${gurobi_lib})
+# add_library(gurobi81 SHARED IMPORTED
+#   IMPORTED_LOCATION ${gurobi_lib}
+#   INTERFACE_INCLUDE_DIRECTORIES /opt/gurobi811/linux64/include/
+#   )
 
 add_library(wrappers
   ${PROJECT_SOURCE_DIR}/src/wrapper/solver_wrapper.cpp
   ${PROJECT_SOURCE_DIR}/src/wrapper/glpk_wrapper.cpp
   ${PROJECT_SOURCE_DIR}/src/wrapper/lpsolve_wrapper.cpp
+  ${PROJECT_SOURCE_DIR}/src/wrapper/gurobi_wrapper.cpp
   )
-target_link_libraries(wrappers glpk lpsolve55)
+target_link_libraries(wrappers
+  glpk lpsolve55 libgurobi_c++ ${gurobi_lib}
+  )
 
 add_library(stability_polytope
 ${PROJECT_SOURCE_DIR}/src/stability_polytope.cpp

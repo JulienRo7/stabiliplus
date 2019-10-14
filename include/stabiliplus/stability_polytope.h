@@ -25,6 +25,7 @@
 // custom libraries
 #include "wrapper/glpk_wrapper.h"
 #include "wrapper/lpsolve_wrapper.h"
+#include "wrapper/gurobi_wrapper.h"
 #include "robot.h"
 
 #include "vertex.h"
@@ -36,7 +37,8 @@
 
 enum Solver {
   GLPK,
-  LP_SOLVE
+  LP_SOLVE,
+  GUROBI
 };
 
 

@@ -18,6 +18,10 @@ m_solver(solver)
     case LP_SOLVE:
       m_lp = new LPSolveWrapper;
       break;
+
+    case GUROBI:
+      m_lp = new GurobiWrapper;
+      break;
   }
 }
 

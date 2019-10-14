@@ -23,7 +23,7 @@ Run the code in the build folder using:
 The options are:
 * --mode : choose the experiment mode for now the modes are:
   * 1 : (default) generate one robot and compute its stability polyhedron;
-  * 2 : NOT IMPLEMENTED YET! generate a timming "benchmark";
+  * 2 : Compare the different solvers;
   * 3 : Compute a sequence of stability polyhedron for the postprocess to generate an animation;
 * --robot : allows to give the path to the desired robot xml files. Some exemples are available in /robots. (default 'rospack find stabiliplus'/robots/robot_8.xml);
 * --fric_sides : allows to choose the number of sides for the friction cone approximation (default 16).
@@ -31,7 +31,6 @@ The options are:
 
 Once the main program has been launched, the results can be displayed using:
 ```bash
-roscd stabiliplus
 python3 postprocess.py
 ```
 Required libraries:
