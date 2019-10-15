@@ -1,7 +1,7 @@
 project(stabiliplus)
 
 cmake_minimum_required(VERSION 2.8)
-message(${CMAKE_VERSION})
+# message(${CMAKE_VERSION})
 
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
@@ -26,11 +26,11 @@ add_subdirectory(lpsolve55 EXCLUDE_FROM_ALL)
 find_file(gurobi_lib libgurobi81.so
   PATH /opt/gurobi811/linux64/lib/
   )
-message(${gurobi_lib})
+# message(${gurobi_lib})
 find_file(gurobi_c++_lib libgurobi_c++.a
   PATH /opt/gurobi811/linux64/lib/
   )
-message(${gurobi_c++_lib})
+# message(${gurobi_c++_lib})
 
 add_library(wrappers
   ${PROJECT_SOURCE_DIR}/src/wrapper/solver_wrapper.cpp

@@ -94,5 +94,5 @@ void GurobiWrapper::set_searchDirection(const Eigen::Vector3d & searchDir)
   obj.addTerms(c_bis.transpose().data(), m_vars, c_bis.rows());
   m_lp.setObjective(obj, GRB_MAXIMIZE);
 
-  m_lp.write("test.lp");
+  // m_lp.write("test.lp");
 }
