@@ -3,9 +3,9 @@
 
 // ---------- constructors and destructor -----------
 
-Experimenter::Experimenter(int mode, std::string const& robot_file_name, int numFrictionSides):
+Experimenter::Experimenter(int mode, std::string const& robot_file_name, int numFrictionSides, Solver solver):
   m_mode(mode), m_numFrictionSides(numFrictionSides),
-    m_robot(robot_file_name, numFrictionSides)
+  m_robot(robot_file_name, numFrictionSides), m_solver(solver)
 {
     stabiliplus_path = "";
 }
@@ -41,7 +41,7 @@ void Experimenter::run_exp1()
     std::cout << "Running Experiment for mode 1!" << '\n';
 
     auto start = std::chrono::high_resolution_clock::now();
-    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot, 50, GLPK));
+    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot, 50, m_solver));
 
     polytope->buildStabilityProblem();
     polytope->projectionStabilityPolyhedron();
@@ -110,7 +110,7 @@ void Experimenter::run_exp3()
         {
 	  auto start = std::chrono::high_resolution_clock::now();
 
-	  std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50));
+	  std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_robot,50, m_solver));
 	  polytope->buildStabilityProblem();
 	  polytope->projectionStabilityPolyhedron();
 

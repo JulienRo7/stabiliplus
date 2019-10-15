@@ -18,7 +18,7 @@ class Experimenter
 {
 public:
     // ---------- constructors and destructor -----------
-    Experimenter(int mode, std::string const& robot_file_name, int numFrictionSides=8);
+  Experimenter(int mode, std::string const& robot_file_name, int numFrictionSides=8, Solver solver = GLPK);
     ~Experimenter();
 
     // ---------- main functions -----------
@@ -37,6 +37,7 @@ private:
     Robot m_robot;
     int m_mode;
     int m_numFrictionSides;
+    Solver m_solver;
     
     std::vector<std::shared_ptr<StabilityPolytope>> m_polytopes;
     std::vector<int> m_total_times_ms;

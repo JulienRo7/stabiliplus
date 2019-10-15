@@ -10,6 +10,8 @@ int main(int argc, char *argv[])
     std::string file_robot = "./robots/robot_8.xml";
     int numFrictionSides = 16;
 
+    Solver solver = GLPK;
+    
     for (int i=0; i<argc; i++)
     {
         // std::cout << "|" << argv[i] << "|" << '\n';
@@ -25,11 +27,33 @@ int main(int argc, char *argv[])
         {
             numFrictionSides = std::atoi(argv[i+1]);
         }
+	else if (std::string(argv[i])=="--solver")
+	  {
+	    std::string solver_name = std::string(argv[i+1]);
+
+	    if (solver_name == "GLPK")
+	      {
+		solver = GLPK;
+	      }
+	    else if (solver_name == "LP_SOLVE")
+	      {
+		solver = LP_SOLVE;
+	      }
+	    else if (solver_name == "GUROBI")
+	      {
+		solver = GUROBI;
+	      }
+	    else
+	      {
+		std::cout << "Unknown solver name " << solver_name << ". Using the default one (GLPK) instead." << std::endl;
+	      }
+	  }
     }
 
     std::cout << "Mode: " << mode << '\n';
     std::cout << "Robot file: " << file_robot << '\n';
     std::cout << "Number of friction sides: " << numFrictionSides << '\n';
+    std::cout << "Solver: " << solver << '\n';
     std::cout << '\n';
 
 
@@ -46,7 +70,7 @@ int main(int argc, char *argv[])
     only robot_2.xml has 4 accelerations
     */
 
-    Experimenter experience(mode, file_robot, numFrictionSides);
+    Experimenter experience(mode, file_robot, numFrictionSides, solver);
 
     experience.run();
 
