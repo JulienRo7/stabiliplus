@@ -203,6 +203,10 @@ void Experimenter::save()
 	  case LP_SOLVE:
 	    solverXML->SetAttribute("name","LP_SOLVE");
 	    break;
+
+	  case GUROBI:
+	    solverXML->SetAttribute("name", "GUROBI");
+	    break;
 	  }
 	compPoint->InsertEndChild(solverXML);
 	

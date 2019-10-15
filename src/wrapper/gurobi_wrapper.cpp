@@ -32,7 +32,7 @@ void GurobiWrapper::buildProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::Ma
     
   int const numberOfColumns = F_bis.cols();
   int const numberOfRows = F_bis.rows();
-
+ 
   /* Building of the glpk problem using the factorized problem */
 
   // adding the variables
@@ -50,10 +50,16 @@ void GurobiWrapper::buildProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::Ma
   for (int i = 0; i < numberOfRows; i++)
     {
       GRBLinExpr constraintRow;
-      constraintRow.addTerms(F_bis.row(i).data(), m_vars, numberOfColumns);
+      for (int j=0; j<numberOfColumns; j++)
+	{
+	  constraintRow += F_bis(i,j) * (m_vars[j]);
+	}
+      // constraintRow.addTerms(F_bis.row(i), m_vars, numberOfColumns);
+      
       m_lp.addConstr(constraintRow, GRB_LESS_EQUAL, f_bis(i));
     }
-  
+
+  m_lp.set(GRB_IntParam_OutputFlag, 0);
 }
 
 void GurobiWrapper::solveProblem()
@@ -87,4 +93,6 @@ void GurobiWrapper::set_searchDirection(const Eigen::Vector3d & searchDir)
   GRBLinExpr obj;
   obj.addTerms(c_bis.transpose().data(), m_vars, c_bis.rows());
   m_lp.setObjective(obj, GRB_MAXIMIZE);
+
+  m_lp.write("test.lp");
 }

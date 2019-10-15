@@ -248,7 +248,7 @@ class PostProcessor:
         print(total_avg_per_sol)
 
         x = np.arange(len(robots))  # the label locations
-        width = 0.35  # the width of the bars
+        width = 0.20  # the width of the bars
 
         fig, ax = plt.subplots()
         rects = []
