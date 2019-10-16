@@ -26,7 +26,7 @@
 #include "wrapper/glpk_wrapper.h"
 #include "wrapper/lpsolve_wrapper.h"
 #include "wrapper/gurobi_wrapper.h"
-#include "robot.h"
+#include "contactSet.h"
 
 #include "vertex.h"
 #include "edge.h"
@@ -46,7 +46,7 @@ class StabilityPolytope
 {
 public:
     // ----------- constructors and destructor ----------
-  StabilityPolytope(Robot robot, int maxNumberOfIteration = 50, Solver solver = GLPK);
+  StabilityPolytope(ContactSet contactSet, int maxNumberOfIteration = 50, Solver solver = GLPK);
   ~StabilityPolytope();
 
     // ----------- main class methods ----------
@@ -85,7 +85,8 @@ public:
     std::vector<Eigen::Vector3d> get_innerFaceNormals() const;
     std::vector<double> get_innerFaceOffsets() const;
 
-    Robot* get_robot();
+
+    ContactSet* get_contactSet();
 
     Solver get_solver() const;
 
@@ -96,8 +97,8 @@ public:
 
 private:
     // robot:
-    Robot m_robot; // the robot should not change
-
+    ContactSet m_contactSet; // for now the contact set should not change
+    
     // attributes used for the LP problem
     Solver m_solver;
     SolverWrapper *m_lp;

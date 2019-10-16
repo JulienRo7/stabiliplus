@@ -2,8 +2,8 @@
 #define _USE_MATH_DEFINES
 #endif
 
-#ifndef ROBOT_H_INCLUDED
-#define ROBOT_H_INCLUDED
+#ifndef CONTACTSET_H_INCLUDED
+#define CONTACTSET_H_INCLUDED
 
 /*
 The robot class contains the description of the robot. It can load it and make other things
@@ -26,15 +26,15 @@ The robot class contains the description of the robot. It can load it and make o
 #include "contactPoints.h"
 
 
-class Robot
+class ContactSet
 {
 
 public:
 
     // ----------- constructors and destructor ----------
-    Robot();
-    Robot(std::string const& robot_file_name, int numFrictionSides=8);
-    ~Robot();
+    ContactSet();
+    ContactSet(std::string const& robot_file_name, int numFrictionSides=8);
+    ~ContactSet();
 
     // ----------- main class methods ----------
     Eigen::MatrixXd computeMatrixA1();
@@ -47,11 +47,11 @@ public:
     Eigen::VectorXd buildFrictionVectorf();
 
     // ----------- input functions ----------
-    void loadRobot(std::string const& file_name);
+    void loadContactSet(std::string const& file_name);
 
     // ----------- output and display functions ----------
-    void showRobot();
-    void saveRobot(const std::string &file_name);
+    void showContactSet();
+    void saveContactSet(const std::string &file_name);
 
 
     // ----------- getters ----------
@@ -92,4 +92,4 @@ private:
 
 };
 
-#endif // ROBOT_H_INCLUDED
+#endif // CONTACTSET_H_INCLUDED

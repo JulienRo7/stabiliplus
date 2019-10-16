@@ -1,28 +1,30 @@
-#include "stabiliplus/robot.h"
+#include "stabiliplus/contactSet.h"
 
-using namespace std;
+// using namespace std;
 
-Robot::Robot() : m_name(""), m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(0), m_numberOfFrictionSides(8),
+ContactSet::ContactSet() : m_name(""), m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(0), m_numberOfFrictionSides(8),
 m_numberOfAccelerations(1)
 {
     m_accelerations.push_back(m_gravity);
 }
 
-Robot::Robot(string const& robot_file_name, int numFrictionSides) :
+ContactSet::ContactSet(std::string const& contact_set_file_name, int numFrictionSides) :
 m_gravity(0,0,-9.81), m_numberOfFrictionSides(numFrictionSides),
 m_numberOfAccelerations(0)
 {
-    loadRobot(robot_file_name);
+
+  loadContactSet(contact_set_file_name);
 }
 
-Robot::~Robot()
+ContactSet::~ContactSet()
 {
-    // std::cout << "Robot destructor called!" << '\n';
+    // std::cout << "ContactSet destructor called!" << '\n';
 }
 
-Eigen::MatrixXd Robot::computeMatrixA1()
+Eigen::MatrixXd ContactSet::computeMatrixA1()
 {
     int n_columns = 3*m_numberOfFeet;
+
 
     Eigen::MatrixXd A1(6,n_columns);
 
@@ -35,7 +37,7 @@ Eigen::MatrixXd Robot::computeMatrixA1()
     return A1;
 }
 
-Eigen::MatrixXd Robot::computeMatrixA2(Eigen::Vector3d const& acceleration)
+Eigen::MatrixXd ContactSet::computeMatrixA2(Eigen::Vector3d const& acceleration)
 {
     Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6,3);
     A2.block<3,3>(0,0) = Eigen::Matrix3d::Zero();
@@ -44,7 +46,7 @@ Eigen::MatrixXd Robot::computeMatrixA2(Eigen::Vector3d const& acceleration)
     return A2;
 }
 
-Eigen::VectorXd Robot::computeVector_t(Eigen::Vector3d const& acceleration)
+Eigen::VectorXd ContactSet::computeVector_t(Eigen::Vector3d const& acceleration)
 {
     Eigen::VectorXd t(6);
 
@@ -54,28 +56,30 @@ Eigen::VectorXd Robot::computeVector_t(Eigen::Vector3d const& acceleration)
     return t;
 }
 
-Eigen::MatrixXd Robot::buildMatrixA()
+Eigen::MatrixXd ContactSet::buildMatrixA()
 {
-    int const n_columnsA1 = 3*m_numberOfFeet;
-    int const n_columnsA = 3*m_numberOfFeet*m_numberOfAccelerations + 3;
-    int const n_rowsA = 6*m_numberOfAccelerations;
 
-    Eigen::MatrixXd  A = Eigen::MatrixXd::Zero(n_rowsA, n_columnsA);
-    Eigen::MatrixXd A1(6, n_columnsA1);
+  int const n_columnsA1 = 3*m_numberOfFeet;
+  int const n_columnsA = 3*m_numberOfFeet*m_numberOfAccelerations + 3;
+  int const n_rowsA = 6*m_numberOfAccelerations;
 
-    A1 = computeMatrixA1();
+  Eigen::MatrixXd  A = Eigen::MatrixXd::Zero(n_rowsA, n_columnsA);
+    //Eigen::MatrixXd A1(6, n_columnsA1);
 
-    for (int i=0; i<m_numberOfAccelerations; ++i)
+  auto A1 = computeMatrixA1();
+
+  
+  for (int i=0; i<m_numberOfAccelerations; ++i)
     {
-        A.block(6*i, n_columnsA1*i, 6, n_columnsA1) = A1;
-        A.block<6, 3>(6*i, n_columnsA-3) = computeMatrixA2(m_accelerations[i]);
+      A.block(6*i, n_columnsA1*i, 6, n_columnsA1) = A1;
+      A.block<6, 3>(6*i, n_columnsA-3) = computeMatrixA2(m_accelerations[i]);
     }
 
-    return A;
+  return A;
 
 }
 
-Eigen::VectorXd Robot::buildVectorB()
+Eigen::VectorXd ContactSet::buildVectorB()
 {
     Eigen::VectorXd B = Eigen::VectorXd::Zero(6*m_numberOfAccelerations);
 
@@ -86,7 +90,7 @@ Eigen::VectorXd Robot::buildVectorB()
     return B;
 }
 
-Eigen::MatrixXd Robot::buildFrictionF()
+Eigen::MatrixXd ContactSet::buildFrictionF()
 {
     int const numberOfColumns = 3*m_numberOfFeet*m_numberOfAccelerations + 3;
     int const numberOfRows = m_numberOfFeet*(m_numberOfFrictionSides+2)*m_numberOfAccelerations + 6;
@@ -110,7 +114,7 @@ Eigen::MatrixXd Robot::buildFrictionF()
     return F;
 }
 
-Eigen::VectorXd Robot::buildFrictionVectorf()
+Eigen::VectorXd ContactSet::buildFrictionVectorf()
 {
     int const numberOfRows = m_numberOfFeet*(m_numberOfFrictionSides+2)*m_numberOfAccelerations + 6;
     Eigen::VectorXd f(numberOfRows);
@@ -142,7 +146,7 @@ Eigen::VectorXd Robot::buildFrictionVectorf()
 }
 
 // ----------- input functions ----------
-void Robot::loadRobot(string const& file_name)
+void ContactSet::loadContactSet(std::string const& file_name)
 {
     tinyxml2::XMLDocument doc;
     doc.LoadFile(file_name.c_str());
@@ -163,7 +167,7 @@ void Robot::loadRobot(string const& file_name)
         while(mainXML)
         {
             mainType = mainXML->Value();
-            if (std::strcmp(mainType.c_str(), "robot")==0)
+            if (std::strcmp(mainType.c_str(), "robot")==0) // FIX ME: for now in the XML files the contact set is still named robot
             {
                 m_name=mainXML->Attribute("name");
                 childXML = mainXML->FirstChildElement();
@@ -181,7 +185,7 @@ void Robot::loadRobot(string const& file_name)
                     else if (std::strcmp(childType.c_str(), "ContactPoint")==0)
                     {
                         m_feet.push_back(ContactPoints(childXML));
-                        // cout << childXML->Attribute("name") << " added" << endl;
+                        // cout << childXML->Attribute("name") << " added" << std::endl;
                     }
                     else {
                         std::cerr << "Un-Recognized child element name: " << childType << '\n';
@@ -229,22 +233,22 @@ void Robot::loadRobot(string const& file_name)
             mainXML = mainXML->NextSiblingElement();
         }
 
-        // cout << robot_name << " loaded !" << endl;
+        // cout << robot_name << " loaded !" << std::endl;
     }
     else
     {
-        cerr << "Failed to open the XML description file" << endl;
+      std::cerr << "Failed to open the XML description file" << std::endl;
     }
 }
 
 // ----------- output and display functions ----------
-void Robot::showRobot()
+void ContactSet::showContactSet()
 {
-    cout << "Mass of the robot: " << m_mass << endl;
-    cout << "Number of feet of the robot: " << m_numberOfFeet << endl;
+  std::cout << "Mass of the robot: " << m_mass << std::endl;
+  std::cout << "Number of feet of the robot: " << m_numberOfFeet << std::endl;
 }
 
-void Robot::saveRobot(const std::string &file_name)
+void ContactSet::saveContactSet(const std::string &file_name)
 {
     // creating new xml object
     tinyxml2::XMLDocument doc;
@@ -256,24 +260,24 @@ void Robot::saveRobot(const std::string &file_name)
     doc.InsertEndChild(root);
 
     // building the robot element
-    tinyxml2::XMLElement *XMLRobot = doc.NewElement("robot");
-    XMLRobot->SetAttribute("name", m_name.c_str());
+    tinyxml2::XMLElement *XMLContactSet = doc.NewElement("robot");
+    XMLContactSet->SetAttribute("name", m_name.c_str());
 
     {
         tinyxml2::XMLElement *XMLMass = doc.NewElement("Mass");
         XMLMass->SetAttribute("mass", m_mass);
-        XMLRobot->InsertEndChild(XMLMass);
+        XMLContactSet->InsertEndChild(XMLMass);
 
         tinyxml2::XMLElement *XMLNumFeet = doc.NewElement("NumFeet");
         XMLNumFeet->SetAttribute("n_feet", m_numberOfFeet);
-        XMLRobot->InsertEndChild(XMLNumFeet);
+        XMLContactSet->InsertEndChild(XMLNumFeet);
 
         for (auto foot: m_feet)
         {
-            XMLRobot->InsertEndChild(foot.get_XMLContactPoint(doc));
+            XMLContactSet->InsertEndChild(foot.get_XMLContactPoint(doc));
         }
     }
-    root->InsertEndChild(XMLRobot);
+    root->InsertEndChild(XMLContactSet);
 
     // building the accelerations element
     tinyxml2::XMLElement *XMLAccelerations = doc.NewElement("accelerations");
@@ -308,17 +312,17 @@ void Robot::saveRobot(const std::string &file_name)
 
 // ------------------ Getters -----------------------
 
-int Robot::get_numberOfFeet() const
+int ContactSet::get_numberOfFeet() const
 {
     return m_numberOfFeet;
 }
 
-int Robot::get_numberOfAcceletations() const
+int ContactSet::get_numberOfAcceletations() const
 {
     return m_numberOfAccelerations;
 }
 
-int Robot::get_contactIndexFromName(std::string contactName) const
+int ContactSet::get_contactIndexFromName(std::string contactName) const
 {
     int i(0), index(0);
     for (auto contact: m_feet)
@@ -332,7 +336,7 @@ int Robot::get_contactIndexFromName(std::string contactName) const
     return index;
 }
 
-std::vector<std::string> Robot::get_contactNames() const
+std::vector<std::string> ContactSet::get_contactNames() const
 {
     std::vector<std::string> names;
     for (auto contact : m_feet)
@@ -342,20 +346,20 @@ std::vector<std::string> Robot::get_contactNames() const
     return names;
 }
 
-bool Robot::hasContactNamed(std::string contactName) const
+bool ContactSet::hasContactNamed(std::string contactName) const
 {
     std::vector<std::string> names = get_contactNames();
     return find(names.begin(), names.end(), contactName)!=names.end();
 }
 
-std::string Robot::get_name() const
+std::string ContactSet::get_name() const
 {
     return m_name;
 }
 
 
 // ------------------ setter -----------------------
-void Robot::translateContact(int contactIndex, Eigen::Vector3d translation)
+void ContactSet::translateContact(int contactIndex, Eigen::Vector3d translation)
 {
     if (contactIndex >= 0 && contactIndex < m_feet.size())
     {
@@ -367,7 +371,7 @@ void Robot::translateContact(int contactIndex, Eigen::Vector3d translation)
     }
 }
 
-void Robot::set_contact(int contactIndex, Eigen::Matrix4d homTrans)
+void ContactSet::set_contact(int contactIndex, Eigen::Matrix4d homTrans)
 {
     if (contactIndex >= 0 && contactIndex < m_feet.size())
     {
@@ -379,26 +383,26 @@ void Robot::set_contact(int contactIndex, Eigen::Matrix4d homTrans)
     }
 }
 
-void Robot::removeContact(int contactIndex)
+void ContactSet::removeContact(int contactIndex)
 {
     m_feet.erase(m_feet.begin()+contactIndex);
     m_numberOfFeet --;
 }
 
-void Robot::removeContact(std::string contactName)
+void ContactSet::removeContact(std::string contactName)
 {
     int index = get_contactIndexFromName(contactName);
     removeContact(index);
 }
 
-void Robot::addContact(std::string contactName)
+void ContactSet::addContact(std::string contactName)
 {
     m_feet.push_back(ContactPoints(contactName, 0.5));
     m_numberOfFeet ++;
 }
 // ---------- Static function -----------
 
-Eigen::Matrix3d Robot::skewSymmetric(Eigen::Vector3d const& vect)
+Eigen::Matrix3d ContactSet::skewSymmetric(Eigen::Vector3d const& vect)
 {
     Eigen::Matrix3d vect_hat;
     vect_hat << 0, -vect(2), vect(1),

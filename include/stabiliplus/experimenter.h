@@ -11,14 +11,14 @@
 
 #include <tinyxml2.h>
 
-#include "robot.h"
+#include "contactSet.h"
 #include "stability_polytope.h"
 
 class Experimenter
 {
 public:
     // ---------- constructors and destructor -----------
-  Experimenter(int mode, std::string const& robot_file_name, int numFrictionSides=8, Solver solver = GLPK);
+  Experimenter(int mode, std::string const& contact_set_file_name, int numFrictionSides=8, Solver solver = GLPK);
     ~Experimenter();
 
     // ---------- main functions -----------
@@ -34,7 +34,7 @@ public:
 
 
 private:
-    Robot m_robot;
+    ContactSet m_contactSet;
     int m_mode;
     int m_numFrictionSides;
     Solver m_solver;

@@ -1,10 +1,10 @@
 #include "stabiliplus/stability_polytope.h"
 
 
-using namespace std;
+// using namespace std;
 
-StabilityPolytope::StabilityPolytope(Robot robot, int maxNumberOfIteration, Solver solver):
-m_robot(robot),
+StabilityPolytope::StabilityPolytope(ContactSet contactSet, int maxNumberOfIteration, Solver solver):
+m_contactSet(contactSet),
 m_numberOfIterations(0), m_maxNumberOfIteration(maxNumberOfIteration), m_residual(1000),
 m_lpMicro(0), m_innerConvexMicro(0), m_outerConvexMicro(0), m_supportFunctionMicro(0),
 m_solver(solver)
@@ -45,17 +45,17 @@ StabilityPolytope::~StabilityPolytope()
 // ----------- main class methods ----------
 void StabilityPolytope::buildStabilityProblem()
 {
-  m_lp->buildProblem(m_robot.buildVectorB(),
-		     m_robot.buildMatrixA(),
-		     m_robot.buildFrictionF(),
-		     m_robot.buildFrictionVectorf());
+  m_lp->buildProblem(m_contactSet.buildVectorB(),
+  		     m_contactSet.buildMatrixA(),
+  		     m_contactSet.buildFrictionF(),
+  		     m_contactSet.buildFrictionVectorf());
 
-  // Eigen::VectorXd B = m_robot.buildVectorB();
-  // Eigen::MatrixXd A = m_robot.buildMatrixA();
+  // Eigen::VectorXd B = m_contactSet.buildVectorB();
+  // Eigen::MatrixXd A = m_contactSet.buildMatrixA();
   // std::cout << "A: "<< '\n' << A << '\n';
-  // Eigen::MatrixXd F = m_robot.buildFrictionF();
+  // Eigen::MatrixXd F = m_contactSet.buildFrictionF();
   // std::cout << "F: "<< '\n' << F << '\n';
-  // Eigen::VectorXd f = m_robot.buildFrictionVectorf();
+  // Eigen::VectorXd f = m_contactSet.buildFrictionVectorf();
 
 
 }
@@ -677,7 +677,7 @@ bool StabilityPolytope::stopCriterion()
 void StabilityPolytope::exportVertices(std::string file_name)
 {
 
-    ofstream file_stream(file_name);
+  std::ofstream file_stream(file_name);
 
     if (file_stream)
     {
@@ -690,7 +690,7 @@ void StabilityPolytope::exportVertices(std::string file_name)
                         << it_vertices->get_coordinates()[2] << ';'
                         << it_vertices->get_direction()[0] << ';'
                         << it_vertices->get_direction()[1] << ';'
-                        << it_vertices->get_direction()[2] << ';' << endl;
+                        << it_vertices->get_direction()[2] << ';' << std::endl;
         }
 
         for (auto it : m_edges)
@@ -701,7 +701,7 @@ void StabilityPolytope::exportVertices(std::string file_name)
                         << it->get_vertex1()->get_coordinates()[2] << ';'
                         << it->get_vertex2()->get_coordinates()[0] << ';'
                         << it->get_vertex2()->get_coordinates()[1] << ';'
-                        << it->get_vertex2()->get_coordinates()[2] << ';' << endl;
+                        << it->get_vertex2()->get_coordinates()[2] << ';' << std::endl;
         }
 
         for (auto const& it : m_outerVertices)
@@ -709,7 +709,7 @@ void StabilityPolytope::exportVertices(std::string file_name)
             file_stream << "ov;" // oe = outer vertex
                         << it->get_coordinates()[0] << ';'
                         << it->get_coordinates()[1] << ';'
-                        << it->get_coordinates()[2] << ';' << endl;
+                        << it->get_coordinates()[2] << ';' << std::endl;
         }
 
         for (auto const& it : m_outerEdges)
@@ -720,7 +720,7 @@ void StabilityPolytope::exportVertices(std::string file_name)
                         << it->get_outerVertex1()->get_coordinates()[2] << ';'
                         << it->get_outerVertex2()->get_coordinates()[0] << ';'
                         << it->get_outerVertex2()->get_coordinates()[1] << ';'
-                        << it->get_outerVertex2()->get_coordinates()[2] << ';' << endl;
+                        << it->get_outerVertex2()->get_coordinates()[2] << ';' << std::endl;
         }
     }
     else
@@ -811,9 +811,9 @@ std::vector<double> StabilityPolytope::get_innerFaceOffsets() const
     return innerFaceOffsets;
 }
 
-Robot* StabilityPolytope::get_robot()
+ContactSet* StabilityPolytope::get_contactSet()
 {
-    return &m_robot;
+    return &m_contactSet;
 }
 
 Solver StabilityPolytope::get_solver() const
