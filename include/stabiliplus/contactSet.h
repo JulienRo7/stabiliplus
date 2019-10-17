@@ -42,9 +42,13 @@ public:
     Eigen::VectorXd computeVector_t(Eigen::Vector3d const& acceleration);
 
     Eigen::MatrixXd buildMatrixA();
+    Eigen::MatrixXd buildStaticMatrixA();
     Eigen::VectorXd buildVectorB();
+    Eigen::VectorXd buildStaticVectorB();
     Eigen::MatrixXd buildFrictionF();
+    Eigen::MatrixXd buildStaticFrictionF();
     Eigen::VectorXd buildFrictionVectorf();
+    Eigen::VectorXd buildStaticFrictionVectorf();
 
     // ----------- input functions ----------
     void loadContactSet(std::string const& file_name);
@@ -56,6 +60,7 @@ public:
 
     // ----------- getters ----------
     int get_numberOfFeet() const;
+
     int get_numberOfAcceletations() const;
 
     int get_contactIndexFromName(std::string contactName) const;

@@ -13,6 +13,7 @@
 
 #include "contactSet.h"
 #include "stability_polytope.h"
+#include "staticStabilityPolytope.h"
 
 class Experimenter
 {
@@ -26,7 +27,8 @@ public:
     void run_exp1();
     void run_exp2();
     void run_exp3();
-
+    void run_exp4();
+    
     // ---------- inputs and setters -----------
 
     // ---------- outputs and getters -----------

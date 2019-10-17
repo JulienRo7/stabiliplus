@@ -96,3 +96,18 @@ void GurobiWrapper::set_searchDirection(const Eigen::Vector3d & searchDir)
 
   // m_lp.write("test.lp");
 }
+
+void GurobiWrapper::set_staticSearchDirection(const Eigen::Vector2d & searchDir)
+{
+  m_staticSearchDirection = searchDir;
+  Eigen::VectorXd c = Eigen::VectorXd::Zero(m_originalNumCols);
+  c.tail(2)=searchDir;
+
+  const Eigen::VectorXd c_bis = m_Q_u.transpose()*c;
+
+  GRBLinExpr obj;
+  obj.addTerms(c_bis.transpose().data(), m_vars, c_bis.rows());
+  m_lp.setObjective(obj, GRB_MAXIMIZE);
+
+  // m_lp.write("test.lp");
+}

@@ -10,6 +10,12 @@
 
 // homemade includes
 
+enum Solver {
+  GLPK,
+  LP_SOLVE,
+  GUROBI
+};
+
 class SolverWrapper
 {
  public:
@@ -23,13 +29,16 @@ class SolverWrapper
 
   // ---------- getters -----------
   Eigen::Vector3d get_result();
-
+  Eigen::Vector2d get_staticResult();
+  
   // ---------- setters -----------
   virtual void set_searchDirection(const Eigen::Vector3d & searchDir) = 0;
+  virtual void set_staticSearchDirection(const Eigen::Vector2d & searchDir) = 0;  
 
  protected:
   Eigen::Vector3d m_result;
   Eigen::Vector3d m_searchDirection;
+  Eigen::Vector2d m_staticSearchDirection;
 
   bool m_problemSolved;
 };

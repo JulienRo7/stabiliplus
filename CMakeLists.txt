@@ -53,16 +53,22 @@ ${PROJECT_SOURCE_DIR}/src/outerface.cpp
 )
 target_link_libraries(stability_polytope wrappers)
 
+add_library(staticStabilityPolytope
+  ${PROJECT_SOURCE_DIR}/src/staticStabilityPolytope.cpp
+  )
+target_link_libraries(staticStabilityPolytope wrappers)
+
 add_library(contactSet
 ${PROJECT_SOURCE_DIR}/src/contactSet.cpp
 ${PROJECT_SOURCE_DIR}/src/contactPoints.cpp
 )
 target_link_libraries(contactSet tinyxml2)
 
+
 add_library(experimenter
 ${PROJECT_SOURCE_DIR}/src/experimenter.cpp
 )
-target_link_libraries(experimenter contactSet stability_polytope tinyxml2)
+target_link_libraries(experimenter contactSet stability_polytope staticStabilityPolytope tinyxml2)
 
 add_executable(main
   ${PROJECT_SOURCE_DIR}/src/main.cpp

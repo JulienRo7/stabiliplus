@@ -35,12 +35,6 @@
 #include "outeredge.h"
 #include "outerface.h"
 
-enum Solver {
-  GLPK,
-  LP_SOLVE,
-  GUROBI
-};
-
 
 class StabilityPolytope
 {

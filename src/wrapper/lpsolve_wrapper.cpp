@@ -99,3 +99,15 @@ void LPSolveWrapper::set_searchDirection(const Eigen::Vector3d & searchDir)
   
   set_obj_fnex(m_lp, c_bis.rows(), c_bis.data(), NULL); 
 }
+
+void LPSolveWrapper::set_staticSearchDirection(const Eigen::Vector2d & searchDir)
+{
+  m_staticSearchDirection = searchDir;
+  Eigen::VectorXd c = Eigen::VectorXd::Zero(m_originalNumCols);
+  c.tail(2)=searchDir;
+
+  Eigen::VectorXd c_bis = Eigen::VectorXd::Zero(get_Ncolumns(m_lp)+1);
+  c_bis.tail(get_Ncolumns(m_lp)) = m_Q_u.transpose()*c;
+  
+  set_obj_fnex(m_lp, c_bis.rows(), c_bis.data(), NULL); 
+}

@@ -100,3 +100,17 @@ void GlpkWrapper::set_searchDirection(const Eigen::Vector3d & searchDir)
     glp_set_obj_coef(m_lp, i+1, c_bis[i]);
   }
 }
+
+void GlpkWrapper::set_staticSearchDirection(const Eigen::Vector2d & searchDir)
+{
+  m_staticSearchDirection = searchDir;
+  Eigen::VectorXd c = Eigen::VectorXd::Zero(m_originalNumCols);
+  c.tail(2)=searchDir;
+
+  const Eigen::VectorXd c_bis = m_Q_u.transpose()*c;
+
+  for (int i = 0; i<c_bis.size(); ++i)
+  {
+    glp_set_obj_coef(m_lp, i+1, c_bis[i]);
+  }
+}

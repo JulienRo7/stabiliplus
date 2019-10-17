@@ -728,7 +728,6 @@ void StabilityPolytope::exportVertices(std::string file_name)
         std::cerr << "Error: Impossible to open the output file." << '\n';
     }
 
-    // glp_write_lp(m_lp, NULL, "export_lp.txt");
 }
 
 void StabilityPolytope::showPoly()

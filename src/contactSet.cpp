@@ -25,7 +25,6 @@ Eigen::MatrixXd ContactSet::computeMatrixA1()
 {
     int n_columns = 3*m_numberOfFeet;
 
-
     Eigen::MatrixXd A1(6,n_columns);
 
     for (int i(0); i<m_numberOfFeet; ++i)
@@ -76,7 +75,22 @@ Eigen::MatrixXd ContactSet::buildMatrixA()
     }
 
   return A;
+}
 
+Eigen::MatrixXd ContactSet::buildStaticMatrixA()
+{
+  int const n_colA1 = 3*m_numberOfFeet;
+  int const n_colA = n_colA1 + 2;
+  int const n_rowA = 6;
+
+  Eigen::MatrixXd A(n_rowA, n_colA);
+  auto A1 = computeMatrixA1();
+
+  A.leftCols(n_colA1) = A1;
+  A.rightCols(2) = computeMatrixA2(m_gravity).leftCols(2);
+
+  return A;
+  
 }
 
 Eigen::VectorXd ContactSet::buildVectorB()
@@ -88,6 +102,11 @@ Eigen::VectorXd ContactSet::buildVectorB()
         B.segment<6>(6*i) = computeVector_t(m_accelerations[i]);
     }
     return B;
+}
+
+Eigen::VectorXd ContactSet::buildStaticVectorB()
+{
+  return computeVector_t(m_gravity);
 }
 
 Eigen::MatrixXd ContactSet::buildFrictionF()
@@ -110,6 +129,27 @@ Eigen::MatrixXd ContactSet::buildFrictionF()
 
     F.block<3,3>(numberOfRows-6,numberOfColumns-3) = Eigen::Matrix3d::Identity();
     F.bottomRightCorner<3,3>() = -Eigen::Matrix3d::Identity();
+
+    return F;
+}
+
+Eigen::MatrixXd ContactSet::buildStaticFrictionF()
+{
+    int const numberOfColumns = 3*m_numberOfFeet + 2;
+    int const numberOfRows = m_numberOfFeet*(m_numberOfFrictionSides+2) + 4;
+
+    Eigen::MatrixXd F = Eigen::MatrixXd::Zero(numberOfRows, numberOfColumns);
+    Eigen::MatrixXd F_contact((m_numberOfFrictionSides+2), 3);
+
+    for (int i=0; i<m_numberOfFeet; ++i)
+    {
+        F_contact = m_feet[i].linearizedFrictionCone(m_numberOfFrictionSides);
+
+	F.block(i*(m_numberOfFrictionSides+2), i*3 , m_numberOfFrictionSides+2, 3) = F_contact;
+    }
+
+    F.block<2,2>(numberOfRows-4,numberOfColumns-2) = Eigen::Matrix2d::Identity();
+    F.bottomRightCorner<2,2>() = -Eigen::Matrix2d::Identity();
 
     return F;
 }
@@ -143,6 +183,33 @@ Eigen::VectorXd ContactSet::buildFrictionVectorf()
     f[numberOfRows-1] = 0; // -z_min
 
     return f;
+}
+
+Eigen::VectorXd ContactSet::buildStaticFrictionVectorf()
+{
+  int const numberOfRows = m_numberOfFeet*(m_numberOfFrictionSides+2) + 4;
+  Eigen::VectorXd f(numberOfRows);
+
+  double f_max = 10*m_mass;
+
+  for (int i=0; i<m_numberOfFeet; i+=1)
+    {
+      int init = i*(m_numberOfFrictionSides+2);
+      f[init] = f_max;
+      f[init+1] = 0;
+      for (int j=0; j<m_numberOfFrictionSides; ++j)
+        {
+	  f[init+2+j]= 0.0;
+        }
+    }
+
+  // Limitation of the CoM
+  f[numberOfRows-4] = 1000; // x_max
+  f[numberOfRows-3] = 1000; // y_max
+  f[numberOfRows-2] = 1000; // -x_min
+  f[numberOfRows-1] = 1000; // -y_min
+  
+  return f;
 }
 
 // ----------- input functions ----------

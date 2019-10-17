@@ -27,6 +27,7 @@ class LPSolveWrapper: public SolverWrapper
 
   // ---------- setters -----------
   void set_searchDirection(const Eigen::Vector3d & searchDir);
+  void set_staticSearchDirection(const Eigen::Vector2d & searchDir);
 
  private:
   lprec *m_lp;

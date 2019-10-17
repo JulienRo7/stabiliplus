@@ -19,19 +19,23 @@ Experimenter::~Experimenter()
 void Experimenter::run()
 {
     std::cout << "Running experiment!" << '\n';
-    switch (m_mode) {
-        case 1:
-            run_exp1();
-            break;
-        case 2:
-            run_exp2();
-            break;
-        case 3:
-            run_exp3();
-            break;
-        default:
-            std::cerr << "Unknown mode" << '\n';
-
+    switch (m_mode)
+      {
+      case 1:
+	run_exp1();
+	break;
+      case 2:
+	run_exp2();
+	break;
+      case 3:
+	run_exp3();
+	break;
+      case 4:
+	run_exp4();
+	break;
+      default:
+	std::cerr << "Unknown mode" << '\n';
+	
     }
     std::cout << "Experiment done!" << '\n';
 }
@@ -129,6 +133,18 @@ void Experimenter::run_exp3()
     }
 }
 
+void Experimenter::run_exp4()
+{
+  std::cout << "Welcome to mode 4: static stability" << std::endl;
+
+  StaticStabilityPolytope static_poly(m_contactSet, 50, m_solver);
+  
+  static_poly.initSolver();
+  static_poly.projectionStabilityPolyhedron();
+
+  static_poly.saveResults("/tmp/static_res.txt");
+}
+
 
 // ---------- outputs and getters -----------
 void Experimenter::save()
@@ -136,7 +152,7 @@ void Experimenter::save()
 
     // if the res folder doesn't exist, create it
     // std::cout << system("mkdir -p `rospack find stabiliplus`/res") << '\n';
-    std::cout << system("mkdir -p /tmp/polytopes") << '\n';
+    std::cout << system("mkdir -p /tmp/polytopes");
     std::cout << system("mkdir -p /tmp/robots") << '\n';
 
     // creating new xml object

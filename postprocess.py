@@ -327,6 +327,71 @@ class PostProcessor:
         print("Animation saved!")
         plt.show()
 
+
+    def display_mode_4(self):
+        innerVertices = []
+        searchDirs = []
+        outerVertices = []
+        normals = []
+
+        file = open("/tmp/static_res.txt", 'r')
+
+        for line in file:
+            line = line.split(';')
+            if line[0]=='iv':
+                innerVertices.append([float(line[1]),float(line[2])])
+            elif line[0]=='sd':
+                searchDirs.append([float(line[1]),float(line[2])])
+            elif line[0]=='ov':
+                outerVertices.append([float(line[1]),float(line[2])])
+            elif line[0]=='no':
+                normals.append([float(line[1]),float(line[2])])
+            else:
+                print("Unknown value")
+
+        display_innerVertices = True
+        display_searchDirs = True
+        display_outerVertices = True
+        display_normals = True
+
+        fig, ax = plt.subplots()
+
+        scale = 0.5
+        
+        if display_innerVertices:
+            iv_x = [v[0] for v in innerVertices]
+            iv_y = [v[1] for v in innerVertices]
+            iv_x.append(iv_x[0])
+            iv_y.append(iv_y[0])
+
+            ax.plot(iv_x, iv_y, 'r-')
+
+        if display_searchDirs:
+            for v,d in zip(innerVertices, searchDirs):
+                ax.arrow(v[0], v[1], scale*d[0], scale*d[1], color='r')
+
+        if display_outerVertices:
+            ov_x = [v[0] for v in outerVertices]
+            ov_y = [v[1] for v in outerVertices]
+            ov_x.append(ov_x[0])
+            ov_y.append(ov_y[0])
+
+            ax.plot(ov_x, ov_y, 'g-')
+
+        if display_normals:
+            m_x = [(v1[0]+v2[0])/2 for v1,v2 in zip(innerVertices[:-1], innerVertices[1:])]
+            m_y = [(v1[1]+v2[1])/2 for v1,v2 in zip(innerVertices[:-1], innerVertices[1:])]
+            m_x.append((innerVertices[-1][0]+innerVertices[0][0])/2)
+            m_y.append((innerVertices[-1][1]+innerVertices[0][1])/2)
+            
+            for x, y, d in zip(m_x, m_y, normals):
+                ax.arrow(x, y, scale*d[0], scale*d[1], color='b')
+
+        ax.set_aspect('equal')
+        ax.set_xbound(-2, 2)
+        plt.show()
+        
+    
     def display_results(self):
 
         if self.mode == 1:
@@ -335,6 +400,8 @@ class PostProcessor:
             self.display_mode_2()
         elif self.mode == 3:
             self.display_mode_3()
+        elif self.mode == 4:
+            self.display_mode_4()
         else:
             print("Unknown Mode {}".format(self.mode))
             assert False
