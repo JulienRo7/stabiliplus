@@ -12,6 +12,7 @@
 #include <cmath>
 #include <algorithm>
 #include <memory>
+#include <chrono>
 
 // libraries
 #include <Eigen/Dense>
@@ -43,7 +44,9 @@ class StaticStabilityPolytope
   // ----- setters -----
 
   // ----- getters -----
-
+  double initTime();
+  double LPTime();
+  double structTime();
   
  private:
   // model description
@@ -61,5 +64,10 @@ class StaticStabilityPolytope
 
   // algorithm storage
   std::vector<std::shared_ptr<StaticPoint>> m_points;
+
+  // timings in micro seconds
+  double m_initTime;
+  double m_LPTime;
+  double m_structTime;
 };
 #endif // STATIC_STABILITY_POLYTOPE_H_INCLUDE

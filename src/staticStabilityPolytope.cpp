@@ -3,7 +3,8 @@
 StaticStabilityPolytope::StaticStabilityPolytope(ContactSet contactSet, int maxNumberOfIteration, double maxError, Solver solver):
   m_contactSet(contactSet), m_solver(solver),
   m_maxIterations(maxNumberOfIteration), m_iteration(0),
-  m_maxError(maxError), m_error(2*maxError)
+  m_maxError(maxError), m_error(2*maxError),
+  m_initTime(0), m_LPTime(0), m_structTime(0)
 {
   switch(solver)
     {
@@ -29,6 +30,8 @@ StaticStabilityPolytope::~StaticStabilityPolytope()
 // ----- main class methods
 void StaticStabilityPolytope::initSolver()
 {
+  auto start = std::chrono::high_resolution_clock::now();
+  
   auto B = m_contactSet.buildStaticVectorB();
   auto A = m_contactSet.buildStaticMatrixA();
   auto F = m_contactSet.buildStaticFrictionF();
@@ -39,21 +42,32 @@ void StaticStabilityPolytope::initSolver()
   // std::cout << "Matrix F: " << F << std::endl;
   // std::cout << "Vector f: " << f.transpose() << std::endl;
   
-  
   m_lp->buildProblem(B, A, F, f);
+
+  auto stop = std::chrono::high_resolution_clock::now();
+
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop - start);
+  m_initTime = duration.count();
 }
 
 void StaticStabilityPolytope::solveLP(Eigen::Vector2d const& direction, Eigen::Vector2d &vertex)
 {
+  auto start = std::chrono::high_resolution_clock::now();
   m_lp->set_staticSearchDirection(direction);
 
   m_lp->solveProblem();
 
   vertex = m_lp->get_staticResult();
+
+  auto stop = std::chrono::high_resolution_clock::now();
+
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop - start);
+  m_LPTime += duration.count();
 }
 
 void StaticStabilityPolytope::projectionStabilityPolyhedron()
 {
+  auto start = std::chrono::high_resolution_clock::now();
   // initialization of the algorithm
   Eigen::Vector2d dir, vertex;
 
@@ -111,6 +125,11 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
 
       m_iteration++;
     }
+  auto stop = std::chrono::high_resolution_clock::now();
+
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop-start);
+
+  m_structTime = duration.count() - m_LPTime;
   
 
 }
@@ -151,4 +170,20 @@ void StaticStabilityPolytope::showPointsNeighbours()
     {
       std::cout << it_pt->prec() << "->" << it_pt << "->" << it_pt->next() << std::endl;
     }
+}
+
+// ----- getters -----
+
+double StaticStabilityPolytope::initTime()
+{
+  return m_initTime;
+}
+double StaticStabilityPolytope::LPTime()
+{
+  return m_LPTime;
+}
+
+double StaticStabilityPolytope::structTime()
+{
+  return m_structTime;
 }

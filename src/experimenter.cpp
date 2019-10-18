@@ -137,11 +137,22 @@ void Experimenter::run_exp4()
 {
   std::cout << "Welcome to mode 4: static stability" << std::endl;
 
+  auto start = std::chrono::high_resolution_clock::now();
+  
   StaticStabilityPolytope static_poly(m_contactSet, 50, 0.01, m_solver);
   
   static_poly.initSolver();
   static_poly.projectionStabilityPolyhedron();
 
+  auto stop = std::chrono::high_resolution_clock::now();
+
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop - start);
+  double totalTime  = duration.count();
+
+  std::cout << "Static Stability Region computed in " << totalTime << " microseconds." << std::endl;
+  std::cout << "Init time: " << static_poly.initTime() << " microseconds" << std::endl;
+  std::cout << "LP time: " << static_poly.LPTime() << " microseconds with solver " << m_solver << std::endl;
+  std::cout << "Structure time: " << static_poly.structTime() << " microseconds" << std::endl;
   static_poly.saveResults("/tmp/static_res.txt");
 }
 
