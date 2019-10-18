@@ -42,22 +42,19 @@ target_link_libraries(wrappers
   glpk lpsolve55 ${gurobi_c++_lib} ${gurobi_lib}
   )
 
-add_library(stability_polytope
-${PROJECT_SOURCE_DIR}/src/stability_polytope.cpp
-${PROJECT_SOURCE_DIR}/src/vertex.cpp
-${PROJECT_SOURCE_DIR}/src/edge.cpp
-${PROJECT_SOURCE_DIR}/src/face.cpp
-${PROJECT_SOURCE_DIR}/src/outervertex.cpp
-${PROJECT_SOURCE_DIR}/src/outeredge.cpp
-${PROJECT_SOURCE_DIR}/src/outerface.cpp
-)
-target_link_libraries(stability_polytope wrappers)
-
-add_library(staticStabilityPolytope
+add_library(StabilityPolytope
+  ${PROJECT_SOURCE_DIR}/src/stabilityPolytope.cpp
+  ${PROJECT_SOURCE_DIR}/src/robustStabilityPolytope.cpp
   ${PROJECT_SOURCE_DIR}/src/staticStabilityPolytope.cpp
   ${PROJECT_SOURCE_DIR}/src/staticPoint.cpp
+  ${PROJECT_SOURCE_DIR}/src/vertex.cpp
+  ${PROJECT_SOURCE_DIR}/src/edge.cpp
+  ${PROJECT_SOURCE_DIR}/src/face.cpp
+  ${PROJECT_SOURCE_DIR}/src/outervertex.cpp
+  ${PROJECT_SOURCE_DIR}/src/outeredge.cpp
+  ${PROJECT_SOURCE_DIR}/src/outerface.cpp
   )
-target_link_libraries(staticStabilityPolytope wrappers)
+target_link_libraries(StabilityPolytope wrappers)
 
 add_library(contactSet
 ${PROJECT_SOURCE_DIR}/src/contactSet.cpp
@@ -65,13 +62,8 @@ ${PROJECT_SOURCE_DIR}/src/contactPoints.cpp
 )
 target_link_libraries(contactSet tinyxml2)
 
-
-add_library(experimenter
-${PROJECT_SOURCE_DIR}/src/experimenter.cpp
-)
-target_link_libraries(experimenter contactSet stability_polytope staticStabilityPolytope tinyxml2)
-
 add_executable(main
   ${PROJECT_SOURCE_DIR}/src/main.cpp
+  ${PROJECT_SOURCE_DIR}/src/experimenter.cpp
   )
-target_link_libraries(main experimenter)
+target_link_libraries(main contactSet StabilityPolytope tinyxml2)

@@ -1,35 +1,13 @@
-#include "stabiliplus/stability_polytope.h"
+#include "stabiliplus/robustStabilityPolytope.h"
 
 
 // using namespace std;
 
-StabilityPolytope::StabilityPolytope(ContactSet contactSet, int maxNumberOfIteration, Solver solver):
-m_contactSet(contactSet),
-m_numberOfIterations(0), m_maxNumberOfIteration(maxNumberOfIteration), m_residual(1000),
-m_lpMicro(0), m_innerConvexMicro(0), m_outerConvexMicro(0), m_supportFunctionMicro(0),
-m_solver(solver)
+// inherited constructor
+
+RobustStabilityPolytope::~RobustStabilityPolytope()
 {
-  switch(m_solver)
-  {
-    case GLPK:
-      m_lp = new GlpkWrapper;
-      break;
-
-    case LP_SOLVE:
-      m_lp = new LPSolveWrapper;
-      break;
-
-    case GUROBI:
-      m_lp = new GurobiWrapper;
-      break;
-  }
-}
-
-
-StabilityPolytope::~StabilityPolytope()
-{
-  delete m_lp;
-
+    
   for (auto it: m_outerEdges)
   {
     it->finish();
@@ -43,8 +21,9 @@ StabilityPolytope::~StabilityPolytope()
 
 
 // ----------- main class methods ----------
-void StabilityPolytope::buildStabilityProblem()
+void RobustStabilityPolytope::initSolver()
 {
+  auto start = std::chrono::high_resolution_clock::now();
   m_lp->buildProblem(m_contactSet.buildVectorB(),
   		     m_contactSet.buildMatrixA(),
   		     m_contactSet.buildFrictionF(),
@@ -57,112 +36,110 @@ void StabilityPolytope::buildStabilityProblem()
   // std::cout << "F: "<< '\n' << F << '\n';
   // Eigen::VectorXd f = m_contactSet.buildFrictionVectorf();
 
-
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop-start);
+  m_initTime = duration.count();
 }
 
 
-void StabilityPolytope::solveStabilityProblem(Eigen::Vector3d const& direction, Eigen::Vector3d &point)
+void RobustStabilityPolytope::solveLP(Eigen::Vector3d const& direction, Eigen::Vector3d &vertex)
 {
-
+  auto start = std::chrono::high_resolution_clock::now();
   m_lp->set_searchDirection(direction);
 
   m_lp->solveProblem();
   
-  point = m_lp->get_result();
+  vertex = m_lp->get_result();
+
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop-start);
+  m_LPTime += duration.count();
 }
 
-void StabilityPolytope::projectionStabilityPolyhedron()
+void RobustStabilityPolytope::projectionStabilityPolyhedron()
 {
-    // std::cout << "Reached here!" << '\n';
-    std::array<Eigen::Vector3d, 4> initialDirections;
-    Eigen::Vector3d dir;
-    Eigen::Vector3d point;
+  auto structStart = std::chrono::high_resolution_clock::now();
+  // std::cout << "Reached here!" << '\n';
+  std::array<Eigen::Vector3d, 4> initialDirections;
+  Eigen::Vector3d dir;
+  Eigen::Vector3d point;
 
-    std::shared_ptr<Vertex> newVertex;
-    // std::shared_ptr<Face> dirFace;
+  std::shared_ptr<Vertex> newVertex;
+  // std::shared_ptr<Face> dirFace;
 
-    dir << 0,0,1;
-    initialDirections[0] = dir;
-    for (int i=1; i<4; ++i)
+  dir << 0,0,1;
+  initialDirections[0] = dir;
+  for (int i=1; i<4; ++i)
     {
-        dir << cos(2*M_PI*(i-1)/3), sin(2*M_PI*(i-1)/3), -1;
-        dir = dir.normalized();
-        initialDirections[i] = dir;
+      dir << cos(2*M_PI*(i-1)/3), sin(2*M_PI*(i-1)/3), -1;
+      dir = dir.normalized();
+      initialDirections[i] = dir;
     }
 
-    for (int i=0; i<4; ++i)
+  for (int i=0; i<4; ++i)
     {
-        auto start = std::chrono::high_resolution_clock::now();
-        solveStabilityProblem(initialDirections[i], point);
-        auto stop = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        m_lpMicro += duration.count();
+      solveLP(initialDirections[i], point);
 
-        newVertex = std::make_shared<Vertex> (point, initialDirections[i]);
-        m_vertices.push_back(newVertex);
+      newVertex = std::make_shared<Vertex> (point, initialDirections[i]);
+      m_vertices.push_back(newVertex);
     }
 
-    auto start = std::chrono::high_resolution_clock::now();
-    buildInnerPoly();
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    m_innerConvexMicro+=duration.count();
+  auto start = std::chrono::high_resolution_clock::now();
+  buildInnerPoly();
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  m_innerConvexMicro+=duration.count();
 
-    start = std::chrono::high_resolution_clock::now();
-    buildOuterPoly();
-    stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    m_outerConvexMicro+=duration.count();
+  start = std::chrono::high_resolution_clock::now();
+  buildOuterPoly();
+  stop = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  m_outerConvexMicro+=duration.count();
 
-    computeResidualFromScratch();
+  computeResidualFromScratch();
 
-    while (stopCriterion())
+  while (!stopCriterion())
     {
 
-        m_numberOfIterations++;
-        // std::cout << "Iteration number: " << m_numberOfIterations << ", residual: " << m_residual << '\n';
-        auto dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesMeasure);
+      m_iteration++;
+      // std::cout << "Iteration number: " << m_iteration << ", error: " << m_error << '\n';
+      auto dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesMeasure);
 
+      solveLP(dirFace->get_normal(), point);
 
-        auto start = std::chrono::high_resolution_clock::now();
-        solveStabilityProblem(dirFace->get_normal(), point);
-        // solveStabilityProblem(dirFace->get_normal(), point);
-        auto stop = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        m_lpMicro += duration.count();
+      newVertex = std::make_shared<Vertex> (point, dirFace->get_normal());
+      m_vertices.push_back(newVertex);
 
-        // const double check = dirFace->get_normal().dot(point) - dirFace->get_offset();
+      start = std::chrono::high_resolution_clock::now();
+      updateInnerPoly(newVertex, dirFace);
+      stop = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      m_innerConvexMicro+=duration.count();
 
-        newVertex = std::make_shared<Vertex> (point, dirFace->get_normal());
-        m_vertices.push_back(newVertex);
+      start = std::chrono::high_resolution_clock::now();
+      updateOuterPoly(newVertex, dirFace);
+      stop = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      m_outerConvexMicro+=duration.count();
 
+      start = std::chrono::high_resolution_clock::now();
+      updateSupportFunctions(dirFace);
+      stop = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      m_supportFunctionMicro+=duration.count();
 
-        // std::cout << "Next research face: " << dirFace->get_index() << " with measure: " << dirFace->get_measure() <<'\n';
-        start = std::chrono::high_resolution_clock::now();
-        updateInnerPoly(newVertex, dirFace);
-        stop = std::chrono::high_resolution_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        m_innerConvexMicro+=duration.count();
-
-        start = std::chrono::high_resolution_clock::now();
-        updateOuterPoly(newVertex, dirFace);
-        stop = std::chrono::high_resolution_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        m_outerConvexMicro+=duration.count();
-
-        start = std::chrono::high_resolution_clock::now();
-        updateSupportFunctions(dirFace);
-        stop = std::chrono::high_resolution_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        m_supportFunctionMicro+=duration.count();
-
-        // à modifier -> à ne pas refaire de zéro
-        computeResidualFromScratch();
+      // à modifier -> à ne pas refaire de zéro
+      computeResidualFromScratch();
     }
+
+  auto structStop = std::chrono::high_resolution_clock::now();
+  auto structDuration = std::chrono::duration_cast<std::chrono::microseconds> (structStop - structStart);
+
+  m_structTime = structDuration.count() - m_LPTime;
 }
 
 
-Eigen::Vector3d StabilityPolytope::computeInnerPoint()
+Eigen::Vector3d RobustStabilityPolytope::computeInnerPoint()
 {
     // Computation of the inner point: it is used to make sure that the normal of the faces are oriented toward the outside
     m_innerPoint = Eigen::Vector3d::Zero();
@@ -173,7 +150,7 @@ Eigen::Vector3d StabilityPolytope::computeInnerPoint()
     m_innerPoint /= m_vertices.size();
 }
 
-void StabilityPolytope::buildInnerPoly()
+void RobustStabilityPolytope::buildInnerPoly()
 {
     computeInnerPoint();
     // std::cout << "Inner Point: " << m_innerPoint << '\n';
@@ -212,7 +189,7 @@ void StabilityPolytope::buildInnerPoly()
 
 }
 
-void StabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace)
+void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace)
 {
     std::list<std::shared_ptr<Face>> consideredFaces;
     std::vector<std::shared_ptr<Face>> currentNeighbors;
@@ -355,7 +332,7 @@ void StabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std:
     }
 }
 
-void StabilityPolytope::buildOuterPoly()
+void RobustStabilityPolytope::buildOuterPoly()
 {
     std::shared_ptr<OuterFace> newOuterFace;
 
@@ -402,7 +379,7 @@ void StabilityPolytope::buildOuterPoly()
 
 }
 
-void StabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace)
+void RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace)
 {
     // --------- Double Description Method ---------
     std::vector<std::shared_ptr<OuterVertex>> U_0; // outer vertex on the plane
@@ -572,7 +549,7 @@ void StabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std:
 
 }
 
-void StabilityPolytope::updateSupportFunctions(std::shared_ptr<Face>& dirFace)
+void RobustStabilityPolytope::updateSupportFunctions(std::shared_ptr<Face>& dirFace)
 {
 
     std::list<std::shared_ptr<Face>> consideredFaces;
@@ -613,7 +590,7 @@ void StabilityPolytope::updateSupportFunctions(std::shared_ptr<Face>& dirFace)
     }
 }
 
-bool StabilityPolytope::computeSupportFunction(std::shared_ptr<Face>& face, const std::shared_ptr<OuterVertex>& initPoint)
+bool RobustStabilityPolytope::computeSupportFunction(std::shared_ptr<Face>& face, const std::shared_ptr<OuterVertex>& initPoint)
 {
     // std::cout << "Computing support function for face " << face->get_index() << '\n';
     double prevSupportFunction = face->get_supportFunction();
@@ -654,83 +631,76 @@ bool StabilityPolytope::computeSupportFunction(std::shared_ptr<Face>& face, cons
     }
     else
     {
-        // m_residual += face->get_area()*(face->get_supportFunction()-prevSupportFunction);
+        // m_error += face->get_area()*(face->get_supportFunction()-prevSupportFunction);
         return true;
     }
 }
 
-double StabilityPolytope::computeResidualFromScratch()
+double RobustStabilityPolytope::computeResidualFromScratch()
 {
-    m_residual = 0;
+    m_error = 0;
     for (auto it: m_faces)
     {
-        m_residual += it->get_area()*it->get_supportFunction();
+        m_error += it->get_area()*it->get_supportFunction();
     }
-}
-
-bool StabilityPolytope::stopCriterion()
-{
-    return m_numberOfIterations < m_maxNumberOfIteration && m_residual > 0.1;
 }
 
 // ----------- output and display functions ----------
-void StabilityPolytope::exportVertices(std::string file_name)
+void RobustStabilityPolytope::writeToStream(std::ofstream& stream) const
 {
 
-  std::ofstream file_stream(file_name);
-
-    if (file_stream)
+  if (stream)
     {
 
-        for (auto it_vertices : m_vertices)
+      for (auto it_vertices : m_vertices)
         {
-            file_stream << "iv;" // iv = inner vertices
-                        << it_vertices->get_coordinates()[0] << ';'
-                        << it_vertices->get_coordinates()[1] << ';'
-                        << it_vertices->get_coordinates()[2] << ';'
-                        << it_vertices->get_direction()[0] << ';'
-                        << it_vertices->get_direction()[1] << ';'
-                        << it_vertices->get_direction()[2] << ';' << std::endl;
+	  stream << "iv;" // iv = inner vertices
+		      << it_vertices->get_coordinates()[0] << ';'
+		      << it_vertices->get_coordinates()[1] << ';'
+		      << it_vertices->get_coordinates()[2] << ';'
+		      << it_vertices->get_direction()[0] << ';'
+		      << it_vertices->get_direction()[1] << ';'
+		      << it_vertices->get_direction()[2] << ';' << std::endl;
         }
 
-        for (auto it : m_edges)
+      for (auto it : m_edges)
         {
-            file_stream << "ie;" // ie = inner edge
-                        << it->get_vertex1()->get_coordinates()[0] << ';'
-                        << it->get_vertex1()->get_coordinates()[1] << ';'
-                        << it->get_vertex1()->get_coordinates()[2] << ';'
-                        << it->get_vertex2()->get_coordinates()[0] << ';'
-                        << it->get_vertex2()->get_coordinates()[1] << ';'
-                        << it->get_vertex2()->get_coordinates()[2] << ';' << std::endl;
+	  stream << "ie;" // ie = inner edge
+		      << it->get_vertex1()->get_coordinates()[0] << ';'
+		      << it->get_vertex1()->get_coordinates()[1] << ';'
+		      << it->get_vertex1()->get_coordinates()[2] << ';'
+		      << it->get_vertex2()->get_coordinates()[0] << ';'
+		      << it->get_vertex2()->get_coordinates()[1] << ';'
+		      << it->get_vertex2()->get_coordinates()[2] << ';' << std::endl;
         }
 
-        for (auto const& it : m_outerVertices)
+      for (auto const& it : m_outerVertices)
         {
-            file_stream << "ov;" // oe = outer vertex
-                        << it->get_coordinates()[0] << ';'
-                        << it->get_coordinates()[1] << ';'
-                        << it->get_coordinates()[2] << ';' << std::endl;
+	  stream << "ov;" // oe = outer vertex
+		      << it->get_coordinates()[0] << ';'
+		      << it->get_coordinates()[1] << ';'
+		      << it->get_coordinates()[2] << ';' << std::endl;
         }
 
-        for (auto const& it : m_outerEdges)
+      for (auto const& it : m_outerEdges)
         {
-            file_stream << "oe;" // oe = outer edge
-                        << it->get_outerVertex1()->get_coordinates()[0] << ';'
-                        << it->get_outerVertex1()->get_coordinates()[1] << ';'
-                        << it->get_outerVertex1()->get_coordinates()[2] << ';'
-                        << it->get_outerVertex2()->get_coordinates()[0] << ';'
-                        << it->get_outerVertex2()->get_coordinates()[1] << ';'
-                        << it->get_outerVertex2()->get_coordinates()[2] << ';' << std::endl;
+	  stream << "oe;" // oe = outer edge
+		      << it->get_outerVertex1()->get_coordinates()[0] << ';'
+		      << it->get_outerVertex1()->get_coordinates()[1] << ';'
+		      << it->get_outerVertex1()->get_coordinates()[2] << ';'
+		      << it->get_outerVertex2()->get_coordinates()[0] << ';'
+		      << it->get_outerVertex2()->get_coordinates()[1] << ';'
+		      << it->get_outerVertex2()->get_coordinates()[2] << ';' << std::endl;
         }
     }
-    else
+  else
     {
-        std::cerr << "Error: Impossible to open the output file." << '\n';
+      std::cerr << "Error: Output Stream not open." << '\n';
     }
 
 }
 
-void StabilityPolytope::showPoly()
+void RobustStabilityPolytope::showPoly() const
 {
     std::cout << "Current Vertices: ";
     for (auto it : m_vertices)
@@ -750,47 +720,43 @@ void StabilityPolytope::showPoly()
 }
 
 // ----------- getters ----------
-int StabilityPolytope::get_numberOfVertices() const
+int RobustStabilityPolytope::get_numberOfVertices() const
 {
     return m_vertices.size();
 }
 
-int StabilityPolytope::get_numberOfFaces() const
+int RobustStabilityPolytope::get_numberOfFaces() const
 {
     return m_faces.size();
 }
 
-int StabilityPolytope::get_numberOfOuterVertices() const
+int RobustStabilityPolytope::get_numberOfOuterVertices() const
 {
     return m_outerVertices.size();
 }
 
-int StabilityPolytope::get_numberOfOuterFaces() const
+int RobustStabilityPolytope::get_numberOfOuterFaces() const
 {
     return m_outerFaces.size();
 }
 
-double StabilityPolytope::get_lpMicro() const
-{
-    return m_lpMicro;
-}
 
-double StabilityPolytope::get_innerConvexMicro() const
+double RobustStabilityPolytope::get_innerConvexMicro() const
 {
     return m_innerConvexMicro;
 }
 
-double StabilityPolytope::get_outerConvexMicro() const
+double RobustStabilityPolytope::get_outerConvexMicro() const
 {
     return m_outerConvexMicro;
 }
 
-double StabilityPolytope::get_supportFunctionMicro() const
+double RobustStabilityPolytope::get_supportFunctionMicro() const
 {
     return m_supportFunctionMicro;
 }
 
-std::vector<Eigen::Vector3d> StabilityPolytope::get_innerFaceNormals() const
+std::vector<Eigen::Vector3d> RobustStabilityPolytope::get_innerFaceNormals() const
 {
     std::vector<Eigen::Vector3d> innerFaceNormals;
     for (auto face: m_faces)
@@ -800,7 +766,7 @@ std::vector<Eigen::Vector3d> StabilityPolytope::get_innerFaceNormals() const
     return innerFaceNormals;
 }
 
-std::vector<double> StabilityPolytope::get_innerFaceOffsets() const
+std::vector<double> RobustStabilityPolytope::get_innerFaceOffsets() const
 {
     std::vector<double> innerFaceOffsets;
     for (auto face: m_faces)
@@ -810,18 +776,6 @@ std::vector<double> StabilityPolytope::get_innerFaceOffsets() const
     return innerFaceOffsets;
 }
 
-ContactSet* StabilityPolytope::get_contactSet()
-{
-    return &m_contactSet;
-}
 
-Solver StabilityPolytope::get_solver() const
-{
-  return m_solver;
-}
 // ------------------ setter -----------------------
-
-void StabilityPolytope::set_maxNumberOfIterations(int maxNumberOfIteration)
-{
-    m_maxNumberOfIteration = maxNumberOfIteration;
-}
+ 

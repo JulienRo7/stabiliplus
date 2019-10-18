@@ -141,11 +141,9 @@ class PostProcessor:
 
         self.solvers = []
         self.total_times = []
-        self.LP_times = []
-        self.inner_times = []
-        self.outer_times = []
-        self.support_times = []
-
+        self.LPTimes = []
+        self.initTimes = []
+        self.structTimes = []
         
         self.loadExperiment(file_name)
 
@@ -161,10 +159,10 @@ class PostProcessor:
 
             elif child.tag == "times":
                 self.total_times.append(int(child.attrib['total']))
-                self.LP_times.append(int(child.attrib['LP']))
-                self.inner_times.append(int(child.attrib['inner']))
-                self.outer_times.append(int(child.attrib['outer']))
-                self.support_times.append(int(child.attrib['support']))
+                self.LPTimes.append(int(child.attrib['LP']))
+                self.initTimes.append(int(child.attrib['init']))
+                self.structTimes.append(int(child.attrib['struct']))
+
 
             elif child.tag == "solver":
                 self.solvers.append(child.attrib['name'])
@@ -215,21 +213,20 @@ class PostProcessor:
         numPts = 0
         total = 0
         LP = 0
-        inner = 0
-        outer = 0
-        support = 0
+        init = 0
+        struct = 0
+
 
         for i in range(self.numComputedPoints):
             if (self.solvers[i]==solver_name and self.robot_names[i]==robot_name):
                 numPts+=1
                 total+=self.total_times[i]
-                LP+=self.LP_times[i]
-                inner+=self.inner_times[i]
-                outer+=self.outer_times[i]
-                support+=self.support_times[i]
+                LP+=self.LPTimes[i]
+                init+=self.initTimes[i]
+                struct+=self.structTimes[i]
 
         assert numPts != 0, "No point found for solver {} and robot {}".format(solver_name, robot_name)
-        return (numPts, int(total/numPts), int(LP/numPts), int(inner/numPts), int(outer/numPts), int(support/numPts))
+        return (numPts, int(total/numPts), int(LP/numPts), int(init/numPts), int(struct/numPts))
 
     def display_mode_2(self):
         solvers = set(self.solvers)

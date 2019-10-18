@@ -45,9 +45,9 @@ void Experimenter::run_exp1()
     std::cout << "Running Experiment for mode 1!" << '\n';
 
     auto start = std::chrono::high_resolution_clock::now();
-    std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_contactSet, 50, m_solver));
+    std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
 
-    polytope->buildStabilityProblem();
+    polytope->initSolver();
     polytope->projectionStabilityPolyhedron();
 
     auto stop = std::chrono::high_resolution_clock::now();
@@ -60,7 +60,7 @@ void Experimenter::run_exp1()
               << " and " << polytope->get_numberOfOuterVertices() << " outer vertices."<< '\n';
     std::cout << "Number of Inner Faces: " << polytope->get_numberOfFaces() << ", number of outer faces: " << polytope->get_numberOfOuterFaces() << '\n';
 
-    std::cout << "LP time: " << polytope->get_lpMicro() << " microseconds" << '\n';
+    std::cout << "LP time: " << polytope->LPTime() << " microseconds" << '\n';
     std::cout << "inner time: " << polytope->get_innerConvexMicro() << " microseconds" << '\n';
     std::cout << "outer time: " << polytope->get_outerConvexMicro() << " microseconds" << '\n';
     std::cout << "support time: " << polytope->get_supportFunctionMicro() << " microseconds" << '\n';
@@ -85,8 +85,8 @@ void Experimenter::run_exp2()
 		std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
 		auto start = std::chrono::high_resolution_clock::now();
 
-		std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(rob, 50, solver));
-		polytope->buildStabilityProblem();
+		std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
+		polytope->initSolver();
 		polytope->projectionStabilityPolyhedron();
 
 		auto stop = std::chrono::high_resolution_clock::now();
@@ -114,8 +114,8 @@ void Experimenter::run_exp3()
         {
 	  auto start = std::chrono::high_resolution_clock::now();
 
-	  std::shared_ptr<StabilityPolytope> polytope(new StabilityPolytope(m_contactSet,50, m_solver));
-	  polytope->buildStabilityProblem();
+	  std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
+	  polytope->initSolver();
 	  polytope->projectionStabilityPolyhedron();
 
 	  auto stop = std::chrono::high_resolution_clock::now();
@@ -138,11 +138,11 @@ void Experimenter::run_exp4()
   std::cout << "Welcome to mode 4: static stability" << std::endl;
 
   auto start = std::chrono::high_resolution_clock::now();
+
+  std::shared_ptr<StaticStabilityPolytope> static_poly(new StaticStabilityPolytope(m_contactSet, 50, 0.01, m_solver));
   
-  StaticStabilityPolytope static_poly(m_contactSet, 50, 0.01, m_solver);
-  
-  static_poly.initSolver();
-  static_poly.projectionStabilityPolyhedron();
+  static_poly->initSolver();
+  static_poly->projectionStabilityPolyhedron();
 
   auto stop = std::chrono::high_resolution_clock::now();
 
@@ -150,10 +150,12 @@ void Experimenter::run_exp4()
   double totalTime  = duration.count();
 
   std::cout << "Static Stability Region computed in " << totalTime << " microseconds." << std::endl;
-  std::cout << "Init time: " << static_poly.initTime() << " microseconds" << std::endl;
-  std::cout << "LP time: " << static_poly.LPTime() << " microseconds with solver " << m_solver << std::endl;
-  std::cout << "Structure time: " << static_poly.structTime() << " microseconds" << std::endl;
-  static_poly.saveResults("/tmp/static_res.txt");
+  std::cout << "Init time: " << static_poly->initTime() << " microseconds" << std::endl;
+  std::cout << "LP time: " << static_poly->LPTime() << " microseconds with solver " << m_solver << std::endl;
+  std::cout << "Structure time: " << static_poly->structTime() << " microseconds" << std::endl;
+
+  m_polytopes.push_back(static_poly);
+  m_total_times_ms.push_back(totalTime);
 }
 
 
@@ -179,7 +181,7 @@ void Experimenter::save()
     tinyxml2::XMLElement *mode = doc.NewElement("mode");
     mode->SetAttribute("mode", m_mode);
     root->InsertEndChild(mode);
-
+    
     // adding the number of computed points (compPoint)
     tinyxml2::XMLElement *numComp = doc.NewElement("numComp");
     int numComputedPoints = m_polytopes.size();
@@ -190,38 +192,42 @@ void Experimenter::save()
     std::string poly_file_name, robot_file_name;
     int poly_count = 0;
 
-    for (auto poly: m_polytopes)
+       for (auto poly: m_polytopes)
     {
         // poly_file_name = stabiliplus_path+"/res/polytope_"+std::to_string(poly_count)+".txt";
         // robot_file_name = stabiliplus_path+"/res/robot_"+std::to_string(poly_count)+".xml";
         poly_file_name = "/tmp/polytopes/polytope_"+std::to_string(poly_count)+".txt";
         robot_file_name = "/tmp/robots/robot_"+std::to_string(poly_count)+".xml";
-        poly->exportVertices(poly_file_name);
-        poly->get_contactSet()->saveContactSet(robot_file_name);
-
+	
+	std::ofstream stream(poly_file_name);
+        poly->writeToStream(stream);
+        poly->contactSet()->saveContactSet(robot_file_name);
+	
         tinyxml2::XMLElement *compPoint = doc.NewElement("compPoint");
         compPoint->SetAttribute("index", poly_count);
         root->InsertEndChild(compPoint);
 
-        tinyxml2::XMLElement *polyXML = doc.NewElement("poly");
+	tinyxml2::XMLElement *polyXML = doc.NewElement("poly");
         polyXML->SetAttribute("file_name", poly_file_name.c_str());
         compPoint->InsertEndChild(polyXML);
-
+	
         tinyxml2::XMLElement *robotXML = doc.NewElement("robot");
-	robotXML->SetAttribute("name", poly->get_contactSet()->get_name().c_str());
+	robotXML->SetAttribute("name", poly->contactSet()->get_name().c_str());
         robotXML->SetAttribute("file_name", robot_file_name.c_str());
         compPoint->InsertEndChild(robotXML);
-
+	
 	tinyxml2::XMLElement *timeXML = doc.NewElement("times");
 	timeXML->SetAttribute("total", m_total_times_ms.at(poly_count));
-	timeXML->SetAttribute("LP", poly->get_lpMicro());
-	timeXML->SetAttribute("inner", poly->get_innerConvexMicro());
-	timeXML->SetAttribute("outer", poly->get_outerConvexMicro());
-	timeXML->SetAttribute("support", poly->get_supportFunctionMicro());
+	timeXML->SetAttribute("LP", poly->LPTime());
+	timeXML->SetAttribute("init", poly->initTime());
+	timeXML->SetAttribute("struct", poly->structTime());
+	// timeXML->SetAttribute("inner", poly->innerConvexMicro());
+	// timeXML->SetAttribute("outer", poly->outerConvexMicro());
+	// timeXML->SetAttribute("support", poly->supportFunctionMicro());
 	compPoint->InsertEndChild(timeXML);
 
 	tinyxml2::XMLElement *solverXML = doc.NewElement("solver");
-	switch(poly->get_solver())
+	switch(poly->solverType())
 	  {
 	  case GLPK:
 	    solverXML->SetAttribute("name","GLPK");
