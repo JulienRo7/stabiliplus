@@ -389,6 +389,7 @@ class PostProcessor:
 
         ax.set_aspect('equal')
         ax.set_xbound(-2, 2)
+        ax.set_ybound(-2, 2)
         plt.show()
         
     

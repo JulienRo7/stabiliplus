@@ -1,10 +1,10 @@
 #include "stabiliplus/staticStabilityPolytope.h"
 
-StaticStabilityPolytope::StaticStabilityPolytope(ContactSet contactSet, int maxNumberOfIteration, Solver solver):
+StaticStabilityPolytope::StaticStabilityPolytope(ContactSet contactSet, int maxNumberOfIteration, double maxError, Solver solver):
   m_contactSet(contactSet), m_solver(solver),
-  m_maxIterations(maxNumberOfIteration), m_iteration(0)
+  m_maxIterations(maxNumberOfIteration), m_iteration(0),
+  m_maxError(maxError), m_error(2*maxError)
 {
-  m_maxIterations = 3;
   switch(solver)
     {
     case GLPK:
@@ -60,70 +60,64 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
   // inner vertices 
   dir << 1, 0;
   solveLP(dir, vertex);
-  m_innerVertices.push_back(vertex);
-  m_searchDirections.push_back(dir);
-
+  std::shared_ptr<StaticPoint> p1 (new StaticPoint(dir, vertex));
+  m_points.push_back(p1);
+  
   dir << cos(2*M_PI/3), sin(2*M_PI/3);
   solveLP(dir, vertex);
-  m_innerVertices.push_back(vertex);
-  m_searchDirections.push_back(dir);
+  std::shared_ptr<StaticPoint> p2 (new StaticPoint(dir, vertex));
+  m_points.push_back(p2);
+  p1->next(p2);
+  p2->prec(p1);
 
   dir << cos(4*M_PI/3), sin(4*M_PI/3);
   solveLP(dir, vertex);
-  m_innerVertices.push_back(vertex);
-  m_searchDirections.push_back(dir);
+  std::shared_ptr<StaticPoint> p3 (new StaticPoint(dir, vertex));
+  m_points.push_back(p3);
+  p2->next(p3);
+  p3->prec(p2);
+  p3->next(p1);
+  p1->prec(p3);
 
-  // outer vertices
-  auto it_vert1 = m_innerVertices.begin();
-  auto it_dir1 = m_searchDirections.begin();
-  auto it_vert2 = m_innerVertices.begin();
-  it_vert2++;
-  auto it_dir2 = m_searchDirections.begin();
-  it_dir2++;
+  // initialisation of the error
+  m_error = p1->measure() + p2->measure() + p3->measure();
 
-  m_outerVertices.push_back(computeOuterVertex(*it_vert1, *it_dir1, *it_vert2, *it_dir2));
-  m_normals.push_back(computeSidesNormal(*it_vert1, *it_vert2));
-
-  it_vert1 ++;
-  it_vert2 ++;
-  it_dir1 ++;
-  it_dir2 ++;
-  m_outerVertices.push_back(computeOuterVertex(*it_vert1, *it_dir1, *it_vert2, *it_dir2));
-  m_normals.push_back(computeSidesNormal(*it_vert1, *it_vert2));
-
-  it_vert1 ++;
-  it_vert2 = m_innerVertices.begin();
-  it_dir1 ++;
-  it_dir2 = m_searchDirections.begin();
-  m_outerVertices.push_back(computeOuterVertex(*it_vert1, *it_dir1, *it_vert2, *it_dir2));
-  m_normals.push_back(computeSidesNormal(*it_vert1, *it_vert2));
-
-  while (m_iteration < m_maxIterations)
+  
+  while (!stopCriterion())
     {
+      // std::cout << "##### Iteration " << m_iteration+1 << " #####" << std::endl;
+      // std::cout << "Error " << m_error << " (m_maxError: " << m_maxError << ") \n";
+      auto p_max = std::max_element(m_points.begin(), m_points.end(), **(m_points.begin()));
+      auto p_next = (*p_max)->next();
+
+      // update the error
+      m_error -= (*p_max)->measure();
       
+      dir = (*p_max)->normal();
+      solveLP(dir, vertex);
+      std::shared_ptr<StaticPoint> p (new StaticPoint(dir, vertex));
+
+      // !!! Warning: the order here is important in order to avoid issue when the new point is close to the old one 
+      p_next->prec(p);
+      p->next(p_next);
+      p->prec(*p_max);
+      (*p_max)->next(p);
+      
+      m_error += (*p_max)->measure();
+      m_error += p->measure();
+      
+      m_points.push_back(p);
+      // showPointsNeighbours();
+
       m_iteration++;
     }
-}
-
-Eigen::Vector2d StaticStabilityPolytope::computeOuterVertex(const Eigen::Vector2d& v1, const Eigen::Vector2d& d1, const Eigen::Vector2d& v2, const Eigen::Vector2d& d2)
-{
-  double a(d1(0)), b(d1(1)), c(d2(0)), d(d2(1));
-  double det = a*d - b*c;
-  double off1(v1.transpose()*d1), off2(v2.transpose()*d2);
-
-  Eigen::Vector2d oV;
   
-  oV << d*off1-b*off2, a*off2-c*off1;
-  oV/=det;
 
-  return oV;
 }
 
-Eigen::Vector2d StaticStabilityPolytope::computeSidesNormal(const Eigen::Vector2d& v1, const Eigen::Vector2d& v2)
+bool StaticStabilityPolytope::stopCriterion() const // return true when the algorithm has to stop
 {
-  Eigen::Vector2d n;
-  n << -v1(1)+v2(1), v1(0)-v2(0);
-  return n/n.norm();
+  return (m_iteration > m_maxIterations || m_error < m_maxError);
 }
 
 
@@ -134,45 +128,27 @@ void StaticStabilityPolytope::saveResults(std::string file_name )
   std::ofstream file_stream(file_name);
   if (file_stream)
     {
-      for (auto v: m_innerVertices)
-	{
-	  file_stream << "iv;" // iv = inner vertice
-		      << v(0) << ";"
-		      << v(1) << ";"
-		      << std::endl;
-	}
+      auto it_pt = m_points.begin();
+      auto pt = (*it_pt)->next();
       
-      for (auto d: m_searchDirections )
+      while (pt != *it_pt)
 	{
-	  file_stream << "sd;" // sd = searchDirection
-		      << d(0) << ";"
-		      << d(1) << ";"
-		      << std::endl;
+	  pt->writeToStream(file_stream);
+	  pt = pt->next();
 	}
-      
-
-      for (auto v: m_outerVertices)
-	{
-	  file_stream << "ov;" // ov = outer vertice
-		      << v(0) << ";"
-		      << v(1) << ";"
-		      << std::endl;
-	}
-      
-      for (auto n: m_normals)
-	{
-	  file_stream << "no;" // no = normal
-		      << n(0) << ";"
-		      << n(1) << ";"
-		      << std::endl;
-	}
-      
+      pt->writeToStream(file_stream);
     }
   else
     {
       std::cout << "Could not open " << file_name << "for writing static stability results" << std::endl;
+    }  
+}
+
+void StaticStabilityPolytope::showPointsNeighbours()
+{
+  std::cout << "Neighborhood: " << std::endl;
+  for (auto it_pt: m_points)
+    {
+      std::cout << it_pt->prec() << "->" << it_pt << "->" << it_pt->next() << std::endl;
     }
-  
-  
-  
 }

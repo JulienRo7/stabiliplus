@@ -8,9 +8,10 @@
 // standart libraries
 #include <iostream>
 #include <fstream>
-#include <list>
+#include <vector>
 #include <cmath>
 #include <algorithm>
+#include <memory>
 
 // libraries
 #include <Eigen/Dense>
@@ -20,11 +21,12 @@
 #include "wrapper/lpsolve_wrapper.h"
 #include "wrapper/gurobi_wrapper.h"
 #include "stabiliplus/contactSet.h"
+#include "stabiliplus/staticPoint.h"
 
 class StaticStabilityPolytope
 {
  public:
-  StaticStabilityPolytope(ContactSet contactSet, int maxNumberOfIteration = 50, Solver solver = GLPK);
+  StaticStabilityPolytope(ContactSet contactSet, int maxNumberOfIteration = 50, double maxError = 1,  Solver solver = GLPK);
   ~StaticStabilityPolytope();
 
   // ----- main class methods ------
@@ -33,12 +35,11 @@ class StaticStabilityPolytope
 
   void projectionStabilityPolyhedron();
 
-  Eigen::Vector2d computeOuterVertex(const Eigen::Vector2d& v1, const Eigen::Vector2d& d1, const Eigen::Vector2d& v2, const Eigen::Vector2d& d2);
-  Eigen::Vector2d computeSidesNormal(const Eigen::Vector2d& v1, const Eigen::Vector2d& v2);
+  bool stopCriterion() const; // return true when the algorithm has to stop
   
   // ----- output -----
   void saveResults(std::string file_name);
-
+  void showPointsNeighbours();
   // ----- setters -----
 
   // ----- getters -----
@@ -54,13 +55,11 @@ class StaticStabilityPolytope
 
   // algoritm stop
   int m_maxIterations;
+  double m_maxError;
   int m_iteration;
+  double m_error;
 
   // algorithm storage
-  std::list<Eigen::Vector2d> m_innerVertices;
-  std::list<Eigen::Vector2d> m_searchDirections;
-  std::list<Eigen::Vector2d> m_outerVertices;
-  std::list<Eigen::Vector2d> m_normals;
-  std::list<double> m_measures;
+  std::vector<std::shared_ptr<StaticPoint>> m_points;
 };
 #endif // STATIC_STABILITY_POLYTOPE_H_INCLUDE

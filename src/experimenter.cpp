@@ -137,7 +137,7 @@ void Experimenter::run_exp4()
 {
   std::cout << "Welcome to mode 4: static stability" << std::endl;
 
-  StaticStabilityPolytope static_poly(m_contactSet, 50, m_solver);
+  StaticStabilityPolytope static_poly(m_contactSet, 50, 0.01, m_solver);
   
   static_poly.initSolver();
   static_poly.projectionStabilityPolyhedron();

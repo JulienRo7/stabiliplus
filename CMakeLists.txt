@@ -55,6 +55,7 @@ target_link_libraries(stability_polytope wrappers)
 
 add_library(staticStabilityPolytope
   ${PROJECT_SOURCE_DIR}/src/staticStabilityPolytope.cpp
+  ${PROJECT_SOURCE_DIR}/src/staticPoint.cpp
   )
 target_link_libraries(staticStabilityPolytope wrappers)
 
