@@ -1,26 +1,26 @@
 #include "stabiliplus/staticStabilityPolytope.h"
 
-StaticStabilityPolytope::StaticStabilityPolytope(ContactSet contactSet, int maxNumberOfIteration, double maxError, Solver solver):
-  m_contactSet(contactSet), m_solver(solver),
-  m_maxIterations(maxNumberOfIteration), m_iteration(0),
-  m_maxError(maxError), m_error(2*maxError),
-  m_initTime(0), m_LPTime(0), m_structTime(0)
-{
-  switch(solver)
-    {
-    case GLPK:
-      m_lp = new GlpkWrapper;
-      break;
+// StaticStabilityPolytope::StaticStabilityPolytope(ContactSet contactSet, int maxNumberOfIteration, double maxError, Solver solver):
+//   m_contactSet(contactSet), m_solver(solver),
+//   m_maxIterations(maxNumberOfIteration), m_iteration(0),
+//   m_maxError(maxError), m_error(2*maxError),
+//   m_initTime(0), m_LPTime(0), m_structTime(0)
+// {
+//   switch(solver)
+//     {
+//     case GLPK:
+//       m_lp = new GlpkWrapper;
+//       break;
       
-    case LP_SOLVE:
-      m_lp = new LPSolveWrapper;
-      break;
+//     case LP_SOLVE:
+//       m_lp = new LPSolveWrapper;
+//       break;
 
-    case GUROBI:
-      m_lp = new GurobiWrapper;
-      break;
-    }
-}
+//     case GUROBI:
+//       m_lp = new GurobiWrapper;
+//       break;
+//     }
+// }
 
 StaticStabilityPolytope::~StaticStabilityPolytope()
 {
@@ -134,32 +134,24 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
 
 }
 
-bool StaticStabilityPolytope::stopCriterion() const // return true when the algorithm has to stop
-{
-  return (m_iteration > m_maxIterations || m_error < m_maxError);
-}
-
-
 // ----- output -----
-void StaticStabilityPolytope::saveResults(std::string file_name )
+void StaticStabilityPolytope::writeToStream(std::ofstream& stream ) const
 {
-  std::cout << "Saving results to " << file_name << std::endl;
-  std::ofstream file_stream(file_name);
-  if (file_stream)
+  if (stream)
     {
       auto it_pt = m_points.begin();
       auto pt = (*it_pt)->next();
       
       while (pt != *it_pt)
 	{
-	  pt->writeToStream(file_stream);
+	  pt->writeToStream(stream);
 	  pt = pt->next();
 	}
-      pt->writeToStream(file_stream);
+      pt->writeToStream(stream);
     }
   else
     {
-      std::cout << "Could not open " << file_name << "for writing static stability results" << std::endl;
+      std::cout << "Error: Output stream not open." << std::endl;
     }  
 }
 
@@ -173,17 +165,3 @@ void StaticStabilityPolytope::showPointsNeighbours()
 }
 
 // ----- getters -----
-
-double StaticStabilityPolytope::initTime()
-{
-  return m_initTime;
-}
-double StaticStabilityPolytope::LPTime()
-{
-  return m_LPTime;
-}
-
-double StaticStabilityPolytope::structTime()
-{
-  return m_structTime;
-}
