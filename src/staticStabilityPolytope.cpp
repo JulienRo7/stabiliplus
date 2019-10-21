@@ -24,7 +24,7 @@
 
 StaticStabilityPolytope::~StaticStabilityPolytope()
 {
-  delete m_lp;
+  
 }
 
 // ----- main class methods
