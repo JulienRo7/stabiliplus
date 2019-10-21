@@ -85,7 +85,7 @@ void Experimenter::run_exp2()
 		std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
 		auto start = std::chrono::high_resolution_clock::now();
 
-		std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
+		std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(rob, 50, 0.05, solver));
 		polytope->initSolver();
 		polytope->projectionStabilityPolyhedron();
 
