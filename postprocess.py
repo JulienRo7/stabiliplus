@@ -366,12 +366,16 @@ class PostProcessor:
         x = np.arange(len(robots))  # the label locations
         width = 0.20  # the width of the bars
 
-        fig, axs = plt.subplots(2, 2)
+        # fig, axs = plt.subplots(2, 2)
         
-        ax_tot = axs[0,0]
-        ax_LP = axs[0,1]
-        ax_init = axs[1,0]
-        ax_struct = axs[1,1]
+        # ax_tot = axs[0,0]
+        # ax_LP = axs[0,1]
+        # ax_init = axs[1,0]
+        # ax_struct = axs[1,1]
+        fig_tot, ax_tot = plt.subplots()
+        fig_LP, ax_LP = plt.subplots()
+        fig_init, ax_init = plt.subplots()
+        fig_struct, ax_struct = plt.subplots()
         
         rects_tot = []
         rects_LP = []
@@ -388,7 +392,7 @@ class PostProcessor:
             rects_struct.append(ax_struct.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_struct_per_sol[sol] , width, label=sol))
             num_sol += 1
 
-        axes  = (ax_tot, ax_LP, ax_init, ax_struct)
+        axes = (ax_tot, ax_LP, ax_init, ax_struct)
 
         for ax in axes:
             # Add some text for labels, title and custom x-axis tick labels, etc.
@@ -396,11 +400,17 @@ class PostProcessor:
             ax.set_xticklabels(robots)
             ax.legend()
 
-        ax_tot.set_ylabel('Average total computing time (µs)')
-        ax_LP.set_ylabel('Average time computing LP (µs)')
-        ax_init.set_ylabel('Average time initializing LP (µs)')
-        ax_struct.set_ylabel('Average time computing geometry (µs)')
-        # ax_tot.set_title('Time comparision of the different solvers')
+        ax_tot.set_ylabel('time (µs)')
+        ax_tot.set_title('Comparison of different solvers: average stability region computation time')
+        
+        ax_LP.set_ylabel('time (µs)')
+        ax_LP.set_title('Comparison of different solvers: average time solving LP')
+        
+        ax_init.set_ylabel('time (µs)')
+        ax_init.set_title('Comparison of different solvers: average LP initialisation time')
+
+        ax_struct.set_ylabel('time (µs)')
+        ax_struct.set_title('Comparison of different solvers: average structural time')
 
         def autolabel(rects, rect_ax):
             """Attach a text label above each bar in *rects*, displaying its height."""
