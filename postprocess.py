@@ -36,21 +36,116 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total:
         print()
 
-class innerOuterPoly:
+class polytope:
+    def __init__(self, file_name):
+        self.readFile(file_name)
+
+    def readFile(self):
+        pass
+
+    def dispInner(self):
+        pass
+
+    def dispOuter(self):
+        pass
+    
+    def display(self):
+        pass
+
+class staticPoly(polytope):
+    def __init__(self, file_name="/tmp/static_res.txt"):
+        self.innerVertices = [] # inner vertices
+        self.searchDirs = [] # search directions
+        self.outerVertices = [] # outer vertices
+        self.normals = [] # inner sides normals
+
+        self.readFile(file_name)
+        
+    def readFile(self, file_name):
+        file = open(file_name, 'r')
+
+        for line in file:
+            line = line.split(';')
+            if line[0]=='iv':
+                self.innerVertices.append([float(line[1]),float(line[2])])
+            elif line[0]=='sd':
+                self.searchDirs.append([float(line[1]),float(line[2])])
+            elif line[0]=='ov':
+                self.outerVertices.append([float(line[1]),float(line[2])])
+            elif line[0]=='no':
+                self.normals.append([float(line[1]),float(line[2])])
+            else:
+                print("Unknown value")
+
+                
+    def dispInner(self, ax, display_innerVertices = True, display_searchDirs = True, display_normals = True):
+        scale = 0.5
+        lines = []
+        if display_innerVertices:
+            iv_x = [v[0] for v in self.innerVertices]
+            iv_y = [v[1] for v in self.innerVertices]
+            iv_x.append(iv_x[0])
+            iv_y.append(iv_y[0])
+
+            lines.append(ax.plot(iv_x, iv_y, 'r-'))
+
+        if display_searchDirs:
+            for v,d in zip(self.innerVertices, self.searchDirs):
+                lines.append(ax.arrow(v[0], v[1], scale*d[0], scale*d[1], color='r'))
+                
+        if display_normals:
+            m_x = [(v1[0]+v2[0])/2 for v1,v2 in zip(self.innerVertices[:-1], self.innerVertices[1:])]
+            m_y = [(v1[1]+v2[1])/2 for v1,v2 in zip(self.innerVertices[:-1], self.innerVertices[1:])]
+            m_x.append((self.innerVertices[-1][0]+self.innerVertices[0][0])/2)
+            m_y.append((self.innerVertices[-1][1]+self.innerVertices[0][1])/2)
+            
+            for x, y, d in zip(m_x, m_y, self.normals):
+                lines.append(ax.arrow(x, y, scale*d[0], scale*d[1], color='b'))
+
+        return lines
+                
+    def dispOuter(self, ax, display_outerVertices = True):
+        scale = 0.5
+        lines = []
+        
+        if display_outerVertices:
+            ov_x = [v[0] for v in outerVertices]
+            ov_y = [v[1] for v in outerVertices]
+            ov_x.append(ov_x[0])
+            ov_y.append(ov_y[0])
+
+            lines.append(ax.plot(ov_x, ov_y, 'g-'))
+
+        return lines
+
+    def display(self, ax, dispInner = True, dispOuter = False):
+
+        
+        lines = []
+        if dispInner:
+            lines.extend(self.dispInner(ax))
+
+        if dispOuter:
+            lines.extend(self.dispOuter(ax))
+            
+        return lines
+        
+class robustPoly(polytope):
     def __init__(self, file_name):
         # coordinates of the inner points
         self.innerX = []
         self.innerY = []
         self.innerZ = []
 
-        # Normals associated to the inner points
+        # Normals associated to the inner points/ search directions
         self.innerU = []
         self.innerV = []
         self.innerW = []
 
         # list of inner edges, each edge is represented using a 2x3 matrix and each column gives the coordinates of one point
         self.innerEdges = []
-
+        self.innerEdgesNormals = []
+        
         # coordinates of the outer points
         self.outerX = []
         self.outerY = []
@@ -61,7 +156,7 @@ class innerOuterPoly:
 
         self.read_polytopeFile(file_name)
 
-    def read_polytopeFile(self, file_name):
+    def readFile(self, file_name):
         file = open(file_name, 'r')
 
         for line in file:
@@ -92,7 +187,7 @@ class innerOuterPoly:
             else:
                 print("Unrecognise type :", line[0])
 
-    def display_inner(self, ax, dispEdges=True, dispInnerNormals=False, color="xkcd:kelly green"):
+    def dispInner(self, ax, dispEdges=True, dispInnerNormals=False, color="xkcd:kelly green"):
         # ----------- display of inner polyhedron -----------
         innerline = ax.plot(self.innerX, self.innerY, self.innerZ, 'go')
 
@@ -110,7 +205,7 @@ class innerOuterPoly:
 
         return innerline
 
-    def display_outer(self, ax, dispEdges=True, color="xkcd:kelly green"):
+    def dispOuter(self, ax, dispEdges=True, color="xkcd:kelly green"):
         # ----------- display of outer polyhedron -----------
         ax.plot(self.outerX, self.outerY, self.outerZ, color=color, marker='o')
 
@@ -151,8 +246,11 @@ class PostProcessor:
 
         for child in compPoint:
             if child.tag == "poly":
-                self.polytopes.append(innerOuterPoly(child.attrib['file_name']))
-
+                if self.mode <= 3:
+                    self.polytopes.append(robustPoly(child.attrib['file_name']))
+                else:
+                    self.polytopes.append(staticPoly(child.attrib['file_name']))
+                    
             elif child.tag == "robot":
                 self.robots.append(Robot.load_from_file(child.attrib['file_name']))
                 self.robot_names.append(child.attrib['name'])
@@ -162,7 +260,6 @@ class PostProcessor:
                 self.LPTimes.append(int(child.attrib['LP']))
                 self.initTimes.append(int(child.attrib['init']))
                 self.structTimes.append(int(child.attrib['struct']))
-
 
             elif child.tag == "solver":
                 self.solvers.append(child.attrib['name'])
@@ -215,7 +312,6 @@ class PostProcessor:
         LP = 0
         init = 0
         struct = 0
-
 
         for i in range(self.numComputedPoints):
             if (self.solvers[i]==solver_name and self.robot_names[i]==robot_name):
@@ -326,67 +422,21 @@ class PostProcessor:
 
 
     def display_mode_4(self):
-        innerVertices = []
-        searchDirs = []
-        outerVertices = []
-        normals = []
-
-        file = open("/tmp/static_res.txt", 'r')
-
-        for line in file:
-            line = line.split(';')
-            if line[0]=='iv':
-                innerVertices.append([float(line[1]),float(line[2])])
-            elif line[0]=='sd':
-                searchDirs.append([float(line[1]),float(line[2])])
-            elif line[0]=='ov':
-                outerVertices.append([float(line[1]),float(line[2])])
-            elif line[0]=='no':
-                normals.append([float(line[1]),float(line[2])])
-            else:
-                print("Unknown value")
-
-        display_innerVertices = True
-        display_searchDirs = True
-        display_outerVertices = True
-        display_normals = True
+        
+        # display_innerVertices = True
+        # display_searchDirs = True
+        # display_outerVertices = True
+        # display_normals = True
 
         fig, ax = plt.subplots()
 
-        scale = 0.5
-        
-        if display_innerVertices:
-            iv_x = [v[0] for v in innerVertices]
-            iv_y = [v[1] for v in innerVertices]
-            iv_x.append(iv_x[0])
-            iv_y.append(iv_y[0])
-
-            ax.plot(iv_x, iv_y, 'r-')
-
-        if display_searchDirs:
-            for v,d in zip(innerVertices, searchDirs):
-                ax.arrow(v[0], v[1], scale*d[0], scale*d[1], color='r')
-
-        if display_outerVertices:
-            ov_x = [v[0] for v in outerVertices]
-            ov_y = [v[1] for v in outerVertices]
-            ov_x.append(ov_x[0])
-            ov_y.append(ov_y[0])
-
-            ax.plot(ov_x, ov_y, 'g-')
-
-        if display_normals:
-            m_x = [(v1[0]+v2[0])/2 for v1,v2 in zip(innerVertices[:-1], innerVertices[1:])]
-            m_y = [(v1[1]+v2[1])/2 for v1,v2 in zip(innerVertices[:-1], innerVertices[1:])]
-            m_x.append((innerVertices[-1][0]+innerVertices[0][0])/2)
-            m_y.append((innerVertices[-1][1]+innerVertices[0][1])/2)
-            
-            for x, y, d in zip(m_x, m_y, normals):
-                ax.arrow(x, y, scale*d[0], scale*d[1], color='b')
+        self.polytopes[0].display(ax)
 
         ax.set_aspect('equal')
         ax.set_xbound(-2, 2)
         ax.set_ybound(-2, 2)
+        ax.grid(True)
+        
         plt.show()
         
     
