@@ -127,7 +127,10 @@ class staticPoly(polytope):
 
         if dispOuter:
             lines.extend(self.dispOuter(ax))
-            
+
+        # ax.set_aspect('equal')
+        ax.set_xbound(-2, 2)
+        ax.set_ybound(-2, 2)
         return lines
         
 class robustPoly(polytope):
@@ -154,7 +157,7 @@ class robustPoly(polytope):
         # list of outer edges, each edge is represented using a 2x3 matrix and each column gives the coordinates of one point
         self.outerEdges = []
 
-        self.read_polytopeFile(file_name)
+        self.readFile(file_name)
 
     def readFile(self, file_name):
         file = open(file_name, 'r')
@@ -217,10 +220,10 @@ class robustPoly(polytope):
     def display(self, ax, dispInner = True, dispOuter = False):
         lines = []
         if dispInner:
-            lines.extend(self.display_inner(ax, dispInnerNormals=True))
+            lines.extend(self.dispInner(ax, dispInnerNormals=True))
 
         if dispOuter:
-            lines.extend(self.display_outer(ax))
+            lines.extend(self.dispOuter(ax))
 
         return lines
 
@@ -229,6 +232,7 @@ class robustPoly(polytope):
 class PostProcessor:
     def __init__(self, file_name="/res/results.xml"):
         self.mode = 0
+        self.robust = False
         self.numComputedPoints = 0
         self.robots = []
         self.robot_names = []
@@ -246,7 +250,7 @@ class PostProcessor:
 
         for child in compPoint:
             if child.tag == "poly":
-                if self.mode <= 3:
+                if self.robust:
                     self.polytopes.append(robustPoly(child.attrib['file_name']))
                 else:
                     self.polytopes.append(staticPoly(child.attrib['file_name']))
@@ -275,6 +279,8 @@ class PostProcessor:
         for child in root:
             if child.tag == 'mode':
                 self.mode = int(child.attrib['mode'])
+            elif child.tag == 'robust':
+                self.robust = child.attrib['robust'] == "true"
             elif child.tag == 'numComp':
                 self.numComputedPoints = int(child.attrib['numComputedPoints'])
             elif child.tag == 'compPoint':
@@ -286,27 +292,29 @@ class PostProcessor:
 
     def display_mode_1(self):
 
-        poly_static = static_stability.static_stability_polyhedron(self.robots[0], 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
-        poly_static.project_static_stability()
-
         ax, lines = self.robots[0].display_robot_configuration()
 
-        # ----------- display of static stability -----------
-        x1 = [v[0] for v in poly_static.inner_vertices]
-        x1.append(x1[0])
-        y1 = [v[1] for v in poly_static.inner_vertices]
-        y1.append(y1[0])
-        ax.plot(x1, y1, color="xkcd:red")
-        # ax.plot(x1, y1, color="r")
+        if self.robust:
+            poly_static = static_stability.static_stability_polyhedron(self.robots[0], 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
+            poly_static.project_static_stability()
+            
+            # ----------- display of static stability -----------
+            x1 = [v[0] for v in poly_static.inner_vertices]
+            x1.append(x1[0])
+            y1 = [v[1] for v in poly_static.inner_vertices]
+            y1.append(y1[0])
+            ax.plot(x1, y1, color="xkcd:red")
+            # ax.plot(x1, y1, color="r")
 
         self.polytopes[0].display(ax)
 
         ax.set_xlabel("x")
         ax.set_ylabel("y")
+        ax.grid(True)
 
         plt.show()
 
-    def extract_timings_mode2(self, solver_name, robot_name):
+    def extract_timings(self, solver_name, robot_name):
         numPts = 0
         total = 0
         LP = 0
@@ -330,51 +338,94 @@ class PostProcessor:
         robots = set(self.robot_names)
 
         total_avg_per_sol = dict()
+        total_LP_per_sol = dict()
+        total_init_per_sol = dict()
+        total_struct_per_sol = dict()
+        
         for sol in solvers:
             sol_times = []
+            LP_times = []
+            init_times = []
+            struct_times = []
+            
             for rob in robots:
-                timings = self.extract_timings_mode2(sol, rob)
+                timings = self.extract_timings(sol, rob)
                 sol_times.append(timings[1])
-                print(sol, rob, timings)
+                LP_times.append(timings[2])
+                init_times.append(timings[3])
+                struct_times.append(timings[4])
+                # print(sol, rob, timings)
             total_avg_per_sol[sol]=sol_times
+            total_LP_per_sol[sol]=LP_times
+            total_init_per_sol[sol]=init_times
+            total_struct_per_sol[sol]=struct_times
 
         print(total_avg_per_sol)
+        print(total_LP_per_sol)
 
         x = np.arange(len(robots))  # the label locations
         width = 0.20  # the width of the bars
 
-        fig, ax = plt.subplots()
-        rects = []
+        fig, axs = plt.subplots(2, 2)
+        
+        ax_tot = axs[0,0]
+        ax_LP = axs[0,1]
+        ax_init = axs[1,0]
+        ax_struct = axs[1,1]
+        
+        rects_tot = []
+        rects_LP = []
+        rects_init = []
+        rects_struct = []
 
         total_num_solvers = len(solvers)
         num_sol = 0
         
         for sol in solvers:
-            rect = ax.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_avg_per_sol[sol] , width, label=sol)
-            rects.append(rect)
+            rects_tot.append(ax_tot.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_avg_per_sol[sol] , width, label=sol))
+            rects_LP.append(ax_LP.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_LP_per_sol[sol] , width, label=sol))
+            rects_init.append(ax_init.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_init_per_sol[sol] , width, label=sol))
+            rects_struct.append(ax_struct.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_struct_per_sol[sol] , width, label=sol))
             num_sol += 1
-            
-        # Add some text for labels, title and custom x-axis tick labels, etc.
-        ax.set_ylabel('Average total computing time (µs)')
-        ax.set_title('Time comparision of the different solvers')
-        ax.set_xticks(x)
-        ax.set_xticklabels(robots)
-        ax.legend()
 
-        def autolabel(rects):
+        axes  = (ax_tot, ax_LP, ax_init, ax_struct)
+
+        for ax in axes:
+            # Add some text for labels, title and custom x-axis tick labels, etc.
+            ax.set_xticks(x)
+            ax.set_xticklabels(robots)
+            ax.legend()
+
+        ax_tot.set_ylabel('Average total computing time (µs)')
+        ax_LP.set_ylabel('Average time computing LP (µs)')
+        ax_init.set_ylabel('Average time initializing LP (µs)')
+        ax_struct.set_ylabel('Average time computing geometry (µs)')
+        # ax_tot.set_title('Time comparision of the different solvers')
+
+        def autolabel(rects, rect_ax):
             """Attach a text label above each bar in *rects*, displaying its height."""
             for rect in rects:
                 height = rect.get_height()
-                ax.annotate('{}'.format(height),
+                rect_ax.annotate('{}'.format(height),
                             xy=(rect.get_x() + rect.get_width() / 2, height),
                             xytext=(0, 3),  # 3 points vertical offset
                             textcoords="offset points",
                             ha='center', va='bottom')
-                
-        for rect in rects:
-            autolabel(rect)
+
+
+        for rect in rects_tot:
+            autolabel(rect, ax_tot)
+
+        for rect in rects_LP:
+            autolabel(rect, ax_LP)
+
+        for rect in rects_init:
+            autolabel(rect, ax_init)
+
+        for rect in rects_struct:
+            autolabel(rect, ax_struct)
             
-        fig.tight_layout()
+        # fig.tight_layout()
         plt.show()
     
     def display_mode_3(self):
@@ -418,27 +469,7 @@ class PostProcessor:
         ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
         # moviewriter.finnish()
         print("Animation saved!")
-        plt.show()
-
-
-    def display_mode_4(self):
-        
-        # display_innerVertices = True
-        # display_searchDirs = True
-        # display_outerVertices = True
-        # display_normals = True
-
-        fig, ax = plt.subplots()
-
-        self.polytopes[0].display(ax)
-
-        ax.set_aspect('equal')
-        ax.set_xbound(-2, 2)
-        ax.set_ybound(-2, 2)
-        ax.grid(True)
-        
-        plt.show()
-        
+        plt.show()        
     
     def display_results(self):
 
@@ -448,8 +479,6 @@ class PostProcessor:
             self.display_mode_2()
         elif self.mode == 3:
             self.display_mode_3()
-        elif self.mode == 4:
-            self.display_mode_4()
         else:
             print("Unknown Mode {}".format(self.mode))
             assert False

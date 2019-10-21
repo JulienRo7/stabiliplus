@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
     int numFrictionSides = 16;
 
     Solver solver = GLPK;
+    bool robust = TRUE;
     
     for (int i=0; i<argc; i++)
     {
@@ -48,12 +49,17 @@ int main(int argc, char *argv[])
 		std::cout << "Unknown solver name " << solver_name << ". Using the default one (GLPK) instead." << std::endl;
 	      }
 	  }
+	else if (std::string(argv[i])=="--robust")
+        {
+            robust = argv[i+1] == "TRUE";
+        }
     }
 
     std::cout << "Mode: " << mode << '\n';
     std::cout << "Robot file: " << file_robot << '\n';
     std::cout << "Number of friction sides: " << numFrictionSides << '\n';
     std::cout << "Solver: " << solver << '\n';
+    std::cout << "Using robust stability: " << robust << '\n';
     std::cout << '\n';
 
 
@@ -70,7 +76,7 @@ int main(int argc, char *argv[])
     only robot_2.xml has 4 accelerations
     */
 
-    Experimenter experience(mode, file_robot, numFrictionSides, solver);
+    Experimenter experience(mode, file_robot, numFrictionSides, solver, robust);
 
     experience.run();
 

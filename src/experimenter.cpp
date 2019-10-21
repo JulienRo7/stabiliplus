@@ -3,9 +3,9 @@
 
 // ---------- constructors and destructor -----------
 
-Experimenter::Experimenter(int mode, std::string const& contact_set_file_name, int numFrictionSides, Solver solver):
+Experimenter::Experimenter(int mode, std::string const& contact_set_file_name, int numFrictionSides, Solver solver, bool robust):
   m_mode(mode), m_numFrictionSides(numFrictionSides),
-  m_contactSet(contact_set_file_name, numFrictionSides), m_solver(solver)
+  m_contactSet(contact_set_file_name, numFrictionSides), m_solver(solver), m_robust(robust)
 {
     stabiliplus_path = "";
 }
@@ -30,9 +30,6 @@ void Experimenter::run()
       case 3:
 	run_exp3();
 	break;
-      case 4:
-	run_exp4();
-	break;
       default:
 	std::cerr << "Unknown mode" << '\n';
 	
@@ -42,8 +39,40 @@ void Experimenter::run()
 
 void Experimenter::run_exp1()
 {
-    std::cout << "Running Experiment for mode 1!" << '\n';
+  std::cout << "Running Experiment for mode 1!" << '\n';
 
+  if (m_robust)
+    {
+      run_exp1_robust();
+    }
+  else
+    {
+      run_exp1_static();
+    }
+}
+
+void Experimenter::run_exp1_static()
+{
+  auto start = std::chrono::high_resolution_clock::now();
+  std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
+
+  polytope->initSolver();
+  polytope->projectionStabilityPolyhedron();
+  
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  
+  m_polytopes.push_back(polytope);
+  m_total_times_ms.push_back(duration.count());
+
+  std::cout << "Static Stability Region computed in " << duration.count() << " microseconds." << std::endl;
+  std::cout << "Init time: " << polytope->initTime() << " microseconds" << std::endl;
+  std::cout << "LP time: " << polytope->LPTime() << " microseconds with solver " << m_solver << std::endl;
+  std::cout << "Structure time: " << polytope->structTime() << " microseconds" << std::endl;
+}
+
+void Experimenter::run_exp1_robust()
+{
     auto start = std::chrono::high_resolution_clock::now();
     std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
 
@@ -57,52 +86,110 @@ void Experimenter::run_exp1()
     m_total_times_ms.push_back(duration.count());
 
     std::cout << "Computation time: " << duration.count() << "ms for " << polytope->get_numberOfVertices() << " inner Vertices"
-              << " and " << polytope->get_numberOfOuterVertices() << " outer vertices."<< '\n';
+	      << " and " << polytope->get_numberOfOuterVertices() << " outer vertices."<< '\n';
     std::cout << "Number of Inner Faces: " << polytope->get_numberOfFaces() << ", number of outer faces: " << polytope->get_numberOfOuterFaces() << '\n';
-
+    
     std::cout << "LP time: " << polytope->LPTime() << " microseconds" << '\n';
     std::cout << "inner time: " << polytope->get_innerConvexMicro() << " microseconds" << '\n';
     std::cout << "outer time: " << polytope->get_outerConvexMicro() << " microseconds" << '\n';
     std::cout << "support time: " << polytope->get_supportFunctionMicro() << " microseconds" << '\n';
+    
 }
 
 void Experimenter::run_exp2()
 {
-    std::cout << "Running Experiment for mode 2!" << '\n';
+  std::cout << "Running Experiment for mode 2!" << '\n';
 
-    std::string robot_names[4] = {"./robots/robot_1.xml", "./robots/robot_2.xml", "./robots/robot_3.xml", "./robots/robot_4.xml"};
-    int numTrials = 100;
-    Solver solvers[3] = {GLPK, LP_SOLVE, GUROBI};
+  if (m_robust)
+    {
+      run_exp2_robust();
+    }
+  else
+    {
+      run_exp2_static();
+    }
+}
 
+void Experimenter::run_exp2_static()
+{
+  std::string robot_names[4] = {"./robots/robot_1.xml", "./robots/robot_2.xml", "./robots/robot_3.xml", "./robots/robot_4.xml"};
+  int numTrials = 100;
+  Solver solvers[3] = {GLPK, LP_SOLVE, GUROBI};
     
-    for (auto solver: solvers)
-      {
-	for (auto rob_file: robot_names)
-	  {
-	    ContactSet rob(rob_file, m_numFrictionSides);
-	    for (int i = 0; i<numTrials; i++)
-	      {
-		std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
-		auto start = std::chrono::high_resolution_clock::now();
+  for (auto solver: solvers)
+    {
+      for (auto rob_file: robot_names)
+	{
+	  ContactSet rob(rob_file, m_numFrictionSides);
+	  for (int i = 0; i<numTrials; i++)
+	    {
+	      std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
+	      auto start = std::chrono::high_resolution_clock::now();
+	      std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(rob, 50, 0.05, solver));
 
-		std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(rob, 50, 0.05, solver));
-		polytope->initSolver();
-		polytope->projectionStabilityPolyhedron();
-
-		auto stop = std::chrono::high_resolution_clock::now();
-		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-		m_polytopes.push_back(polytope);
-		m_total_times_ms.push_back(duration.count());
+	      polytope->initSolver();
+	      polytope->projectionStabilityPolyhedron();
+	      
+	      auto stop = std::chrono::high_resolution_clock::now();
+	      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	      
+	      m_polytopes.push_back(polytope);
+	      m_total_times_ms.push_back(duration.count());
+	    }
+	}
+    }
+    
+}
+  
+void Experimenter::run_exp2_robust()
+{
+  std::string robot_names[4] = {"./robots/robot_1.xml", "./robots/robot_2.xml", "./robots/robot_3.xml", "./robots/robot_4.xml"};
+  int numTrials = 100;
+  Solver solvers[3] = {GLPK, LP_SOLVE, GUROBI};
+  
+  
+  for (auto solver: solvers)
+    {
+      for (auto rob_file: robot_names)
+	{
+	  ContactSet rob(rob_file, m_numFrictionSides);
+	  for (int i = 0; i<numTrials; i++)
+	    {
+	      std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
+	      auto start = std::chrono::high_resolution_clock::now();
+	      std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(rob, 50, 0.05, solver));
+	      
+	      polytope->initSolver();
+	      polytope->projectionStabilityPolyhedron();
+	      
+	      auto stop = std::chrono::high_resolution_clock::now();
+	      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	      
+	      m_polytopes.push_back(polytope);
+	      m_total_times_ms.push_back(duration.count());
 	      }
 	  }
       }
     
 }
 
+
 void Experimenter::run_exp3()
 {
-    std::cout << "Running Experiment for mode 3!" << '\n';
+  std::cout << "Running Experiment for mode 3!" << '\n';
+
+  if (m_robust)
+    {
+      run_exp3_robust();
+    }
+  else
+    {
+      run_exp3_static();
+    }
+}
+
+void Experimenter::run_exp3_static()
+{
     if (m_contactSet.get_name()=="robot_8")
     {
         Eigen::Vector3d dx;
@@ -113,8 +200,8 @@ void Experimenter::run_exp3()
         for (int i=0; i<50; i++)
         {
 	  auto start = std::chrono::high_resolution_clock::now();
+	  std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
 
-	  std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
 	  polytope->initSolver();
 	  polytope->projectionStabilityPolyhedron();
 
@@ -133,29 +220,36 @@ void Experimenter::run_exp3()
     }
 }
 
-void Experimenter::run_exp4()
+void Experimenter::run_exp3_robust()
 {
-  std::cout << "Welcome to mode 4: static stability" << std::endl;
+    if (m_contactSet.get_name()=="robot_8")
+    {
+        Eigen::Vector3d dx;
+        dx << 0.0,
+              0.01,
+              0.0;
 
-  auto start = std::chrono::high_resolution_clock::now();
+        for (int i=0; i<50; i++)
+        {
+	  auto start = std::chrono::high_resolution_clock::now();
+	  std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
 
-  std::shared_ptr<StaticStabilityPolytope> static_poly(new StaticStabilityPolytope(m_contactSet, 50, 0.01, m_solver));
-  
-  static_poly->initSolver();
-  static_poly->projectionStabilityPolyhedron();
+	  polytope->initSolver();
+	  polytope->projectionStabilityPolyhedron();
 
-  auto stop = std::chrono::high_resolution_clock::now();
+	  auto stop = std::chrono::high_resolution_clock::now();
+	  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop - start);
-  double totalTime  = duration.count();
+	  m_polytopes.push_back(polytope);
+	  m_total_times_ms.push_back(duration.count());
 
-  std::cout << "Static Stability Region computed in " << totalTime << " microseconds." << std::endl;
-  std::cout << "Init time: " << static_poly->initTime() << " microseconds" << std::endl;
-  std::cout << "LP time: " << static_poly->LPTime() << " microseconds with solver " << m_solver << std::endl;
-  std::cout << "Structure time: " << static_poly->structTime() << " microseconds" << std::endl;
-
-  m_polytopes.push_back(static_poly);
-  m_total_times_ms.push_back(totalTime);
+	  m_contactSet.translateContact(3, dx);
+        }
+    }
+    else
+    {
+        std::cerr << "This experiment requires robot 8 to be loaded!" << '\n';
+    }
 }
 
 
@@ -181,6 +275,11 @@ void Experimenter::save()
     tinyxml2::XMLElement *mode = doc.NewElement("mode");
     mode->SetAttribute("mode", m_mode);
     root->InsertEndChild(mode);
+
+    // adding the robust bool to the root node to tell if we are using static or robust polytopes
+    tinyxml2::XMLElement *robust = doc.NewElement("robust");
+    robust->SetAttribute("robust", m_robust);
+    root->InsertEndChild(robust);
     
     // adding the number of computed points (compPoint)
     tinyxml2::XMLElement *numComp = doc.NewElement("numComp");
