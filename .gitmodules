@@ -1,0 +1,3 @@
+[submodule "lpsolve55"]
+	path = lpsolve55
+	url = git@gite.lirmm.fr:gergondet/lpsolve55.git

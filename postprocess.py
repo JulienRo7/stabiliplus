@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET # phone home!
 import sys
 
 
-sys.path.append("../Stability")
+sys.path.append("./python")
 
 from robot_description import Robot
 import static_stability
