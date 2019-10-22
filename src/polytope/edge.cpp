@@ -1,6 +1,6 @@
-#include "stabiliplus/edge.h"
+#include "edge.h"
 
-#include "stabiliplus/face.h" // Because of forward declaration
+#include "face.h" // Because of forward declaration
 
 int Edge::GlobalEdgeCounter = 0;
 

@@ -9,14 +9,14 @@
 #include <Eigen/Dense>
 
 // custom libraries
-#include "stabiliplus/stabilityPolytope.h"
+#include "polytope/stabilityPolytope.h"
 
-#include "vertex.h"
-#include "edge.h"
-#include "face.h"
-#include "outervertex.h"
-#include "outeredge.h"
-#include "outerface.h"
+#include "polytope/vertex.h"
+#include "polytope/edge.h"
+#include "polytope/face.h"
+#include "polytope/outervertex.h"
+#include "polytope/outeredge.h"
+#include "polytope/outerface.h"
 
 
 class RobustStabilityPolytope: public StabilityPolytope

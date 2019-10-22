@@ -1,4 +1,4 @@
-#include "stabiliplus/staticPoint.h"
+#include "staticPoint.h"
 
 StaticPoint::StaticPoint(Eigen::Vector2d dir, Eigen::Vector2d vertex, StaticMeasure mesType):
   m_innerVertex(vertex), m_searchDir(dir), m_measureType(mesType)

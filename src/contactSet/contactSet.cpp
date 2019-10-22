@@ -1,4 +1,4 @@
-#include "stabiliplus/contactSet.h"
+#include "contactSet/contactSet.h"
 
 // using namespace std;
 

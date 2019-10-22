@@ -24,7 +24,7 @@
 #include "wrapper/glpk_wrapper.h"
 #include "wrapper/lpsolve_wrapper.h"
 #include "wrapper/gurobi_wrapper.h"
-#include "contactSet.h"
+#include "contactSet/contactSet.h"
 
 
 class StabilityPolytope

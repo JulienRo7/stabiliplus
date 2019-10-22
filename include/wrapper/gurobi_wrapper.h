@@ -6,7 +6,7 @@
 #include <iostream>
 
 // libraries
-#include <gurobi_c++.h>
+#include "gurobi_c++.h"
 
 // homemade includes
 #include "wrapper/solver_wrapper.h"

@@ -11,10 +11,10 @@
 
 #include <tinyxml2.h>
 
-#include "contactSet.h"
-#include "stabilityPolytope.h"
-#include "robustStabilityPolytope.h"
-#include "staticStabilityPolytope.h"
+#include "contactSet/contactSet.h"
+#include "polytope/stabilityPolytope.h"
+#include "polytope/robustStabilityPolytope.h"
+#include "polytope/staticStabilityPolytope.h"
 
 class Experimenter
 {

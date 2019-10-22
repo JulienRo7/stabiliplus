@@ -1,6 +1,6 @@
-#include "stabiliplus/outervertex.h"
+#include "outervertex.h"
 
-#include "stabiliplus/outeredge.h" // forward declaration
+#include "outeredge.h" // forward declaration
 
 int OuterVertex::GlobalOuterVertexCounter = 0;
 

@@ -23,7 +23,7 @@ The robot class contains the description of the robot. It can load it and make o
 #include <Eigen/Dense>
 
 // custom libraries
-#include "contactPoints.h"
+#include "contactSet/contactPoints.h"
 
 
 class ContactSet

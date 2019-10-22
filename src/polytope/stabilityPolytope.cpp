@@ -1,4 +1,4 @@
-#include "stabiliplus/stabilityPolytope.h"
+#include "polytope/stabilityPolytope.h"
 
 StabilityPolytope::StabilityPolytope(ContactSet contactSet, int maxIteration, double maxError, Solver solverType):
   m_contactSet(contactSet), m_solverType(solverType),

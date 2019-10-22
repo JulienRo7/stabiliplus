@@ -6,8 +6,8 @@
 // libraries
 
 // custom libraries
-#include "stabiliplus/stabilityPolytope.h"
-#include "stabiliplus/staticPoint.h"
+#include "polytope/stabilityPolytope.h"
+#include "polytope/staticPoint.h"
 
 class StaticStabilityPolytope: public StabilityPolytope
 {

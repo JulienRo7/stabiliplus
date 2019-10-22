@@ -1,4 +1,4 @@
-#include "stabiliplus/experimenter.h"
+#include "experimenter.h"
 
 
 // ---------- constructors and destructor -----------
