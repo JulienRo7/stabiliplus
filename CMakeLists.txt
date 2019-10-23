@@ -6,8 +6,7 @@ find_package(Eigen3 REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-O2")
 
-
-add_subdirectory(lpsolve55 EXCLUDE_FROM_ALL)
+add_subdirectory(lpsolve55)
 
 find_file(gurobi_lib libgurobi81.so
   PATH $ENV{GUROBI_HOME}/lib/
@@ -30,6 +29,7 @@ target_include_directories(wrappers
   PUBLIC 
   $<INSTALL_INTERFACE:include>    
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lpsolve55/src>
   $ENV{GUROBI_HOME}/include
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -132,8 +132,8 @@ target_link_libraries(main
 include(GNUInstallDirs)
 install(TARGETS StabilityPolytope ContactSet wrappers
     EXPORT Stabiliplus-export
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/Stabiliplus
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/Stabiliplus
     )
 
 install(EXPORT Stabiliplus-export
@@ -145,14 +145,7 @@ install(EXPORT Stabiliplus-export
   ${CMAKE_INSTALL_LIBDIR}/cmake/Stabiliplus
   )
 
-#get_filename_component(Stabiliplus_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-# include(CMakeFindDependencyMacro)
-
-# find_dependency(Eigen3 REQUIRED)
-
-# if(NOT TARGET Stabiliplus::StabilityPolytope)
-#     include("${Stabiliplus_CMAKE_DIR}/StabiliplusTargets.cmake")
-# endif()
-
-
+install(DIRECTORY include/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Stabiliplus
+  )
 

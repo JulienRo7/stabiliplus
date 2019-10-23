@@ -6,7 +6,8 @@
 #include <iostream>
 
 // libraries
-#include <lp_solve/lp_lib.h>
+#include <lp_lib.h>
+//#include <lp_solve/lp_lib.h>
 
 // homemade includes
 #include "wrapper/solver_wrapper.h"
