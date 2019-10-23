@@ -46,14 +46,14 @@ target_link_libraries(wrappers
   glpk lpsolve55 ${gurobi_c++_lib} ${gurobi_lib}
   )
 
-### contactSet library ###
+### ContactSet library ###
 
-add_library(contactSet
+add_library(ContactSet
   ${PROJECT_SOURCE_DIR}/src/contactSet/contactSet.cpp
   ${PROJECT_SOURCE_DIR}/src/contactSet/contactPoints.cpp
   )
 
-target_include_directories(contactSet
+target_include_directories(ContactSet
   PUBLIC 
   $<INSTALL_INTERFACE:include>    
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -61,11 +61,11 @@ target_include_directories(contactSet
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
-target_compile_features(contactSet
+target_compile_features(ContactSet
   PRIVATE cxx_std_11
   )
 
-target_link_libraries(contactSet
+target_link_libraries(ContactSet
   PUBLIC
   Eigen3::Eigen
   PRIVATE
@@ -102,7 +102,6 @@ target_compile_features(StabilityPolytope
 target_link_libraries(StabilityPolytope
   PUBLIC
   Eigen3::Eigen
-  # contactSet
   wrappers
   PRIVATE
   )
@@ -125,4 +124,35 @@ target_compile_features(main
 
 target_link_libraries(main
   PRIVATE
-  contactSet StabilityPolytope tinyxml2)
+  ContactSet StabilityPolytope tinyxml2)
+
+
+#### Exporting targets and installing ####
+
+include(GNUInstallDirs)
+install(TARGETS StabilityPolytope ContactSet wrappers
+    EXPORT Stabiliplus-export
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
+install(EXPORT Stabiliplus-export
+  FILE
+  StabiliplusConfig.cmake
+  NAMESPACE
+  Stabiliplus::
+  DESTINATION
+  ${CMAKE_INSTALL_LIBDIR}/cmake/Stabiliplus
+  )
+
+#get_filename_component(Stabiliplus_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+# include(CMakeFindDependencyMacro)
+
+# find_dependency(Eigen3 REQUIRED)
+
+# if(NOT TARGET Stabiliplus::StabilityPolytope)
+#     include("${Stabiliplus_CMAKE_DIR}/StabiliplusTargets.cmake")
+# endif()
+
+
+
