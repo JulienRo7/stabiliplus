@@ -146,6 +146,6 @@ install(EXPORT Stabiliplus-export
   )
 
 install(DIRECTORY include/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Stabiliplus
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/
   )
 

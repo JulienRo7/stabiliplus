@@ -1,4 +1,4 @@
-#include "outerface.h"
+#include "polytope/outerface.h"
 
 // #include "outervertex.h"
 

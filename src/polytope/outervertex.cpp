@@ -1,6 +1,6 @@
-#include "outervertex.h"
+#include "polytope/outervertex.h"
 
-#include "outeredge.h" // forward declaration
+#include "polytope/outeredge.h" // forward declaration
 
 int OuterVertex::GlobalOuterVertexCounter = 0;
 

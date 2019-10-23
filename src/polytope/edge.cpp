@@ -1,6 +1,6 @@
-#include "edge.h"
+#include "polytope/edge.h"
 
-#include "face.h" // Because of forward declaration
+#include "polytope/face.h" // Because of forward declaration
 
 int Edge::GlobalEdgeCounter = 0;
 
