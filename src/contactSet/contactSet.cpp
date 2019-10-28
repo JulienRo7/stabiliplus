@@ -438,7 +438,7 @@ void ContactSet::translateContact(int contactIndex, Eigen::Vector3d translation)
     }
 }
 
-void ContactSet::set_contact(int contactIndex, Eigen::Matrix4d homTrans)
+void ContactSet::updateContact(int contactIndex, Eigen::Matrix4d homTrans)
 {
     if (contactIndex >= 0 && contactIndex < m_feet.size())
     {
@@ -447,6 +447,20 @@ void ContactSet::set_contact(int contactIndex, Eigen::Matrix4d homTrans)
     else
     {
         std::cerr << "Error: the contact index is not valid" << '\n';
+    }
+}
+
+void ContactSet::updateContact(std::string contactName, Eigen::Matrix4d homTrans)
+{
+  if (hasContactNamed(contactName))
+    {
+      int index = get_contactIndexFromName(contactName);
+      m_feet[index].set_contact(homTrans);
+    }
+  else
+    {
+      std::cout << "There is no contact named " << contactName << "..." << std::endl;
+      std::cout << "But I won't throw an error! hehehe!" << std::endl;
     }
 }
 
@@ -467,6 +481,15 @@ void ContactSet::addContact(std::string contactName)
     m_feet.push_back(ContactPoints(contactName, 0.5));
     m_numberOfFeet ++;
 }
+
+void ContactSet::addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction)
+{
+  ContactPoints contact(contactName, friction);
+  contact.set_contact(homTrans);
+  m_feet.push_back(contact);
+  m_numberOfFeet ++;
+}
+
 // ---------- Static function -----------
 
 Eigen::Matrix3d ContactSet::skewSymmetric(Eigen::Vector3d const& vect)
