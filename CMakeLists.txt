@@ -6,7 +6,8 @@ find_package(Eigen3 REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-O2")
 
-add_subdirectory(lpsolve55)
+# add_subdirectory(lpsolve55)
+find_package(lpsolve55 REQUIRED)
 
 find_file(gurobi_lib libgurobi81.so
   PATH $ENV{GUROBI_HOME}/lib/
@@ -43,7 +44,7 @@ target_link_libraries(wrappers
   PUBLIC
   Eigen3::Eigen
   PRIVATE
-  glpk lpsolve55 ${gurobi_c++_lib} ${gurobi_lib}
+  glpk lpsolve55::lpsolve55 ${gurobi_c++_lib} ${gurobi_lib}
   )
 
 ### ContactSet library ###
