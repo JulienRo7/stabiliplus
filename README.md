@@ -5,6 +5,8 @@ apt install libeigen3-dev libglpk-dev libtinyxml2-dev
 ```
 
 This project also requires gurobi optimizer to be installed on the computer.
+This project also requires lpsolve55 optimizer to be installed on the computer. For an easy installation using cmake see:
+[lpsolve55 by Pierre Gergondet](https://gite.lirmm.fr/gergondet/lpsolve55~)
 
 ## build
 
