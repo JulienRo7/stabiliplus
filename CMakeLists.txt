@@ -5,6 +5,7 @@ project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-O2")
+# set(CMAKE_CXX_FLAGS "-g")
 
 # add_subdirectory(lpsolve55)
 find_package(lpsolve55 REQUIRED)

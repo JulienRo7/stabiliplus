@@ -20,14 +20,22 @@ class GlpkWrapper: public SolverWrapper
 
   // ---------- main functions -------------
   void buildProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f);
+  void buildFactorizedProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f);
+  void buildOriginalProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f);
   void solveProblem();
+  void solveOriginalProblem();
+  void solveFactorizedProblem();
 
   // ---------- getters -----------
 
 
   // ---------- setters -----------
   void set_searchDirection(const Eigen::Vector3d & searchDir);
+  void set_searchDirectionOriginal(const Eigen::Vector3d & searchDir);
+  void set_searchDirectionFactorized(const Eigen::Vector3d & searchDir);
   void set_staticSearchDirection(const Eigen::Vector2d & searchDir);
+  void set_staticSearchDirectionOriginal(const Eigen::Vector2d & searchDir);
+  void set_staticSearchDirectionFactorized(const Eigen::Vector2d & searchDir);
 
  private:
   glp_prob *m_lp;

@@ -41,7 +41,6 @@ void RobustStabilityPolytope::initSolver()
   m_initTime = duration.count();
 }
 
-
 void RobustStabilityPolytope::solveLP(Eigen::Vector3d const& direction, Eigen::Vector3d &vertex)
 {
   auto start = std::chrono::high_resolution_clock::now();
