@@ -32,7 +32,7 @@ class StabilityPolytope
 public:
   // ----------- constructors and destructor ----------
   StabilityPolytope(ContactSet contactSet, int maxIteration, double maxError, Solver solveType);
-  ~StabilityPolytope();
+  virtual ~StabilityPolytope();
   
   // ----------- main class methods ----------
   virtual void initSolver() = 0; 
