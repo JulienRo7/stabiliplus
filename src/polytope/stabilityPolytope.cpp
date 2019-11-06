@@ -26,6 +26,7 @@ StabilityPolytope::StabilityPolytope(ContactSet contactSet, int maxIteration, do
 StabilityPolytope::~StabilityPolytope()
 {
   delete m_lp;
+  m_lp = nullptr;
 }
 
 
