@@ -21,7 +21,7 @@ class SolverWrapper
  public:
   // ---------- constructor and destructor -------------
   SolverWrapper();
-  ~SolverWrapper();
+  virtual ~SolverWrapper();
 
   // ---------- main functions -------------
   virtual void buildProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f) = 0;
