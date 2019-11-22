@@ -155,6 +155,34 @@ void StaticStabilityPolytope::writeToStream(std::ofstream& stream ) const
     }  
 }
 
+std::vector<Eigen::Vector4d> StaticStabilityPolytope::constraintPlanes() const
+{
+  std::vector<Eigen::Vector4d> planes;
+
+  for (auto pt: m_points)
+    {
+      planes.push_back(pt->plane());
+    }
+  
+  return planes;
+}
+
+Eigen::Vector3d StaticStabilityPolytope::baryPoint() const
+{
+  Eigen::Vector2d bary = Eigen::Vector2d::Zero();
+
+  for (auto pt: m_points)
+    {
+      bary += pt->innerVertex();
+    }
+
+  bary /= m_points.size();
+  
+  Eigen::Vector3d baryPt;
+  baryPt << bary, 0;
+  return baryPt;
+}
+
 void StaticStabilityPolytope::showPointsNeighbours()
 {
   std::cout << "Neighborhood: " << std::endl;

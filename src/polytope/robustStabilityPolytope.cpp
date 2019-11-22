@@ -718,6 +718,36 @@ void RobustStabilityPolytope::showPoly() const
     std::cout << '\n';
 }
 
+std::vector<Eigen::Vector4d> RobustStabilityPolytope::constraintPlanes() const
+{
+  std::vector<Eigen::Vector4d> planes;
+
+  for (auto face: m_faces)
+    {
+      Eigen::Vector4d plane;
+      plane << face->get_normal(), face->get_offset();
+
+      planes.push_back(plane);
+    }
+  
+  return planes;
+}
+
+Eigen::Vector3d RobustStabilityPolytope::baryPoint() const
+{
+  Eigen::Vector3d baryPt = Eigen::Vector3d::Zero();
+
+  for (auto pt: m_vertices)
+    {
+      baryPt+=pt->get_coordinates();
+    }
+
+  baryPt /= m_vertices.size();
+
+  return baryPt;  
+}
+
+
 // ----------- getters ----------
 int RobustStabilityPolytope::get_numberOfVertices() const
 {

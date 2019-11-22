@@ -46,6 +46,8 @@ public:
   // ----------- output and display functions ----------
   void writeToStream(std::ofstream& stream) const;
   void showPoly() const;
+  std::vector<Eigen::Vector4d> constraintPlanes() const;
+  Eigen::Vector3d baryPoint() const;
 
   // ----------- getters ----------
   int get_numberOfVertices() const;

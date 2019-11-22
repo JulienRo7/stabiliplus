@@ -24,6 +24,9 @@ class StaticStabilityPolytope: public StabilityPolytope
 
   // ----- output -----
   void writeToStream(std::ofstream& stream) const;
+  std::vector<Eigen::Vector4d> constraintPlanes() const;
+  Eigen::Vector3d baryPoint() const;
+
   void showPointsNeighbours();
   // ----- setters -----
 

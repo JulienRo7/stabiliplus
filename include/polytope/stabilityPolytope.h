@@ -44,6 +44,8 @@ public:
 
   // ----------- output and display functions ----------
   virtual void writeToStream(std::ofstream& stream) const = 0;
+  virtual std::vector<Eigen::Vector4d> constraintPlanes() const = 0;
+  virtual Eigen::Vector3d baryPoint() const = 0;
 
   // ----------- getters ----------
   double LPTime() const;

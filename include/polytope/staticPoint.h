@@ -32,6 +32,7 @@ class StaticPoint
   void computeSupport();
   // ----- outputs -----
   void writeToStream(std::ofstream& file_stream) const;
+  Eigen::Vector4d plane() const;
   
   // ----- getters -----
   std::shared_ptr<StaticPoint> next() const;

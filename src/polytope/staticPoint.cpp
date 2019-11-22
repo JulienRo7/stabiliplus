@@ -95,6 +95,14 @@ void StaticPoint::writeToStream(std::ofstream& file_stream) const
 	      << std::endl;
 }
 
+Eigen::Vector4d StaticPoint::plane() const
+{
+  double offset = m_innerVertex.transpose()*m_normal;
+  Eigen::Vector4d plane;
+  plane << m_normal, 0, offset;
+
+  return plane;
+}
 
 // ----- getters -----
 std::shared_ptr<StaticPoint> StaticPoint::next() const
