@@ -20,7 +20,7 @@ find_file(gurobi_c++_lib libgurobi_c++.a
 
 ### wrapper library ###
 
-add_library(wrappers
+add_library(wrappers SHARED
   ${PROJECT_SOURCE_DIR}/src/wrapper/solver_wrapper.cpp
   ${PROJECT_SOURCE_DIR}/src/wrapper/glpk_wrapper.cpp
   ${PROJECT_SOURCE_DIR}/src/wrapper/lpsolve_wrapper.cpp
@@ -33,8 +33,8 @@ target_include_directories(wrappers
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lpsolve55/src>
   $ENV{GUROBI_HOME}/include
-  PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  # PRIVATE
+  # ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
 target_compile_features(wrappers
@@ -50,7 +50,7 @@ target_link_libraries(wrappers
 
 ### ContactSet library ###
 
-add_library(ContactSet
+add_library(ContactSet SHARED
   ${PROJECT_SOURCE_DIR}/src/contactSet/contactSet.cpp
   ${PROJECT_SOURCE_DIR}/src/contactSet/contactPoints.cpp
   )
@@ -76,7 +76,7 @@ target_link_libraries(ContactSet
 
 ### StabilityPolytope library ###
 
-add_library(StabilityPolytope
+add_library(StabilityPolytope SHARED
   ${PROJECT_SOURCE_DIR}/src/polytope/stabilityPolytope.cpp
   ${PROJECT_SOURCE_DIR}/src/polytope/robustStabilityPolytope.cpp
   ${PROJECT_SOURCE_DIR}/src/polytope/staticStabilityPolytope.cpp
@@ -134,8 +134,8 @@ target_link_libraries(main
 include(GNUInstallDirs)
 install(TARGETS StabilityPolytope ContactSet wrappers
     EXPORT Stabiliplus-export
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/Stabiliplus
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/Stabiliplus
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/
     )
 
 install(EXPORT Stabiliplus-export
