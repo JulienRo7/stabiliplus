@@ -220,7 +220,7 @@ class robustPoly(polytope):
     def display(self, ax, dispInner = True, dispOuter = False):
         lines = []
         if dispInner:
-            lines.extend(self.dispInner(ax, dispInnerNormals=True))
+            lines.extend(self.dispInner(ax))
 
         if dispOuter:
             lines.extend(self.dispOuter(ax))

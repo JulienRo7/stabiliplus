@@ -23,7 +23,7 @@ fmax_(fmax), fmin_(fmin)
 ContactPoints::ContactPoints(tinyxml2::XMLElement* contactPointXML):
   fmax_(1000), fmin_(0)
 {
-
+  
     tinyxml2::XMLElement* currentXMLElement = contactPointXML->FirstChildElement();
     tinyxml2::XMLElement* lineXML(0);
     tinyxml2::XMLElement* valueXML(0);
@@ -38,6 +38,12 @@ ContactPoints::ContactPoints(tinyxml2::XMLElement* contactPointXML):
         {
             // Get the friction coefficient of the contact Point
             currentXMLElement->QueryDoubleAttribute("mu", &m_frictionCoef);
+        }
+	else if (std::strcmp(currentType.c_str(), "flim")==0)
+        {
+            // Get the fmax and fmin
+            currentXMLElement->QueryDoubleAttribute("fmax", &fmax_);
+	    currentXMLElement->QueryDoubleAttribute("fmin", &fmin_);
         }
         else if (std::strcmp(currentType.c_str(), "matrix")==0)
         {

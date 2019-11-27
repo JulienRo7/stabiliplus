@@ -8,6 +8,7 @@ Experimenter::Experimenter(int mode, std::string const& contact_set_file_name, i
   m_contactSet(contact_set_file_name, numFrictionSides), m_solver(solver), m_robust(robust)
 {
     stabiliplus_path = "";
+    m_contactSet.showContactSet();
 }
 
 Experimenter::~Experimenter()
