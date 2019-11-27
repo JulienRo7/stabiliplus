@@ -17,7 +17,7 @@ class ContactPoints
 public:
     // ------- constructors and destructor -------
     ContactPoints();
-    ContactPoints(std::string name, double frictionCoef);
+    ContactPoints(std::string name, double frictionCoef, double fmax=1000, double fmin=0);
     ContactPoints(tinyxml2::XMLElement* contactPointXML);
     ~ContactPoints();
 
@@ -34,11 +34,16 @@ public:
 
     bool isContactNamed(std::string name) const;
 
+    double fmax() const;
+    double fmin() const;
 
     // ------- setters -------
     void translate(Eigen::Vector3d trans);
     void set_contact(Eigen::Matrix4d homTrans);
     void set_friction(double frictionCoef);
+
+    void fmax(double f);
+    void fmin(double f);
 
 private:
     std::string m_name;
@@ -46,6 +51,8 @@ private:
     Eigen::Matrix3d m_rotation;
     Eigen::Vector3d m_position;
 
+    double fmax_;
+    double fmin_;
 
 };
 
