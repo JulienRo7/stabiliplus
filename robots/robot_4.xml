@@ -5,7 +5,8 @@
         <NumFeet n_feet='3' />
 
         <ContactPoint name='contact_1'>
-            <friction mu='0.5'/>
+          <friction mu='0.5'/>
+	  <flim fmax='10' fmin='0'/>
             <matrix name='position' row='3' column='1'>
                 <line><v>0.0</v></line>
                 <line><v>1.0</v></line>
@@ -15,7 +16,8 @@
         </ContactPoint>
 
         <ContactPoint name='contact_2'>
-            <friction mu='0.5'/>
+          <friction mu='0.5'/>
+	  <flim fmax='10' fmin='0'/>
             <matrix name='position' row='3' column='1'>
                 <line><v>0.86603</v></line>
                 <line><v>-0.5</v></line>
@@ -25,7 +27,8 @@
         </ContactPoint>
 
         <ContactPoint name='contact_3'>
-            <friction mu='0.5'/>
+          <friction mu='0.5'/>
+	  <flim fmax='10' fmin='0'/>
             <matrix name='position' row='3' column='1'>
                 <line><v>-0.86603</v></line>
                 <line><v>-0.5</v></line>

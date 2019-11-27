@@ -164,7 +164,7 @@ void GlpkWrapper::solveFactorizedProblem()
   }
 
   const Eigen::VectorXd x = m_Q_c*m_R_inv_T_b + (m_Q_u*z);
-
+  // std::cout << "LP solution: " << x.transpose() << std::endl;
   m_result = x.tail(3);
 }
 

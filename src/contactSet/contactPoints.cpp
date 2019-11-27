@@ -6,22 +6,24 @@
 ContactPoints::ContactPoints():
 m_name(""), m_frictionCoef(1),
 m_rotation(Eigen::Matrix3d::Zero()),
-m_position(0,0,0)
+m_position(0,0,0), fmax_(1000), fmin_(0)
 {
 
 }
 
-ContactPoints::ContactPoints(std::string name, double frictionCoef):
+ContactPoints::ContactPoints(std::string name, double frictionCoef, double fmax, double fmin):
 m_name(name), m_frictionCoef(frictionCoef),
 m_rotation(Eigen::Matrix3d::Zero()),
-m_position(Eigen::Vector3d::Zero())
+m_position(Eigen::Vector3d::Zero()),
+fmax_(fmax), fmin_(fmin)
 {
 
 }
 
-ContactPoints::ContactPoints(tinyxml2::XMLElement* contactPointXML)
+ContactPoints::ContactPoints(tinyxml2::XMLElement* contactPointXML):
+  fmax_(1000), fmin_(0)
 {
-
+  
     tinyxml2::XMLElement* currentXMLElement = contactPointXML->FirstChildElement();
     tinyxml2::XMLElement* lineXML(0);
     tinyxml2::XMLElement* valueXML(0);
@@ -36,6 +38,12 @@ ContactPoints::ContactPoints(tinyxml2::XMLElement* contactPointXML)
         {
             // Get the friction coefficient of the contact Point
             currentXMLElement->QueryDoubleAttribute("mu", &m_frictionCoef);
+        }
+	else if (std::strcmp(currentType.c_str(), "flim")==0)
+        {
+            // Get the fmax and fmin
+            currentXMLElement->QueryDoubleAttribute("fmax", &fmax_);
+	    currentXMLElement->QueryDoubleAttribute("fmin", &fmin_);
         }
         else if (std::strcmp(currentType.c_str(), "matrix")==0)
         {
@@ -233,6 +241,16 @@ tinyxml2::XMLElement* ContactPoints::get_XMLContactPoint(tinyxml2::XMLDocument &
     return XMLContactPoint;
 }
 
+double ContactPoints::fmax() const
+{
+  return fmax_;
+}
+
+double ContactPoints::fmin() const
+{
+  return fmin_;
+}
+
 // ------- setters -------
 void ContactPoints::translate(Eigen::Vector3d trans)
 {
@@ -252,3 +270,30 @@ void ContactPoints::set_friction(double frictionCoef)
         m_frictionCoef = frictionCoef;
     }
 }
+
+void ContactPoints::fmax(double f)
+{
+  if (f >= 0)
+    {
+      fmax_ = f;
+    }
+  else
+    {
+      fmax_ = 0;
+      std::cerr << "Error: fmax should be positive" << std::endl;
+    }
+}
+
+void ContactPoints::fmin(double f)
+{
+  if (f >= 0)
+    {
+      fmin_ = f;
+    }
+  else
+    {
+      fmin_ = 0;
+      std::cerr << "Error: fmin should be positive" << std::endl;
+    }
+}
+    

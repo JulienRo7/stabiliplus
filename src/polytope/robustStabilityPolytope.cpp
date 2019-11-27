@@ -24,6 +24,8 @@ RobustStabilityPolytope::~RobustStabilityPolytope()
 void RobustStabilityPolytope::initSolver()
 {
   auto start = std::chrono::high_resolution_clock::now();
+
+
   m_lp->buildProblem(m_contactSet.buildVectorB(),
   		     m_contactSet.buildMatrixA(),
   		     m_contactSet.buildFrictionF(),
@@ -33,8 +35,11 @@ void RobustStabilityPolytope::initSolver()
   // Eigen::MatrixXd A = m_contactSet.buildMatrixA();
   // std::cout << "A: "<< '\n' << A << '\n';
   // Eigen::MatrixXd F = m_contactSet.buildFrictionF();
-  // std::cout << "F: "<< '\n' << F << '\n';
   // Eigen::VectorXd f = m_contactSet.buildFrictionVectorf();
+  // Eigen::MatrixXd Ff(F.rows(), F.cols()+1);
+  // Ff << F, f;
+  // std::cout << "Friction: \n" << Ff << std::endl;
+
 
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop-start);
