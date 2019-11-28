@@ -79,7 +79,7 @@ public:
     void removeContact(std::string contactName);
 
     void addContact(std::string contactName);
-    void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction=0.5);
+    void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction=0.5, double fmax=1000, double fmin=0);
 
     // ---------- static functions ---------
     static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const& vect);
