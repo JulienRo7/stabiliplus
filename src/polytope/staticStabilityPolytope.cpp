@@ -193,3 +193,7 @@ void StaticStabilityPolytope::showPointsNeighbours()
 }
 
 // ----- getters -----
+int StaticStabilityPolytope::get_numberOfVertices() const
+{
+  return m_points.size();
+}

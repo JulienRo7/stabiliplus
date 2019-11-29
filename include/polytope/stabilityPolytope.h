@@ -55,6 +55,7 @@ public:
   ContactSet* contactSet();
   Solver solverType() const;
 
+  virtual int get_numberOfVertices() const = 0;
   // ----------- setters ----------
   void maxIteration(int maxIteration);
 

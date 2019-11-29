@@ -31,6 +31,7 @@ class StaticStabilityPolytope: public StabilityPolytope
   // ----- setters -----
 
   // ----- getters -----
+  int get_numberOfVertices() const;
   
  private:
   // algorithm storage
