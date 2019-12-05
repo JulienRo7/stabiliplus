@@ -2,8 +2,7 @@
 #define _USE_MATH_DEFINES
 #endif
 
-#ifndef STABILITY_POLYTOPE_H_INCLUDE
-#define STABILITY_POLYTOPE_H_INCLUDE
+# pragma once
 
 // standard libraries
 #include <iostream>
@@ -22,9 +21,9 @@
 
 // custom libraries
 #include "wrapper/glpk_wrapper.h"
-#include "wrapper/lpsolve_wrapper.h"
-#include "wrapper/gurobi_wrapper.h"
-#include "contactSet/contactSet.h"
+//#include "wrapper/lpsolve_wrapper.h"
+//#include "wrapper/gurobi_wrapper.h"
+#include "problemDescriptor/contactSet.h"
 
 
 class StabilityPolytope
@@ -83,4 +82,3 @@ public:
   
 }; // class StabilityPolytope
 
-#endif // STABILITY_POLYTOPE_H_INCLUDE

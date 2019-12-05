@@ -2,8 +2,7 @@
 #define _USE_MATH_DEFINES
 #endif
 
-#ifndef CONTACTSET_H_INCLUDED
-#define CONTACTSET_H_INCLUDED
+# pragma once 
 
 /*
 The robot class contains the description of the robot. It can load it and make other things
@@ -23,7 +22,7 @@ The robot class contains the description of the robot. It can load it and make o
 #include <Eigen/Dense>
 
 // custom libraries
-#include "contactSet/contactPoints.h"
+#include "problemDescriptor/contactPoints.h"
 
 
 class ContactSet
@@ -99,4 +98,3 @@ private:
 
 };
 
-#endif // CONTACTSET_H_INCLUDED

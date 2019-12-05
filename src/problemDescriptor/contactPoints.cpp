@@ -1,4 +1,4 @@
-#include "contactSet/contactPoints.h"
+#include "problemDescriptor/contactPoints.h"
 
 // using namespace std;
 

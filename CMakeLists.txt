@@ -8,9 +8,11 @@ set(CMAKE_CXX_FLAGS "-O2")
 # set(CMAKE_CXX_FLAGS "-g")
 
 # add_subdirectory(lpsolve55)
-find_package(lpsolve55 REQUIRED)
+# find_package(lpsolve55 REQUIRED)
+# find_package(lpsolve55 REQUIRED)
+# add_required_dependency(lpsolve55)
 
-find_file(gurobi_lib libgurobi81.so
+find_file(gurobi_lib libgurobi70.so
   PATH $ENV{GUROBI_HOME}/lib/
   )
 find_file(gurobi_c++_lib libgurobi_c++.a
@@ -23,16 +25,16 @@ find_file(gurobi_c++_lib libgurobi_c++.a
 add_library(wrappers SHARED
   ${PROJECT_SOURCE_DIR}/src/wrapper/solver_wrapper.cpp
   ${PROJECT_SOURCE_DIR}/src/wrapper/glpk_wrapper.cpp
-  ${PROJECT_SOURCE_DIR}/src/wrapper/lpsolve_wrapper.cpp
-  ${PROJECT_SOURCE_DIR}/src/wrapper/gurobi_wrapper.cpp
+  #${PROJECT_SOURCE_DIR}/src/wrapper/lpsolve_wrapper.cpp
+  #${PROJECT_SOURCE_DIR}/src/wrapper/gurobi_wrapper.cpp
   )
 
 target_include_directories(wrappers
   PUBLIC 
   $<INSTALL_INTERFACE:include>    
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lpsolve55/src>
-  $ENV{GUROBI_HOME}/include
+  #$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lpsolve55/src>
+  #$ENV{GUROBI_HOME}/include
   # PRIVATE
   # ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
@@ -45,17 +47,18 @@ target_link_libraries(wrappers
   PUBLIC
   Eigen3::Eigen
   PRIVATE
-  glpk lpsolve55::lpsolve55 ${gurobi_c++_lib} ${gurobi_lib}
+  glpk 
+  #lpsolve55::lpsolve55 ${gurobi_c++_lib} ${gurobi_lib}
   )
 
 ### ContactSet library ###
 
-add_library(ContactSet SHARED
-  ${PROJECT_SOURCE_DIR}/src/contactSet/contactSet.cpp
-  ${PROJECT_SOURCE_DIR}/src/contactSet/contactPoints.cpp
+add_library(ProblemDescriptor SHARED
+  ${PROJECT_SOURCE_DIR}/src/problemDescriptor/contactSet.cpp
+  ${PROJECT_SOURCE_DIR}/src/problemDescriptor/contactPoints.cpp
   )
 
-target_include_directories(ContactSet
+target_include_directories(ProblemDescriptor
   PUBLIC 
   $<INSTALL_INTERFACE:include>    
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -63,11 +66,11 @@ target_include_directories(ContactSet
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
-target_compile_features(ContactSet
+target_compile_features(ProblemDescriptor
   PRIVATE cxx_std_11
   )
 
-target_link_libraries(ContactSet
+target_link_libraries(ProblemDescriptor
   PUBLIC
   Eigen3::Eigen
   PRIVATE
@@ -126,13 +129,13 @@ target_compile_features(main
 
 target_link_libraries(main
   PRIVATE
-  ContactSet StabilityPolytope tinyxml2)
+  ProblemDescriptor StabilityPolytope tinyxml2)
 
 
 #### Exporting targets and installing ####
 
 include(GNUInstallDirs)
-install(TARGETS StabilityPolytope ContactSet wrappers
+install(TARGETS StabilityPolytope ProblemDescriptor wrappers
     EXPORT Stabiliplus-export
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/

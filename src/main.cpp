@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     int numFrictionSides = 16;
 
     Solver solver = GLPK;
-    bool robust = TRUE;
+    bool robust = true;
     
     for (int i=0; i<argc; i++)
     {

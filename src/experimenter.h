@@ -1,5 +1,5 @@
-#ifndef EXPERIMENTER_H_INCLUDED
-#define EXPERIMENTER_H_INCLUDED
+# pragma once 
+
 
 #include <iostream>
 #include <fstream>
@@ -11,7 +11,7 @@
 
 #include <tinyxml2.h>
 
-#include "contactSet/contactSet.h"
+#include "problemDescriptor/contactSet.h"
 #include "polytope/stabilityPolytope.h"
 #include "polytope/robustStabilityPolytope.h"
 #include "polytope/staticStabilityPolytope.h"
@@ -20,7 +20,7 @@ class Experimenter
 {
  public:
   // ---------- constructors and destructor -----------
-  Experimenter(int mode, std::string const& contact_set_file_name, int numFrictionSides=8, Solver solver = GLPK, bool robust = TRUE);
+  Experimenter(int mode, std::string const& contact_set_file_name, int numFrictionSides=8, Solver solver = GLPK, bool robust = true);
   ~Experimenter();
 
   // ---------- main functions -----------
@@ -55,4 +55,4 @@ class Experimenter
 
 };
 
-#endif // EXPERIMENTER_H_INCLUDED
+

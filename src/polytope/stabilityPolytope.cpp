@@ -12,6 +12,7 @@ StabilityPolytope::StabilityPolytope(ContactSet contactSet, int maxIteration, do
       m_lp = new GlpkWrapper;
       break;
 
+      /*
     case LP_SOLVE:
       m_lp = new LPSolveWrapper;
       break;
@@ -19,6 +20,7 @@ StabilityPolytope::StabilityPolytope(ContactSet contactSet, int maxIteration, do
     case GUROBI:
       m_lp = new GurobiWrapper;
       break;
+      */
   }
 }
 
