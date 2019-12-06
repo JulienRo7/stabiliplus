@@ -7,6 +7,7 @@
 /*
 The robot class contains the description of the robot. It can load it and make other things
 */
+
 // standart libraries
 #include <iostream>
 #include <fstream>
@@ -23,9 +24,9 @@ The robot class contains the description of the robot. It can load it and make o
 
 // custom libraries
 #include "problemDescriptor/contactPoints.h"
+#include "problemDescriptor/problemDescriptor.h"
 
-
-class ContactSet
+class ContactSet: public ProblemDescriptor
 {
 
 public:
@@ -36,18 +37,19 @@ public:
     ~ContactSet();
 
     // ----------- main class methods ----------
+    Eigen::MatrixXd buildStaticMatrixA() override;
+    Eigen::VectorXd buildStaticVectorB() override;
+    Eigen::MatrixXd buildStaticFrictionF() override;
+    Eigen::VectorXd buildStaticFrictionVectorf() override;
+
+    Eigen::MatrixXd buildMatrixA() override;
+    Eigen::VectorXd buildVectorB() override;
+    Eigen::MatrixXd buildFrictionF() override;
+    Eigen::VectorXd buildFrictionVectorf() override;
     Eigen::MatrixXd computeMatrixA1();
     Eigen::MatrixXd computeMatrixA2(Eigen::Vector3d const& acceleration);
     Eigen::VectorXd computeVector_t(Eigen::Vector3d const& acceleration);
 
-    Eigen::MatrixXd buildMatrixA();
-    Eigen::MatrixXd buildStaticMatrixA();
-    Eigen::VectorXd buildVectorB();
-    Eigen::VectorXd buildStaticVectorB();
-    Eigen::MatrixXd buildFrictionF();
-    Eigen::MatrixXd buildStaticFrictionF();
-    Eigen::VectorXd buildFrictionVectorf();
-    Eigen::VectorXd buildStaticFrictionVectorf();
 
     // ----------- input functions ----------
     void loadContactSet(std::string const& file_name);
@@ -67,7 +69,6 @@ public:
 
     bool hasContactNamed(std::string contactName) const;
     
-    std::string get_name() const;
 
     // ----------- setters ----------
     void translateContact(int contactIndex, Eigen::Vector3d translation);
@@ -80,13 +81,10 @@ public:
     void addContact(std::string contactName);
     void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction=0.5);
 
-    // ---------- static functions ---------
-    static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const& vect);
-
 private:
-    std::string m_name;
-    Eigen::Vector3d const m_gravity;
-    double m_mass;
+    //std::string m_name;
+    //Eigen::Vector3d const m_gravity;
+    //double m_mass;
 
     int m_numberOfFeet;
     std::vector<ContactPoints> m_feet;

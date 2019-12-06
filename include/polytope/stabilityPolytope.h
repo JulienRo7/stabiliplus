@@ -23,6 +23,8 @@
 #include "wrapper/glpk_wrapper.h"
 //#include "wrapper/lpsolve_wrapper.h"
 //#include "wrapper/gurobi_wrapper.h"
+
+#include "problemDescriptor/problemDescriptor.h"
 #include "problemDescriptor/contactSet.h"
 
 
@@ -30,7 +32,8 @@ class StabilityPolytope
 {
 public:
   // ----------- constructors and destructor ----------
-  StabilityPolytope(ContactSet contactSet, int maxIteration, double maxError, Solver solveType);
+  //StabilityPolytope(ContactSet contactSet, int maxIteration, double maxError, Solver solveType);
+  StabilityPolytope(std::shared_ptr<ProblemDescriptor> inputPD, int maxIteration, double maxError, Solver solveType);
   virtual ~StabilityPolytope();
   
   // ----------- main class methods ----------
@@ -51,7 +54,10 @@ public:
   double initTime() const;
   double structTime() const;
   
-  ContactSet* contactSet();
+  virtual inline std::shared_ptr<ProblemDescriptor> problemDescriptor() 
+  {
+    return m_pdPtr; 
+  }
   Solver solverType() const;
 
   // ----------- setters ----------
@@ -61,7 +67,7 @@ public:
 
  protected:
   // robot:
-  ContactSet m_contactSet; // for now the contact set should not change
+  std::shared_ptr<ProblemDescriptor> m_pdPtr; // for now the contact set should not change
   
   // attributes used for the LP problem
   Solver m_solverType;

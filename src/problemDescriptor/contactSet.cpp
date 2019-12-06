@@ -2,14 +2,15 @@
 
 // using namespace std;
 
-ContactSet::ContactSet() : m_name(""), m_gravity(0,0,-9.81), m_mass(1), m_numberOfFeet(0), m_numberOfFrictionSides(8),
+ContactSet::ContactSet() : ProblemDescriptor(), m_numberOfFeet(0), m_numberOfFrictionSides(8),
 m_numberOfAccelerations(1)
 {
     m_accelerations.push_back(m_gravity);
 }
 
 ContactSet::ContactSet(std::string const& contact_set_file_name, int numFrictionSides) :
-m_gravity(0,0,-9.81), m_numberOfFrictionSides(numFrictionSides),
+ProblemDescriptor(),
+m_numberOfFrictionSides(numFrictionSides),
 m_numberOfAccelerations(0)
 {
   loadContactSet(contact_set_file_name);
@@ -17,7 +18,7 @@ m_numberOfAccelerations(0)
 
 ContactSet::~ContactSet()
 {
-    // std::cout << "ContactSet destructor called!" << '\n';
+    std::cout << "ContactSet destructor called!" << '\n';
 }
 
 Eigen::MatrixXd ContactSet::computeMatrixA1()
@@ -418,12 +419,6 @@ bool ContactSet::hasContactNamed(std::string contactName) const
     return find(names.begin(), names.end(), contactName)!=names.end();
 }
 
-std::string ContactSet::get_name() const
-{
-    return m_name;
-}
-
-
 // ------------------ setter -----------------------
 void ContactSet::translateContact(int contactIndex, Eigen::Vector3d translation)
 {
@@ -489,13 +484,4 @@ void ContactSet::addContact(std::string contactName, Eigen::Matrix4d homTrans, d
   m_numberOfFeet ++;
 }
 
-// ---------- Static function -----------
 
-Eigen::Matrix3d ContactSet::skewSymmetric(Eigen::Vector3d const& vect)
-{
-    Eigen::Matrix3d vect_hat;
-    vect_hat << 0, -vect(2), vect(1),
-		vect(2), 0, -vect(0),
-		-vect(1), vect(0), 0;
-    return vect_hat;
-}

@@ -24,18 +24,28 @@
 
 StaticStabilityPolytope::~StaticStabilityPolytope()
 {
-  
+  //delete m_contactSetPtr;
+  //m_contactSetPtr = nullptr;
 }
 
 // ----- main class methods
 void StaticStabilityPolytope::initSolver()
 {
+  //m_contactSetPtr = static_cast<ContactSet *>(m_pdPtr);
+
   auto start = std::chrono::high_resolution_clock::now();
   
-  auto B = m_contactSet.buildStaticVectorB();
-  auto A = m_contactSet.buildStaticMatrixA();
-  auto F = m_contactSet.buildStaticFrictionF();
-  auto f = m_contactSet.buildStaticFrictionVectorf();
+  /*
+  auto B = m_contactSetPtr->buildStaticVectorB();
+  auto A = m_contactSetPtr->buildStaticMatrixA();
+  auto F = m_contactSetPtr->buildStaticFrictionF();
+  auto f = m_contactSetPtr->buildStaticFrictionVectorf();
+  */
+  auto B = m_pdPtr->buildStaticVectorB();
+  auto A = m_pdPtr->buildStaticMatrixA();
+  auto F = m_pdPtr->buildStaticFrictionF();
+  auto f = m_pdPtr->buildStaticFrictionVectorf();
+
 
   // std::cout << "Vector B: " << B.transpose() << std::endl;
   // std::cout << "Matrix A: " << A << std::endl;

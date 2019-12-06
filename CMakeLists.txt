@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 
 project(Stabiliplus VERSION 1.0.0)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(Eigen3 REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-O2")
@@ -54,6 +56,7 @@ target_link_libraries(wrappers
 ### ContactSet library ###
 
 add_library(ProblemDescriptor SHARED
+  ${PROJECT_SOURCE_DIR}/src/problemDescriptor/problemDescriptor.cpp
   ${PROJECT_SOURCE_DIR}/src/problemDescriptor/contactSet.cpp
   ${PROJECT_SOURCE_DIR}/src/problemDescriptor/contactPoints.cpp
   )

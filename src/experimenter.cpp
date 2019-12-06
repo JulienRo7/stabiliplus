@@ -4,11 +4,11 @@
 // ---------- constructors and destructor -----------
 
 Experimenter::Experimenter(int mode, std::string const& contact_set_file_name, int numFrictionSides, Solver solver, bool robust):
-  m_mode(mode), m_numFrictionSides(numFrictionSides),
-  m_contactSet(contact_set_file_name, numFrictionSides), m_solver(solver), m_robust(robust)
+  m_mode(mode), m_numFrictionSides(numFrictionSides),m_solver(solver), m_robust(robust)
 {
+    m_contactSetPtr = std::make_shared<ContactSet>(contact_set_file_name, numFrictionSides);
     stabiliplus_path = "";
-    m_contactSet.showContactSet();
+    m_contactSetPtr->showContactSet();
 }
 
 Experimenter::~Experimenter()
@@ -55,7 +55,8 @@ void Experimenter::run_exp1()
 void Experimenter::run_exp1_static()
 {
   auto start = std::chrono::high_resolution_clock::now();
-  std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
+
+  std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
 
   polytope->initSolver();
   polytope->projectionStabilityPolyhedron();
@@ -75,7 +76,7 @@ void Experimenter::run_exp1_static()
 void Experimenter::run_exp1_robust()
 {
     auto start = std::chrono::high_resolution_clock::now();
-    std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
+    std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
 
     polytope->initSolver();
     polytope->projectionStabilityPolyhedron();
@@ -121,7 +122,7 @@ void Experimenter::run_exp2_static()
     {
       for (auto rob_file: robot_names)
 	{
-	  ContactSet rob(rob_file, m_numFrictionSides);
+	  std::shared_ptr<ContactSet> rob = std::make_shared<ContactSet>(rob_file, m_numFrictionSides);
 	  for (int i = 0; i<numTrials; i++)
 	    {
 	      std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
@@ -153,7 +154,7 @@ void Experimenter::run_exp2_robust()
     {
       for (auto rob_file: robot_names)
 	{
-	  ContactSet rob(rob_file, m_numFrictionSides);
+	  std::shared_ptr<ContactSet> rob = std::make_shared<ContactSet>(rob_file, m_numFrictionSides);
 	  for (int i = 0; i<numTrials; i++)
 	    {
 	      std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i+1 << '/' << numTrials << '\n';
@@ -191,7 +192,7 @@ void Experimenter::run_exp3()
 
 void Experimenter::run_exp3_static()
 {
-    if (m_contactSet.get_name()=="robot_8")
+    if (m_contactSetPtr->get_name()=="robot_8")
     {
         Eigen::Vector3d dx;
         dx << 0.0,
@@ -201,7 +202,7 @@ void Experimenter::run_exp3_static()
         for (int i=0; i<50; i++)
         {
 	  auto start = std::chrono::high_resolution_clock::now();
-	  std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
+	  std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
 
 	  polytope->initSolver();
 	  polytope->projectionStabilityPolyhedron();
@@ -212,7 +213,7 @@ void Experimenter::run_exp3_static()
 	  m_polytopes.push_back(polytope);
 	  m_total_times_ms.push_back(duration.count());
 
-	  m_contactSet.translateContact(3, dx);
+	  m_contactSetPtr->translateContact(3, dx);
         }
     }
     else
@@ -223,7 +224,7 @@ void Experimenter::run_exp3_static()
 
 void Experimenter::run_exp3_robust()
 {
-    if (m_contactSet.get_name()=="robot_8")
+    if (m_contactSetPtr->get_name()=="robot_8")
     {
         Eigen::Vector3d dx;
         dx << 0.0,
@@ -233,7 +234,7 @@ void Experimenter::run_exp3_robust()
         for (int i=0; i<50; i++)
         {
 	  auto start = std::chrono::high_resolution_clock::now();
-	  std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSet, 50, 0.05, m_solver));
+	  std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
 
 	  polytope->initSolver();
 	  polytope->projectionStabilityPolyhedron();
@@ -244,7 +245,7 @@ void Experimenter::run_exp3_robust()
 	  m_polytopes.push_back(polytope);
 	  m_total_times_ms.push_back(duration.count());
 
-	  m_contactSet.translateContact(3, dx);
+	  m_contactSetPtr->translateContact(3, dx);
         }
     }
     else
@@ -301,7 +302,12 @@ void Experimenter::save()
 	
 	std::ofstream stream(poly_file_name);
         poly->writeToStream(stream);
-        poly->contactSet()->saveContactSet(robot_file_name);
+	
+	if(typeid(ContactSet) ==typeid(*(poly->problemDescriptor())))
+	{
+	  auto csPtr = static_cast<ContactSet*>(poly->problemDescriptor().get());
+          csPtr->saveContactSet(robot_file_name);
+	}
 	
         tinyxml2::XMLElement *compPoint = doc.NewElement("compPoint");
         compPoint->SetAttribute("index", poly_count);
@@ -312,7 +318,16 @@ void Experimenter::save()
         compPoint->InsertEndChild(polyXML);
 	
         tinyxml2::XMLElement *robotXML = doc.NewElement("robot");
-	robotXML->SetAttribute("name", poly->contactSet()->get_name().c_str());
+	
+	if(typeid(ContactSet) ==typeid(*(poly->problemDescriptor())))
+	{
+
+	  auto csPtr = static_cast<ContactSet*>(poly->problemDescriptor().get());
+          csPtr->saveContactSet(robot_file_name);
+
+	  robotXML->SetAttribute("name", csPtr->get_name().c_str());
+	}
+
         robotXML->SetAttribute("file_name", robot_file_name.c_str());
         compPoint->InsertEndChild(robotXML);
 	

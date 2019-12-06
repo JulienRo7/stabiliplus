@@ -17,23 +17,33 @@ class StaticStabilityPolytope: public StabilityPolytope
   ~StaticStabilityPolytope();
 
   // ----- main class methods ------
-  void initSolver();
+  void initSolver() override;
   void solveLP(Eigen::Vector2d const& direction, Eigen::Vector2d &vertex);
 
-  void projectionStabilityPolyhedron();
+  void projectionStabilityPolyhedron() override;
 
   // ----- output -----
-  void writeToStream(std::ofstream& stream) const;
-  std::vector<Eigen::Vector4d> constraintPlanes() const;
-  Eigen::Vector3d baryPoint() const;
+  void writeToStream(std::ofstream& stream) const override;
+  std::vector<Eigen::Vector4d> constraintPlanes() const override;
+  Eigen::Vector3d baryPoint() const override;
 
   void showPointsNeighbours();
   // ----- setters -----
 
   // ----- getters -----
   
+  /*
+  inline std::shared_ptr<ProblemDescriptor>* problemDescriptor() override
+  {
+    return m_contactSetPtr; 
+  }
+	 
+  */
  private:
+
   // algorithm storage
+  
+  //std::shared_ptr<ContactSet>  m_contactSetPtr; // for now the contact set should not change
   std::vector<std::shared_ptr<StaticPoint>> m_points;
 
 };

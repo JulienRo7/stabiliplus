@@ -17,19 +17,30 @@ RobustStabilityPolytope::~RobustStabilityPolytope()
   {
     it->finish();
   }
+
+  //delete m_contactSetPtr;
+  //m_contactSetPtr = nullptr;
+
 }
 
 
 // ----------- main class methods ----------
 void RobustStabilityPolytope::initSolver()
 {
+  //m_contactSetPtr = static_cast<ContactSet*>(m_pdPtr);
   auto start = std::chrono::high_resolution_clock::now();
 
+/*
+  m_lp->buildProblem(m_contactSetPtr->buildVectorB(),
+  		     m_contactSetPtr->buildMatrixA(),
+  		     m_contactSetPtr->buildFrictionF(),
+  		     m_contactSetPtr->buildFrictionVectorf());
+*/
+  m_lp->buildProblem(m_pdPtr->buildVectorB(),
+  		     m_pdPtr->buildMatrixA(),
+  		     m_pdPtr->buildFrictionF(),
+  		     m_pdPtr->buildFrictionVectorf());
 
-  m_lp->buildProblem(m_contactSet.buildVectorB(),
-  		     m_contactSet.buildMatrixA(),
-  		     m_contactSet.buildFrictionF(),
-  		     m_contactSet.buildFrictionVectorf());
 
   // Eigen::VectorXd B = m_contactSet.buildVectorB();
   // Eigen::MatrixXd A = m_contactSet.buildMatrixA();

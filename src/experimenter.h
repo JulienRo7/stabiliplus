@@ -16,6 +16,8 @@
 #include "polytope/robustStabilityPolytope.h"
 #include "polytope/staticStabilityPolytope.h"
 
+#include <typeinfo>   // operator typeid
+
 class Experimenter
 {
  public:
@@ -42,7 +44,7 @@ class Experimenter
 
 
  private:
-  ContactSet m_contactSet;
+  std::shared_ptr<ContactSet> m_contactSetPtr;
   int m_mode;
   bool m_robust;
   int m_numFrictionSides;
