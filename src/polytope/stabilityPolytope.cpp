@@ -1,10 +1,11 @@
 #include "polytope/stabilityPolytope.h"
 
-StabilityPolytope::StabilityPolytope(std::shared_ptr<ProblemDescriptor> inputPD, int maxIteration, double maxError, Solver solverType):
-  m_pdPtr(inputPD), m_solverType(solverType),
-  m_iteration(0), m_maxIteration(maxIteration),
-  m_error(1000), m_maxError(maxError),
-  m_LPTime(0), m_initTime(0), m_structTime(0)
+StabilityPolytope::StabilityPolytope(std::shared_ptr<ProblemDescriptor> inputPD,
+                                     int maxIteration,
+                                     double maxError,
+                                     Solver solverType)
+: m_pdPtr(inputPD), m_solverType(solverType), m_iteration(0), m_maxIteration(maxIteration), m_error(1000),
+  m_maxError(maxError), m_LPTime(0), m_initTime(0), m_structTime(0)
 {
   switch(m_solverType)
   {
@@ -24,19 +25,17 @@ StabilityPolytope::StabilityPolytope(std::shared_ptr<ProblemDescriptor> inputPD,
   }
 }
 
-
 StabilityPolytope::~StabilityPolytope()
 {
   delete m_lp;
   m_lp = nullptr;
-  //delete m_pdPtr;
-  //m_pdPtr = nullptr;
+  // delete m_pdPtr;
+  // m_pdPtr = nullptr;
 }
-
 
 // ----------- main class methods ----------
 
-bool StabilityPolytope::stopCriterion() const// return true when the algorithm must stop
+bool StabilityPolytope::stopCriterion() const // return true when the algorithm must stop
 {
   return (m_iteration >= m_maxIteration) || (m_error <= m_maxError);
 }
@@ -47,19 +46,18 @@ bool StabilityPolytope::stopCriterion() const// return true when the algorithm m
 
 double StabilityPolytope::LPTime() const
 {
-    return m_LPTime;
+  return m_LPTime;
 }
 
 double StabilityPolytope::initTime() const
 {
-    return m_initTime;
+  return m_initTime;
 }
 
 double StabilityPolytope::structTime() const
 {
-    return m_structTime;
+  return m_structTime;
 }
-
 
 Solver StabilityPolytope::solverType() const
 {
@@ -69,5 +67,5 @@ Solver StabilityPolytope::solverType() const
 
 void StabilityPolytope::maxIteration(int maxIteration)
 {
-    m_maxIteration = maxIteration;
+  m_maxIteration = maxIteration;
 }

@@ -1,8 +1,7 @@
 #ifndef GUROBI_WRAPPER_H_INCLUDE
 #define GUROBI_WRAPPER_H_INCLUDE
 
-
-//standard libraries
+// standard libraries
 #include <iostream>
 
 // libraries
@@ -11,9 +10,9 @@
 // homemade includes
 #include "wrapper/solver_wrapper.h"
 
-class GurobiWrapper: public SolverWrapper
+class GurobiWrapper : public SolverWrapper
 {
- public:
+public:
   // ---------- constructor and destructor -------------
   GurobiWrapper();
   ~GurobiWrapper();
@@ -24,16 +23,15 @@ class GurobiWrapper: public SolverWrapper
 
   // ---------- getters -----------
 
-
   // ---------- setters -----------
   void set_searchDirection(const Eigen::Vector3d & searchDir);
   void set_staticSearchDirection(const Eigen::Vector2d & searchDir);
 
- private:
+private:
   GRBEnv m_env;
   GRBModel m_lp;
 
-  GRBVar* m_vars;
+  GRBVar * m_vars;
 
   int m_originalNumCols;
   Eigen::MatrixXd m_Q_u;

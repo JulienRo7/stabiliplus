@@ -9,17 +9,15 @@
 #include <Eigen/Dense>
 
 // custom libraries
-#include "polytope/stabilityPolytope.h"
-
-#include "polytope/vertex.h"
 #include "polytope/edge.h"
 #include "polytope/face.h"
-#include "polytope/outervertex.h"
 #include "polytope/outeredge.h"
 #include "polytope/outerface.h"
+#include "polytope/outervertex.h"
+#include "polytope/stabilityPolytope.h"
+#include "polytope/vertex.h"
 
-
-class RobustStabilityPolytope: public StabilityPolytope
+class RobustStabilityPolytope : public StabilityPolytope
 {
 public:
   // ----------- constructors and destructor ----------
@@ -28,23 +26,23 @@ public:
 
   // ----------- main class methods ----------
   void initSolver() override; // compute the reduced stability problem
-  void solveLP(Eigen::Vector3d const& direction, Eigen::Vector3d &vertex);
+  void solveLP(Eigen::Vector3d const & direction, Eigen::Vector3d & vertex);
 
   void projectionStabilityPolyhedron() override;
 
   Eigen::Vector3d computeInnerPoint();
   void buildInnerPoly();
-  void updateInnerPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace);
+  void updateInnerPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace);
   void buildOuterPoly();
-  void updateOuterPoly(std::shared_ptr<Vertex> &newVertex, std::shared_ptr<Face> &dirFace);
+  void updateOuterPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace);
 
-  void updateSupportFunctions(std::shared_ptr<Face>& dirFace);
-  bool computeSupportFunction(std::shared_ptr<Face>& face, const std::shared_ptr<OuterVertex>& initPoint);
+  void updateSupportFunctions(std::shared_ptr<Face> & dirFace);
+  bool computeSupportFunction(std::shared_ptr<Face> & face, const std::shared_ptr<OuterVertex> & initPoint);
 
   double computeResidualFromScratch();
 
   // ----------- output and display functions ----------
-  void writeToStream(std::ofstream& stream) const override;
+  void writeToStream(std::ofstream & stream) const override;
   void showPoly() const;
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
   Eigen::Vector3d baryPoint() const override;
@@ -65,16 +63,15 @@ public:
   /*
   inline ProblemDescriptor * problemDescriptor() override
   {
-    return m_contactSetPtr; 
+    return m_contactSetPtr;
   }
-	
+
   */
   // ----------- setters ----------
 
   // ---------- static functions ---------
 
- private:
-  
+private:
   ContactSet * m_contactSetPtr;
 
   // inner polyhedron
@@ -97,8 +94,6 @@ public:
   double m_innerConvexMicro;
   double m_outerConvexMicro;
   double m_supportFunctionMicro;
-
-
 };
 
 #endif // ROBUST_STABILITY_POLYTOPE_H_INCLUDE

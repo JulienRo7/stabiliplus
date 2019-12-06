@@ -1,8 +1,7 @@
 #ifndef GLPK_WRAPPER_H_INCLUDE
 #define GLPK_WRAPPER_H_INCLUDE
 
-
-//standard libraries
+// standard libraries
 #include <iostream>
 
 // libraries
@@ -11,9 +10,9 @@
 // homemade includes
 #include "wrapper/solver_wrapper.h"
 
-class GlpkWrapper: public SolverWrapper
+class GlpkWrapper : public SolverWrapper
 {
- public:
+public:
   // ---------- constructor and destructor -------------
   GlpkWrapper();
   ~GlpkWrapper();
@@ -28,7 +27,6 @@ class GlpkWrapper: public SolverWrapper
 
   // ---------- getters -----------
 
-
   // ---------- setters -----------
   void set_searchDirection(const Eigen::Vector3d & searchDir);
   void set_searchDirectionOriginal(const Eigen::Vector3d & searchDir);
@@ -37,8 +35,8 @@ class GlpkWrapper: public SolverWrapper
   void set_staticSearchDirectionOriginal(const Eigen::Vector2d & searchDir);
   void set_staticSearchDirectionFactorized(const Eigen::Vector2d & searchDir);
 
- private:
-  glp_prob *m_lp;
+private:
+  glp_prob * m_lp;
 
   int m_originalNumCols;
   Eigen::MatrixXd m_Q_u;

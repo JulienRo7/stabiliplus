@@ -1,8 +1,7 @@
 #ifndef SOLVER_WRAPPER_H_INCLUDE
 #define SOLVER_WRAPPER_H_INCLUDE
 
-
-//standard libraries
+// standard libraries
 #include <iostream>
 
 // libraries
@@ -10,7 +9,8 @@
 
 // homemade includes
 
-enum Solver {
+enum Solver
+{
   GLPK,
   LP_SOLVE,
   GUROBI
@@ -18,7 +18,7 @@ enum Solver {
 
 class SolverWrapper
 {
- public:
+public:
   // ---------- constructor and destructor -------------
   SolverWrapper();
   virtual ~SolverWrapper();
@@ -30,12 +30,12 @@ class SolverWrapper
   // ---------- getters -----------
   Eigen::Vector3d get_result();
   Eigen::Vector2d get_staticResult();
-  
+
   // ---------- setters -----------
   virtual void set_searchDirection(const Eigen::Vector3d & searchDir) = 0;
-  virtual void set_staticSearchDirection(const Eigen::Vector2d & searchDir) = 0;  
+  virtual void set_staticSearchDirection(const Eigen::Vector2d & searchDir) = 0;
 
- protected:
+protected:
   Eigen::Vector3d m_result;
   Eigen::Vector3d m_searchDirection;
   Eigen::Vector2d m_staticSearchDirection;

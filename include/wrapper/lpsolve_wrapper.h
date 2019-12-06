@@ -1,8 +1,7 @@
 #ifndef LPSOLVE_WRAPPER_H_INCLUDE
 #define LPSOLVE_WRAPPER_H_INCLUDE
 
-
-//standard libraries
+// standard libraries
 #include <iostream>
 
 // libraries
@@ -12,9 +11,9 @@
 // homemade includes
 #include "wrapper/solver_wrapper.h"
 
-class LPSolveWrapper: public SolverWrapper
+class LPSolveWrapper : public SolverWrapper
 {
- public:
+public:
   // ---------- constructor and destructor -------------
   LPSolveWrapper();
   ~LPSolveWrapper();
@@ -25,13 +24,12 @@ class LPSolveWrapper: public SolverWrapper
 
   // ---------- getters -----------
 
-
   // ---------- setters -----------
   void set_searchDirection(const Eigen::Vector3d & searchDir);
   void set_staticSearchDirection(const Eigen::Vector2d & searchDir);
 
- private:
-  lprec *m_lp;
+private:
+  lprec * m_lp;
 
   int m_originalNumCols;
   Eigen::MatrixXd m_Q_u;
