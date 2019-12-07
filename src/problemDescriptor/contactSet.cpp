@@ -16,7 +16,7 @@ ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_nam
 
 ContactSet::~ContactSet()
 {
-  //std::cout << "ContactSet destructor called!" << '\n';
+  // std::cout << "ContactSet destructor called!" << '\n';
 }
 
 void ContactSet::update()
@@ -32,11 +32,11 @@ void ContactSet::update()
     {
       resetMatricies_();
     }
-  }else
-  {
-   setZeroMatricies_();
   }
-
+  else
+  {
+    setZeroMatricies_();
+  }
 
   if(staticCase())
   {
@@ -133,7 +133,7 @@ void ContactSet::resetMatricies_()
   int const n_columnsA = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
   int const n_rowsA = 6 * m_numberOfAccelerations;
   m_A.resize(n_rowsA, n_columnsA);
-  //m_A.setZero();
+  // m_A.setZero();
 
   // Eigen::VectorXd B = Eigen::VectorXd::Zero(6 * m_numberOfAccelerations);
   m_B.resize(6 * m_numberOfAccelerations);
@@ -159,7 +159,7 @@ void ContactSet::buildMatrixA_()
   // int const n_rowsA = 6 * m_numberOfAccelerations;
 
   Eigen::MatrixXd tempA1;
-  
+
   tempA1.resize(6, n_columnsA1);
   tempA1.setZero();
   computeMatrixA1_(tempA1);
@@ -178,7 +178,7 @@ void ContactSet::buildMatrixA_()
 
 void ContactSet::setZeroMatricies_()
 {
-	
+
   m_A.setZero();
 
   m_B.setZero();

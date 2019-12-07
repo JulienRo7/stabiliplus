@@ -69,9 +69,9 @@ public:
   {
     return staticCase_;
   }
-void setStaticCase(bool setTrue) 
+  void setStaticCase(bool setTrue)
   {
-    staticCase_ = setTrue; 
+    staticCase_ = setTrue;
   }
 
 private:

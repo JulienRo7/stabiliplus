@@ -38,10 +38,8 @@ void RobustStabilityPolytope::initSolver()
                        m_pdPtr->buildFrictionVectorf());
            */
   m_pdPtr->update();
-  m_lp->buildProblem(m_pdPtr->getVectorB(), 
-		  m_pdPtr->getMatrixA(), 
-		  m_pdPtr->getFrictionF(),
-		  m_pdPtr->getFrictionVectorf());
+  m_lp->buildProblem(m_pdPtr->getVectorB(), m_pdPtr->getMatrixA(), m_pdPtr->getFrictionF(),
+                     m_pdPtr->getFrictionVectorf());
 
   // Eigen::VectorXd B = m_contactSet.buildVectorB();
   // Eigen::MatrixXd A = m_contactSet.buildMatrixA();
