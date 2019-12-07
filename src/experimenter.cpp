@@ -9,7 +9,8 @@ Experimenter::Experimenter(int mode,
                            bool robust)
 : m_mode(mode), m_numFrictionSides(numFrictionSides), m_solver(solver), m_robust(robust)
 {
-  m_contactSetPtr = std::make_shared<ContactSet>(contact_set_file_name, numFrictionSides);
+  bool staticCase = false;
+  m_contactSetPtr = std::make_shared<ContactSet>(staticCase, contact_set_file_name, numFrictionSides);
   stabiliplus_path = "";
   m_contactSetPtr->showContactSet();
 }
@@ -54,6 +55,7 @@ void Experimenter::run_exp1()
 void Experimenter::run_exp1_static()
 {
   auto start = std::chrono::high_resolution_clock::now();
+  m_contactSetPtr->setStaticCase(true);
 
   std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
 
@@ -75,6 +77,8 @@ void Experimenter::run_exp1_static()
 void Experimenter::run_exp1_robust()
 {
   auto start = std::chrono::high_resolution_clock::now();
+  m_contactSetPtr->setStaticCase(false);
+
   std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
 
   polytope->initSolver();
@@ -119,11 +123,13 @@ void Experimenter::run_exp2_static()
   int numTrials = 100;
   Solver solvers[3] = {GLPK, LP_SOLVE, GUROBI};
 
+  bool staticCase = true;
+
   for(auto solver : solvers)
   {
     for(auto rob_file : robot_names)
     {
-      std::shared_ptr<ContactSet> rob = std::make_shared<ContactSet>(rob_file, m_numFrictionSides);
+      std::shared_ptr<ContactSet> rob = std::make_shared<ContactSet>(staticCase, rob_file, m_numFrictionSides);
       for(int i = 0; i < numTrials; i++)
       {
         std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i + 1 << '/' << numTrials
@@ -151,11 +157,13 @@ void Experimenter::run_exp2_robust()
   int numTrials = 100;
   Solver solvers[3] = {GLPK, LP_SOLVE, GUROBI};
 
+  bool staticCase = false;
+
   for(auto solver : solvers)
   {
     for(auto rob_file : robot_names)
     {
-      std::shared_ptr<ContactSet> rob = std::make_shared<ContactSet>(rob_file, m_numFrictionSides);
+      std::shared_ptr<ContactSet> rob = std::make_shared<ContactSet>(staticCase, rob_file, m_numFrictionSides);
       for(int i = 0; i < numTrials; i++)
       {
         std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i + 1 << '/' << numTrials
@@ -192,6 +200,8 @@ void Experimenter::run_exp3()
 
 void Experimenter::run_exp3_static()
 {
+  m_contactSetPtr->setStaticCase(true);
+
   if(m_contactSetPtr->get_name() == "robot_8")
   {
     Eigen::Vector3d dx;
@@ -223,6 +233,7 @@ void Experimenter::run_exp3_static()
 
 void Experimenter::run_exp3_robust()
 {
+  m_contactSetPtr->setStaticCase(false);
   if(m_contactSetPtr->get_name() == "robot_8")
   {
     Eigen::Vector3d dx;

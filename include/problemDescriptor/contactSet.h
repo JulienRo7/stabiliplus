@@ -30,23 +30,12 @@ class ContactSet : public ProblemDescriptor
 
 public:
   // ----------- constructors and destructor ----------
-  ContactSet();
-  ContactSet(std::string const & robot_file_name, int numFrictionSides = 8);
+  ContactSet(bool staticCase);
+  ContactSet(bool staticCase, std::string const & robot_file_name, int numFrictionSides = 8);
   ~ContactSet();
 
   // ----------- main class methods ----------
-  Eigen::MatrixXd buildStaticMatrixA() override;
-  Eigen::VectorXd buildStaticVectorB() override;
-  Eigen::MatrixXd buildStaticFrictionF() override;
-  Eigen::VectorXd buildStaticFrictionVectorf() override;
-
-  Eigen::MatrixXd buildMatrixA() override;
-  Eigen::VectorXd buildVectorB() override;
-  Eigen::MatrixXd buildFrictionF() override;
-  Eigen::VectorXd buildFrictionVectorf() override;
-  Eigen::MatrixXd computeMatrixA1();
-  Eigen::MatrixXd computeMatrixA2(Eigen::Vector3d const & acceleration);
-  Eigen::VectorXd computeVector_t(Eigen::Vector3d const & acceleration);
+  void update() override;
 
   // ----------- input functions ----------
   void loadContactSet(std::string const & file_name);
@@ -76,16 +65,50 @@ public:
   void addContact(std::string contactName);
   void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction = 0.5);
 
+  inline bool staticCase() const
+  {
+    return staticCase_;
+  }
+void setStaticCase(bool setTrue) 
+  {
+    staticCase_ = setTrue; 
+  }
+
 private:
+  bool staticCase_;
   // std::string m_name;
   // Eigen::Vector3d const m_gravity;
   // double m_mass;
 
-  int m_numberOfFeet;
+  int m_numberOfFeet = 0;
+  int m_numberOfFeet_ini = -1;
   std::vector<ContactPoints> m_feet;
 
-  int m_numberOfAccelerations;
+  int m_numberOfAccelerations = 0;
+  int m_numberOfAccelerations_ini = -1;
   std::vector<Eigen::Vector3d> m_accelerations;
 
+  /*! \brief Check whether needs to update the matrix size depending on the number of feet and accelerations.
+   */
+  bool needsUpdateSize_();
+  // bool needsUpdateStaticSize_();
+  void resetMatricies_();
+  void resetStaticMatricies_();
+  void setZeroMatricies_();
   int m_numberOfFrictionSides; // Number of sides of the approximation of the friction cones
+
+  // Matrix constructors
+  void buildStaticMatrixA_();
+  void buildStaticVectorB_();
+  void buildStaticFrictionF_();
+  void buildStaticFrictionVectorf_();
+
+  void buildMatrixA_();
+  void computeMatrixA1_(Eigen::MatrixXd & A1);
+  void computeMatrixA2_(Eigen::MatrixXd & A2, Eigen::Vector3d const & acceleration);
+
+  void buildVectorB_();
+  void buildFrictionF_();
+  void buildFrictionVectorf_();
+  Eigen::VectorXd computeVector_t_(Eigen::Vector3d const & acceleration);
 };

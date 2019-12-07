@@ -42,17 +42,21 @@ void StaticStabilityPolytope::initSolver()
   auto F = m_contactSetPtr->buildStaticFrictionF();
   auto f = m_contactSetPtr->buildStaticFrictionVectorf();
   */
-  auto B = m_pdPtr->buildStaticVectorB();
-  auto A = m_pdPtr->buildStaticMatrixA();
-  auto F = m_pdPtr->buildStaticFrictionF();
-  auto f = m_pdPtr->buildStaticFrictionVectorf();
+  /*
+  auto B = m_pdPtr->getVectorB();
+  auto A = m_pdPtr->getMatrixA();
+  auto F = m_pdPtr->getFrictionF();
+  auto f = m_pdPtr->getFrictionVectorf();
+  */
 
   // std::cout << "Vector B: " << B.transpose() << std::endl;
   // std::cout << "Matrix A: " << A << std::endl;
   // std::cout << "Matrix F: " << F << std::endl;
   // std::cout << "Vector f: " << f.transpose() << std::endl;
 
-  m_lp->buildProblem(B, A, F, f);
+  m_pdPtr->update();
+  m_lp->buildProblem(m_pdPtr->getVectorB(), m_pdPtr->getMatrixA(), m_pdPtr->getFrictionF(),
+                     m_pdPtr->getFrictionVectorf());
 
   auto stop = std::chrono::high_resolution_clock::now();
 

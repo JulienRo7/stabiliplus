@@ -4,7 +4,7 @@ ProblemDescriptor::ProblemDescriptor() : m_name(""), m_gravity(0, 0, -9.81), m_m
 
 ProblemDescriptor::~ProblemDescriptor()
 {
-  std::cout << "ProblemDescriptor destructor called!" << '\n';
+  // std::cout << "ProblemDescriptor destructor called!" << '\n';
 }
 
 // ---------- Static function -----------

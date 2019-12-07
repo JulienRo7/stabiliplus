@@ -72,7 +72,7 @@ public:
   // ---------- static functions ---------
 
 private:
-  ContactSet * m_contactSetPtr;
+  //ContactSet * m_contactSetPtr;
 
   // inner polyhedron
   std::vector<std::shared_ptr<Vertex>> m_vertices;

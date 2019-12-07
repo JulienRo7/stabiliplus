@@ -2,13 +2,13 @@
 
 // using namespace std;
 
-ContactSet::ContactSet()
+ContactSet::ContactSet(bool staticCase)
 : ProblemDescriptor(), m_numberOfFeet(0), m_numberOfFrictionSides(8), m_numberOfAccelerations(1)
 {
   m_accelerations.push_back(m_gravity);
 }
 
-ContactSet::ContactSet(std::string const & contact_set_file_name, int numFrictionSides)
+ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_name, int numFrictionSides)
 : ProblemDescriptor(), m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0)
 {
   loadContactSet(contact_set_file_name);
@@ -16,14 +16,53 @@ ContactSet::ContactSet(std::string const & contact_set_file_name, int numFrictio
 
 ContactSet::~ContactSet()
 {
-  std::cout << "ContactSet destructor called!" << '\n';
+  //std::cout << "ContactSet destructor called!" << '\n';
 }
 
-Eigen::MatrixXd ContactSet::computeMatrixA1()
+void ContactSet::update()
 {
-  int n_columns = 3 * m_numberOfFeet;
 
-  Eigen::MatrixXd A1(6, n_columns);
+  if(needsUpdateSize_())
+  {
+    if(staticCase())
+    {
+      resetStaticMatricies_();
+    }
+    else
+    {
+      resetMatricies_();
+    }
+  }else
+  {
+   setZeroMatricies_();
+  }
+
+
+  if(staticCase())
+  {
+
+    buildStaticMatrixA_();
+
+    buildStaticVectorB_();
+
+    buildStaticFrictionF_();
+
+    buildStaticFrictionVectorf_();
+  }
+  else
+  {
+    buildMatrixA_();
+    buildVectorB_();
+    buildFrictionF_();
+    buildFrictionVectorf_();
+  }
+}
+
+void ContactSet::computeMatrixA1_(Eigen::MatrixXd & A1)
+{
+  // int n_columns = 3 * m_numberOfFeet;
+
+  // Eigen::MatrixXd A1(6, n_columns);
 
   for(int i(0); i < m_numberOfFeet; ++i)
   {
@@ -31,19 +70,19 @@ Eigen::MatrixXd ContactSet::computeMatrixA1()
     A1.block<3, 3>(3, 3 * i) = skewSymmetric(m_feet[i].get_position());
   }
 
-  return A1;
+  // return A1;
 }
 
-Eigen::MatrixXd ContactSet::computeMatrixA2(Eigen::Vector3d const & acceleration)
+void ContactSet::computeMatrixA2_(Eigen::MatrixXd & A2, Eigen::Vector3d const & acceleration)
 {
-  Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, 3);
+  // Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, 3);
   A2.block<3, 3>(0, 0) = Eigen::Matrix3d::Zero();
   A2.block<3, 3>(3, 0) = -skewSymmetric(m_mass * acceleration);
 
-  return A2;
+  // return A2;
 }
 
-Eigen::VectorXd ContactSet::computeVector_t(Eigen::Vector3d const & acceleration)
+Eigen::VectorXd ContactSet::computeVector_t_(Eigen::Vector3d const & acceleration)
 {
   Eigen::VectorXd t(6);
 
@@ -53,64 +92,165 @@ Eigen::VectorXd ContactSet::computeVector_t(Eigen::Vector3d const & acceleration
   return t;
 }
 
-Eigen::MatrixXd ContactSet::buildMatrixA()
+/*
+bool ContactSet::needsUpdateStaticSize_()
 {
 
+ if(m_numberOfFeet_ini == m_numberOfFeet )
+ {
+   // The number of feet keep the same, then we do not update matrix sizes.
+   return false;
+ }else{
+
+   m_numberOfFeet_ini = m_numberOfFeet;
+   // There are new foot added.
+   return false;
+ }
+
+}
+*/
+
+bool ContactSet::needsUpdateSize_()
+{
+
+  if((m_numberOfFeet_ini == m_numberOfFeet) && (m_numberOfAccelerations_ini == m_numberOfAccelerations))
+  {
+    // The number of feet and accelerations keep the same, then we do not update matrix sizes.
+    // There are new foot or accelerations added.
+    return false;
+  }
+  else
+  {
+    m_numberOfFeet_ini = m_numberOfFeet;
+    m_numberOfAccelerations_ini = m_numberOfAccelerations;
+    return true;
+  }
+}
+
+void ContactSet::resetMatricies_()
+{
   int const n_columnsA1 = 3 * m_numberOfFeet;
   int const n_columnsA = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
   int const n_rowsA = 6 * m_numberOfAccelerations;
+  m_A.resize(n_rowsA, n_columnsA);
+  //m_A.setZero();
 
-  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(n_rowsA, n_columnsA);
+  // Eigen::VectorXd B = Eigen::VectorXd::Zero(6 * m_numberOfAccelerations);
+  m_B.resize(6 * m_numberOfAccelerations);
+
+  int const numberOfColumns = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
+  int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
+
+  m_F.resize(numberOfRows, numberOfColumns);
+
+  // int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
+
+  m_f.resize(numberOfRows);
+
+  setZeroMatricies_();
+}
+
+void ContactSet::buildMatrixA_()
+{
+
   // Eigen::MatrixXd A1(6, n_columnsA1);
+  int const n_columnsA1 = 3 * m_numberOfFeet;
+  int const n_columnsA = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
+  // int const n_rowsA = 6 * m_numberOfAccelerations;
 
-  auto A1 = computeMatrixA1();
+  Eigen::MatrixXd tempA1;
+  
+  tempA1.resize(6, n_columnsA1);
+  tempA1.setZero();
+  computeMatrixA1_(tempA1);
 
   for(int i = 0; i < m_numberOfAccelerations; ++i)
   {
-    A.block(6 * i, n_columnsA1 * i, 6, n_columnsA1) = A1;
-    A.block<6, 3>(6 * i, n_columnsA - 3) = computeMatrixA2(m_accelerations[i]);
+    m_A.block(6 * i, n_columnsA1 * i, 6, n_columnsA1) = tempA1;
+
+    Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, 3);
+    computeMatrixA2_(A2, m_accelerations[i]);
+    m_A.block<6, 3>(6 * i, n_columnsA - 3) = A2;
   }
 
-  return A;
+  // return A;
 }
 
-Eigen::MatrixXd ContactSet::buildStaticMatrixA()
+void ContactSet::setZeroMatricies_()
+{
+	
+  m_A.setZero();
+
+  m_B.setZero();
+
+  m_F.setZero();
+
+  m_f.setZero();
+}
+void ContactSet::resetStaticMatricies_()
 {
   int const n_colA1 = 3 * m_numberOfFeet;
   int const n_colA = n_colA1 + 2;
   int const n_rowA = 6;
+  m_A.resize(n_rowA, n_colA);
 
-  Eigen::MatrixXd A(n_rowA, n_colA);
-  auto A1 = computeMatrixA1();
+  // b
+  m_B.resize(6);
 
-  A.leftCols(n_colA1) = A1;
-  A.rightCols(2) = computeMatrixA2(m_gravity).leftCols(2);
+  // F
+  int const numberOfColumns = 3 * m_numberOfFeet + 2;
+  int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) + 4;
 
-  return A;
+  m_F.resize(numberOfRows, numberOfColumns);
+
+  m_f.resize(numberOfRows);
+
+  setZeroMatricies_();
 }
 
-Eigen::VectorXd ContactSet::buildVectorB()
+void ContactSet::buildStaticMatrixA_()
 {
-  Eigen::VectorXd B = Eigen::VectorXd::Zero(6 * m_numberOfAccelerations);
 
+  int const n_colA1 = 3 * m_numberOfFeet;
+
+  Eigen::MatrixXd tempA1;
+  tempA1.Zero(6, n_colA1);
+  computeMatrixA1_(tempA1);
+
+  m_A.leftCols(n_colA1) = tempA1;
+  Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, 3);
+  computeMatrixA2_(A2, m_gravity);
+  m_A.rightCols(2) = A2.leftCols(2);
+
+  // return A;
+}
+
+void ContactSet::buildVectorB_()
+{
+
+  // Eigen::VectorXd B = Eigen::VectorXd::Zero(6 * m_numberOfAccelerations);
+
+  // m_B.setZero();
   for(int i = 0; i < m_numberOfAccelerations; ++i)
   {
-    B.segment<6>(6 * i) = computeVector_t(m_accelerations[i]);
+    m_B.segment<6>(6 * i) = computeVector_t_(m_accelerations[i]);
   }
-  return B;
+  // return B;
 }
 
-Eigen::VectorXd ContactSet::buildStaticVectorB()
+void ContactSet::buildStaticVectorB_()
 {
-  return computeVector_t(m_gravity);
+  m_B = computeVector_t_(m_gravity);
 }
 
-Eigen::MatrixXd ContactSet::buildFrictionF()
+void ContactSet::buildFrictionF_()
 {
+
   int const numberOfColumns = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
   int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
 
-  Eigen::MatrixXd F = Eigen::MatrixXd::Zero(numberOfRows, numberOfColumns);
+  // m_F.setZero();
+
   Eigen::MatrixXd F_contact((m_numberOfFrictionSides + 2), 3);
 
   for(int i = 0; i < m_numberOfFeet; ++i)
@@ -119,43 +259,40 @@ Eigen::MatrixXd ContactSet::buildFrictionF()
 
     for(int j = 0; j < m_numberOfAccelerations; ++j)
     {
-      F.block(j * (m_numberOfFrictionSides + 2) * m_numberOfFeet + i * (m_numberOfFrictionSides + 2),
-              j * 3 * m_numberOfFeet + i * 3, (m_numberOfFrictionSides + 2), 3) = F_contact;
+      m_F.block(j * (m_numberOfFrictionSides + 2) * m_numberOfFeet + i * (m_numberOfFrictionSides + 2),
+                j * 3 * m_numberOfFeet + i * 3, (m_numberOfFrictionSides + 2), 3) = F_contact;
     }
   }
 
-  F.block<3, 3>(numberOfRows - 6, numberOfColumns - 3) = Eigen::Matrix3d::Identity();
-  F.bottomRightCorner<3, 3>() = -Eigen::Matrix3d::Identity();
+  m_F.block<3, 3>(numberOfRows - 6, numberOfColumns - 3) = Eigen::Matrix3d::Identity();
+  m_F.bottomRightCorner<3, 3>() = -Eigen::Matrix3d::Identity();
 
-  return F;
+  // return F;
 }
 
-Eigen::MatrixXd ContactSet::buildStaticFrictionF()
+void ContactSet::buildStaticFrictionF_()
 {
   int const numberOfColumns = 3 * m_numberOfFeet + 2;
   int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) + 4;
 
-  Eigen::MatrixXd F = Eigen::MatrixXd::Zero(numberOfRows, numberOfColumns);
   Eigen::MatrixXd F_contact((m_numberOfFrictionSides + 2), 3);
 
   for(int i = 0; i < m_numberOfFeet; ++i)
   {
     F_contact = m_feet[i].linearizedFrictionCone(m_numberOfFrictionSides);
 
-    F.block(i * (m_numberOfFrictionSides + 2), i * 3, m_numberOfFrictionSides + 2, 3) = F_contact;
+    m_F.block(i * (m_numberOfFrictionSides + 2), i * 3, m_numberOfFrictionSides + 2, 3) = F_contact;
   }
 
-  F.block<2, 2>(numberOfRows - 4, numberOfColumns - 2) = Eigen::Matrix2d::Identity();
-  F.bottomRightCorner<2, 2>() = -Eigen::Matrix2d::Identity();
-
-  return F;
+  m_F.block<2, 2>(numberOfRows - 4, numberOfColumns - 2) = Eigen::Matrix2d::Identity();
+  m_F.bottomRightCorner<2, 2>() = -Eigen::Matrix2d::Identity();
 }
 
-Eigen::VectorXd ContactSet::buildFrictionVectorf()
+void ContactSet::buildFrictionVectorf_()
 {
-  int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
-  Eigen::VectorXd f(numberOfRows);
-  f = Eigen::VectorXd::Zero(numberOfRows);
+  // int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
+  int numberOfRows = m_f.rows();
+  // Eigen::VectorXd f(numberOfRows);
 
   // double f_max = 10*m_mass;
 
@@ -163,45 +300,40 @@ Eigen::VectorXd ContactSet::buildFrictionVectorf()
   {
     int ind = i * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations;
 
-    f[ind] = m_feet[i].fmax();
-    f[ind + 1] = -m_feet[i].fmin();
+    m_f[ind] = m_feet[i].fmax();
+    m_f[ind + 1] = -m_feet[i].fmin();
     // std::cout << "Setting inequalities for " << m_feet[i].get_name() << " fmax=" << m_feet[i].fmax() << "N fmin=" <<
     // m_feet[i].fmin() << "N" << std::endl;
   }
 
   // Limitation of the CoM
-  f[numberOfRows - 6] = 1000; // x_max
-  f[numberOfRows - 5] = 1000; // y_max
-  f[numberOfRows - 4] = 2; // z_max
-  f[numberOfRows - 3] = 1000; // -x_min
-  f[numberOfRows - 2] = 1000; // -y_min
-  f[numberOfRows - 1] = 0; // -z_min
-
-  return f;
+  m_f[numberOfRows - 6] = 1000; // x_max
+  m_f[numberOfRows - 5] = 1000; // y_max
+  m_f[numberOfRows - 4] = 2; // z_max
+  m_f[numberOfRows - 3] = 1000; // -x_min
+  m_f[numberOfRows - 2] = 1000; // -y_min
+  m_f[numberOfRows - 1] = 0; // -z_min
 }
 
-Eigen::VectorXd ContactSet::buildStaticFrictionVectorf()
+void ContactSet::buildStaticFrictionVectorf_()
 {
-  int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) + 4;
-  Eigen::VectorXd f(numberOfRows);
-  f = Eigen::VectorXd::Zero(numberOfRows);
+  // int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) + 4;
 
+  int numberOfRows = m_f.rows();
   // double f_max = 10*m_mass;
 
   for(int i = 0; i < m_numberOfFeet; i += 1)
   {
     int init = i * (m_numberOfFrictionSides + 2);
-    f[init] = m_feet[i].fmax();
-    f[init + 1] = -m_feet[i].fmin();
+    m_f[init] = m_feet[i].fmax();
+    m_f[init + 1] = -m_feet[i].fmin();
   }
 
   // Limitation of the CoM
-  f[numberOfRows - 4] = 1000; // x_max
-  f[numberOfRows - 3] = 1000; // y_max
-  f[numberOfRows - 2] = 1000; // -x_min
-  f[numberOfRows - 1] = 1000; // -y_min
-
-  return f;
+  m_f[numberOfRows - 4] = 1000; // x_max
+  m_f[numberOfRows - 3] = 1000; // y_max
+  m_f[numberOfRows - 2] = 1000; // -x_min
+  m_f[numberOfRows - 1] = 1000; // -y_min
 }
 
 // ----------- input functions ----------
