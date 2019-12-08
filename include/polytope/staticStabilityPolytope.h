@@ -40,6 +40,11 @@ public:
   }
 
   */
+
+  inline const std::vector<std::shared_ptr<StaticPoint>> & getPolygonVerticies()
+  {
+    return m_points; 
+  }
 private:
   // algorithm storage
 
