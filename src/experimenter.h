@@ -1,26 +1,27 @@
-#ifndef EXPERIMENTER_H_INCLUDED
-#define EXPERIMENTER_H_INCLUDED
+#pragma once
 
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
+#include "polytope/robustStabilityPolytope.h"
+#include "polytope/stabilityPolytope.h"
+#include "polytope/staticStabilityPolytope.h"
+#include "problemDescriptor/contactSet.h"
 #include <chrono>
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <string>
-
 #include <tinyxml2.h>
-
-#include "contactSet/contactSet.h"
-#include "polytope/stabilityPolytope.h"
-#include "polytope/robustStabilityPolytope.h"
-#include "polytope/staticStabilityPolytope.h"
+#include <typeinfo> // operator typeid
+#include <vector>
 
 class Experimenter
 {
- public:
+public:
   // ---------- constructors and destructor -----------
-  Experimenter(int mode, std::string const& contact_set_file_name, int numFrictionSides=8, Solver solver = GLPK, bool robust = TRUE);
+  Experimenter(int mode,
+               std::string const & contact_set_file_name,
+               int numFrictionSides = 8,
+               Solver solver = GLPK,
+               bool robust = true);
   ~Experimenter();
 
   // ---------- main functions -----------
@@ -34,15 +35,14 @@ class Experimenter
   void run_exp3();
   void run_exp3_static();
   void run_exp3_robust();
-    
+
   // ---------- inputs and setters -----------
 
   // ---------- outputs and getters -----------
   void save();
 
-
- private:
-  ContactSet m_contactSet;
+private:
+  std::shared_ptr<ContactSet> m_contactSetPtr;
   int m_mode;
   bool m_robust;
   int m_numFrictionSides;
@@ -50,9 +50,6 @@ class Experimenter
 
   std::vector<std::shared_ptr<StabilityPolytope>> m_polytopes;
   std::vector<int> m_total_times_ms;
-  
+
   std::string stabiliplus_path;
-
 };
-
-#endif // EXPERIMENTER_H_INCLUDED
