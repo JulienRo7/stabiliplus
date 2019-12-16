@@ -57,6 +57,10 @@ public:
   }
   Solver solverType() const;
 
+  inline int getMaxIteration() const
+  {
+    return m_maxIteration; 
+  }
   // ----------- setters ----------
   void maxIteration(int maxIteration);
 

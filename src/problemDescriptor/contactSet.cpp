@@ -3,13 +3,13 @@
 // using namespace std;
 
 ContactSet::ContactSet(bool staticCase)
-: ProblemDescriptor(), m_numberOfFeet(0), m_numberOfFrictionSides(8), m_numberOfAccelerations(1)
+: ProblemDescriptor(), m_numberOfFeet(0), m_numberOfFrictionSides(8), m_numberOfAccelerations(1), staticCase_(staticCase)
 {
   m_accelerations.push_back(m_gravity);
 }
 
 ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_name, int numFrictionSides)
-: ProblemDescriptor(), m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0)
+: ProblemDescriptor(), m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0), staticCase_(staticCase)
 {
   loadContactSet(contact_set_file_name);
 }
@@ -214,7 +214,7 @@ void ContactSet::buildStaticMatrixA_()
   int const n_colA1 = 3 * m_numberOfFeet;
 
   Eigen::MatrixXd tempA1;
-  tempA1.Zero(6, n_colA1);
+  tempA1.setZero(6, n_colA1);
   computeMatrixA1_(tempA1);
 
   m_A.leftCols(n_colA1) = tempA1;
