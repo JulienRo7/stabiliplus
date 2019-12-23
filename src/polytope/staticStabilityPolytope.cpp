@@ -55,8 +55,19 @@ void StaticStabilityPolytope::initSolver()
   // std::cout << "Vector f: " << f.transpose() << std::endl;
 
   m_pdPtr->update();
-  m_lp->buildProblem(m_pdPtr->getVectorB(), m_pdPtr->getMatrixA(), m_pdPtr->getFrictionF(),
-                     m_pdPtr->getFrictionVectorf());
+
+ 
+  std::cout<<"Inside StaticStabilityPolytope: "<<std::endl;
+
+  std::cout<<"A matrix is: "<<std::endl<<m_pdPtr->getMatrixA()<<std::endl;
+  std::cout<<"B vector is: "<<std::endl<<m_pdPtr->getVectorB().transpose()<<std::endl;
+
+  std::cout<<"F matrix is: "<<std::endl<<m_pdPtr->getFrictionF()<<std::endl;
+  std::cout<<"f vector is: "<<std::endl<<m_pdPtr->getFrictionVectorf().transpose()<<std::endl;
+
+
+  m_lp->buildProblem(m_pdPtr->getVectorB(),  m_pdPtr->getMatrixA(), 
+		    m_pdPtr->getFrictionF(), m_pdPtr->getFrictionVectorf());
 
   auto stop = std::chrono::high_resolution_clock::now();
 
@@ -88,18 +99,33 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
   // inner vertices
   dir << 1, 0;
   solveLP(dir, vertex);
+  std::cout << "Fisrt vertex: " << vertex.transpose()<<std::endl; 
+  std::cout << "Fisrt vertex dir: " << dir.transpose()<<std::endl; 
+
   std::shared_ptr<StaticPoint> p1(new StaticPoint(dir, vertex));
   m_points.push_back(p1);
 
   dir << cos(2 * M_PI / 3), sin(2 * M_PI / 3);
+  vertex<< 0.0 , 0.0;
+
   solveLP(dir, vertex);
+  std::cout << "Second vertex: " << vertex.transpose()<<std::endl; 
+  std::cout << "Second vertex dir: " << dir.transpose()<<std::endl; 
+
+
   std::shared_ptr<StaticPoint> p2(new StaticPoint(dir, vertex));
   m_points.push_back(p2);
   p1->next(p2);
   p2->prec(p1);
 
   dir << cos(4 * M_PI / 3), sin(4 * M_PI / 3);
+
+  vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
+  std::cout << "Third vertex: " << vertex.transpose()<<std::endl; 
+  std::cout << "Third vertex dir: " << dir.transpose()<<std::endl; 
+
+
   std::shared_ptr<StaticPoint> p3(new StaticPoint(dir, vertex));
   m_points.push_back(p3);
   p2->next(p3);
@@ -110,6 +136,7 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
   // initialisation of the error
   m_error = p1->measure() + p2->measure() + p3->measure();
 
+  std::cout<<"Initial projection error: "<<m_error<<std::endl;
   while(!stopCriterion())
   {
     // std::cout << "##### Iteration " << m_iteration+1 << " #####" << std::endl;
@@ -137,6 +164,8 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
     // showPointsNeighbours();
 
     m_iteration++;
+
+    std::cout<<"iteration-"<<m_iteration<<": "<<m_error<< ", "<<std::endl;
   }
   auto stop = std::chrono::high_resolution_clock::now();
 

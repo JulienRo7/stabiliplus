@@ -24,26 +24,9 @@ class ProblemDescriptor
 {
 public:
   // ----------- constructors and destructor ----------
-  ProblemDescriptor();
+  ProblemDescriptor(std::string name="ProblemDescriptor");
   virtual ~ProblemDescriptor();
-  /*
-    virtual Eigen::MatrixXd buildStaticMatrixA() = 0;
-    virtual Eigen::VectorXd buildStaticVectorB() = 0;
-    virtual Eigen::MatrixXd buildStaticFrictionF() = 0;
-    virtual Eigen::VectorXd buildStaticFrictionVectorf() = 0;
 
-    virtual Eigen::MatrixXd buildMatrixA() = 0;
-    virtual Eigen::VectorXd buildVectorB() = 0;
-    virtual Eigen::MatrixXd buildFrictionF() = 0;
-    virtual Eigen::VectorXd buildFrictionVectorf() = 0;
-  */
-
-  /*
-  const Eigen::MatrixXd &  getStaticMatrixA() = 0;
-  const Eigen::VectorXd &  getStaticVectorB() = 0;
-  const Eigen::MatrixXd &  buildStaticFrictionF() = 0;
-  const Eigen::VectorXd &  buildStaticFrictionVectorf() = 0;
-  */
   inline const Eigen::MatrixXd & getMatrixA()
   {
     return m_A;
