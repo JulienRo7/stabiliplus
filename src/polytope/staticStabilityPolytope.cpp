@@ -57,6 +57,7 @@ void StaticStabilityPolytope::initSolver()
   m_pdPtr->update();
 
  
+  /*
   std::cout<<"Inside StaticStabilityPolytope: "<<std::endl;
 
   std::cout<<"A matrix is: "<<std::endl<<m_pdPtr->getMatrixA()<<std::endl;
@@ -65,6 +66,7 @@ void StaticStabilityPolytope::initSolver()
   std::cout<<"F matrix is: "<<std::endl<<m_pdPtr->getFrictionF()<<std::endl;
   std::cout<<"f vector is: "<<std::endl<<m_pdPtr->getFrictionVectorf().transpose()<<std::endl;
 
+  */
 
   m_lp->buildProblem(m_pdPtr->getVectorB(),  m_pdPtr->getMatrixA(), 
 		    m_pdPtr->getFrictionF(), m_pdPtr->getFrictionVectorf());
@@ -99,8 +101,8 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
   // inner vertices
   dir << 1, 0;
   solveLP(dir, vertex);
-  std::cout << "Fisrt vertex: " << vertex.transpose()<<std::endl; 
-  std::cout << "Fisrt vertex dir: " << dir.transpose()<<std::endl; 
+  //std::cout << "Fisrt vertex: " << vertex.transpose()<<std::endl; 
+  //std::cout << "Fisrt vertex dir: " << dir.transpose()<<std::endl; 
 
   std::shared_ptr<StaticPoint> p1(new StaticPoint(dir, vertex));
   m_points.push_back(p1);
@@ -109,8 +111,8 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
   vertex<< 0.0 , 0.0;
 
   solveLP(dir, vertex);
-  std::cout << "Second vertex: " << vertex.transpose()<<std::endl; 
-  std::cout << "Second vertex dir: " << dir.transpose()<<std::endl; 
+  //std::cout << "Second vertex: " << vertex.transpose()<<std::endl; 
+  //std::cout << "Second vertex dir: " << dir.transpose()<<std::endl; 
 
 
   std::shared_ptr<StaticPoint> p2(new StaticPoint(dir, vertex));
@@ -122,8 +124,8 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
 
   vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
-  std::cout << "Third vertex: " << vertex.transpose()<<std::endl; 
-  std::cout << "Third vertex dir: " << dir.transpose()<<std::endl; 
+  //std::cout << "Third vertex: " << vertex.transpose()<<std::endl; 
+  //std::cout << "Third vertex dir: " << dir.transpose()<<std::endl; 
 
 
   std::shared_ptr<StaticPoint> p3(new StaticPoint(dir, vertex));
@@ -137,10 +139,11 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
   m_error = p1->measure() + p2->measure() + p3->measure();
 
   std::cout<<"Initial projection error: "<<m_error<<std::endl;
+
   while(!stopCriterion())
   {
-    // std::cout << "##### Iteration " << m_iteration+1 << " #####" << std::endl;
-    // std::cout << "Error " << m_error << " (m_maxError: " << m_maxError << ") \n";
+    //std::cout << "##### Iteration " << m_iteration+1 << " #####" << std::endl;
+    //std::cout << "Error " << m_error << " (m_maxError: " << m_maxError << ") \n";
     auto p_max = std::max_element(m_points.begin(), m_points.end(), **(m_points.begin()));
     auto p_next = (*p_max)->next();
 
