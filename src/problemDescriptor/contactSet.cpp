@@ -3,13 +3,13 @@
 // using namespace std;
 
 ContactSet::ContactSet(bool staticCase)
-: ProblemDescriptor(), m_numberOfFeet(0), m_numberOfFrictionSides(8), m_numberOfAccelerations(1)
+  : ProblemDescriptor(), m_numberOfFeet(0), m_numberOfFrictionSides(8), m_numberOfAccelerations(1), staticCase_(staticCase)
 {
   m_accelerations.push_back(m_gravity);
 }
 
 ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_name, int numFrictionSides)
-: ProblemDescriptor(), m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0)
+  : ProblemDescriptor(), m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0), staticCase_(staticCase)
 {
   loadContactSet(contact_set_file_name);
 }
@@ -40,13 +40,9 @@ void ContactSet::update()
 
   if(staticCase())
   {
-
     buildStaticMatrixA_();
-
     buildStaticVectorB_();
-
     buildStaticFrictionF_();
-
     buildStaticFrictionVectorf_();
   }
   else
@@ -69,7 +65,7 @@ void ContactSet::computeMatrixA1_(Eigen::MatrixXd & A1)
     A1.block<3, 3>(0, 3 * i) = Eigen::Matrix3d::Identity();
     A1.block<3, 3>(3, 3 * i) = skewSymmetric(m_feet[i].get_position());
   }
-
+  
   // return A1;
 }
 
@@ -214,7 +210,7 @@ void ContactSet::buildStaticMatrixA_()
   int const n_colA1 = 3 * m_numberOfFeet;
 
   Eigen::MatrixXd tempA1;
-  tempA1.Zero(6, n_colA1);
+  tempA1=Eigen::MatrixXd::Zero(6, n_colA1);
   computeMatrixA1_(tempA1);
 
   m_A.leftCols(n_colA1) = tempA1;
@@ -442,6 +438,7 @@ void ContactSet::showContactSet()
   {
     std::cout << "Contact named: " << contact.get_name() << " (fmax=" << contact.fmax() << "N, fmin=" << contact.fmin()
               << "N)" << std::endl;
+    //contact.showContactPoint();
   }
 }
 
