@@ -1,6 +1,6 @@
 #include "problemDescriptor/problemDescriptor.h"
 
-ProblemDescriptor::ProblemDescriptor() : m_name(""), m_gravity(0, 0, -9.81), m_mass(1) {}
+ProblemDescriptor::ProblemDescriptor(std::string name) : m_name(name), m_gravity(0, 0, -9.81), m_mass(1) {}
 
 ProblemDescriptor::~ProblemDescriptor()
 {

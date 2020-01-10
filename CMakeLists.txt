@@ -14,13 +14,18 @@ set(CMAKE_CXX_FLAGS "-O2")
 # find_package(lpsolve55 REQUIRED)
 # add_required_dependency(lpsolve55)
 
-find_file(gurobi_lib libgurobi70.so
-  PATH $ENV{GUROBI_HOME}/lib/
-  )
-find_file(gurobi_c++_lib libgurobi_c++.a
-  PATH $ENV{GUROBI_HOME}/lib/
-  )
+#find_file(gurobi_lib libgurobi90.so
+#  PATH $ENV{GUROBI_HOME}/lib/
+#  )
+#find_file(gurobi_c++_lib libgurobi_c++.a
+#  PATH $ENV{GUROBI_HOME}/lib/
+#  )
 
+#message("gurobi_c++_lib is: ")
+#message(${gurobi_c++_lib})
+#
+#message("gurobi_lib is: ")
+#message(${gurobi_lib})
 
 ### wrapper library ###
 
@@ -38,7 +43,7 @@ target_include_directories(wrappers
   #$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lpsolve55/src>
   #$ENV{GUROBI_HOME}/include
   # PRIVATE
-  # ${CMAKE_CURRENT_SOURCE_DIR}/src
+  #${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
 target_compile_features(wrappers
@@ -50,7 +55,9 @@ target_link_libraries(wrappers
   Eigen3::Eigen
   PRIVATE
   glpk 
-  #lpsolve55::lpsolve55 ${gurobi_c++_lib} ${gurobi_lib}
+  #${gurobi_c++_lib} 
+  #${gurobi_lib}
+  #lpsolve55::lpsolve55 
   )
 
 ### ContactSet library ###
@@ -129,10 +136,10 @@ target_include_directories(main
 target_compile_features(main
   PRIVATE cxx_std_11
   )
-
-target_link_libraries(main
+  target_link_libraries(main
   PRIVATE
   ProblemDescriptor StabilityPolytope tinyxml2)
+
 
 
 #### Exporting targets and installing ####

@@ -24,7 +24,7 @@ public:
   virtual ~SolverWrapper();
 
   // ---------- main functions -------------
-  virtual void buildProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f) = 0;
+  virtual void buildProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd &A, const Eigen::MatrixXd &F, const Eigen::VectorXd & f) = 0;
   virtual void solveProblem() = 0;
 
   // ---------- getters -----------

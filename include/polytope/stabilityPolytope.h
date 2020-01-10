@@ -57,7 +57,14 @@ public:
   }
   Solver solverType() const;
 
+
   virtual int get_numberOfVertices() const = 0;
+
+  inline int getMaxIteration() const
+  {
+    return m_maxIteration; 
+  }
+
   // ----------- setters ----------
   void maxIteration(int maxIteration);
 

@@ -10,13 +10,13 @@ GlpkWrapper::~GlpkWrapper()
   glp_delete_prob(m_lp);
 }
 
-void GlpkWrapper::buildProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f)
+void GlpkWrapper::buildProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd & A, const Eigen::MatrixXd & F, const Eigen::VectorXd & f)
 {
-  // buildOriginalProblem(B, A, F, f);
-  buildFactorizedProblem(B, A, F, f);
+  buildOriginalProblem(B, A, F, f);
+  //buildFactorizedProblem(B, A, F, f);
 }
 
-void GlpkWrapper::buildFactorizedProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f)
+void GlpkWrapper::buildFactorizedProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd & A, const Eigen::MatrixXd & F, const Eigen::VectorXd & f)
 {
   m_originalNumCols = A.cols();
 
@@ -74,7 +74,7 @@ void GlpkWrapper::buildFactorizedProblem(Eigen::VectorXd B, Eigen::MatrixXd A, E
   // glp_write_lp(m_lp, NULL, "export_lp.txt");
 }
 
-void GlpkWrapper::buildOriginalProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f)
+void GlpkWrapper::buildOriginalProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd A, const Eigen::MatrixXd & F, const Eigen::VectorXd & f)
 {
   m_originalNumCols = A.cols();
 
@@ -131,8 +131,8 @@ void GlpkWrapper::buildOriginalProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eig
 
 void GlpkWrapper::solveProblem()
 {
-  // solveOriginalProblem();
-  solveFactorizedProblem();
+  solveOriginalProblem();
+  //solveFactorizedProblem();
 }
 
 void GlpkWrapper::solveOriginalProblem()
@@ -173,8 +173,8 @@ void GlpkWrapper::solveFactorizedProblem()
 void GlpkWrapper::set_searchDirection(const Eigen::Vector3d & searchDir)
 {
   m_searchDirection = searchDir;
-  // set_searchDirectionOriginal(m_searchDirection);
-  set_searchDirectionFactorized(m_searchDirection);
+  set_searchDirectionOriginal(m_searchDirection);
+  //set_searchDirectionFactorized(m_searchDirection);
 }
 
 void GlpkWrapper::set_searchDirectionOriginal(const Eigen::Vector3d & searchDir)
@@ -205,8 +205,8 @@ void GlpkWrapper::set_searchDirectionFactorized(const Eigen::Vector3d & searchDi
 void GlpkWrapper::set_staticSearchDirection(const Eigen::Vector2d & searchDir)
 {
   m_staticSearchDirection = searchDir;
-  // set_staticSearchDirectionOriginal(searchDir);
-  set_staticSearchDirectionFactorized(searchDir);
+  set_staticSearchDirectionOriginal(searchDir);
+  //set_staticSearchDirectionFactorized(searchDir);
 }
 
 void GlpkWrapper::set_staticSearchDirectionOriginal(const Eigen::Vector2d & searchDir)

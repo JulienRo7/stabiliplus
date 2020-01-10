@@ -75,7 +75,6 @@ public:
   }
 
 private:
-  bool staticCase_;
   // std::string m_name;
   // Eigen::Vector3d const m_gravity;
   // double m_mass;
@@ -111,4 +110,6 @@ private:
   void buildFrictionF_();
   void buildFrictionVectorf_();
   Eigen::VectorXd computeVector_t_(Eigen::Vector3d const & acceleration);
+
+  bool staticCase_;
 };

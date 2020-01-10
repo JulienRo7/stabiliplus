@@ -18,17 +18,17 @@ public:
   ~GlpkWrapper();
 
   // ---------- main functions -------------
-  void buildProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f);
-  void buildFactorizedProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f);
-  void buildOriginalProblem(Eigen::VectorXd B, Eigen::MatrixXd A, Eigen::MatrixXd F, Eigen::VectorXd f);
-  void solveProblem();
+  void buildProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd & A, const Eigen::MatrixXd & F, const Eigen::VectorXd &f) override;
+  void buildFactorizedProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd & A, const Eigen::MatrixXd & F, const Eigen::VectorXd & f);
+  void buildOriginalProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd A, const Eigen::MatrixXd & F, const Eigen::VectorXd & f);
+  void solveProblem() override;
   void solveOriginalProblem();
   void solveFactorizedProblem();
 
   // ---------- getters -----------
 
   // ---------- setters -----------
-  void set_searchDirection(const Eigen::Vector3d & searchDir);
+  void set_searchDirection(const Eigen::Vector3d & searchDir) override;
   void set_searchDirectionOriginal(const Eigen::Vector3d & searchDir);
   void set_searchDirectionFactorized(const Eigen::Vector3d & searchDir);
   void set_staticSearchDirection(const Eigen::Vector2d & searchDir);
