@@ -34,6 +34,7 @@ public:
   // ----- getters -----
 
   int get_numberOfVertices() const;
+  const std::vector<Eigen::Vector2d> getInnerVertices() const;
   
   /*
   inline std::shared_ptr<ProblemDescriptor>* problemDescriptor() override
@@ -43,10 +44,7 @@ public:
 
   */
   
-  inline const std::vector<std::shared_ptr<StaticPoint>> & getPolygonVerticies()
-  {
-    return m_points; 
-  }
+
   
 private:
   // algorithm storage
