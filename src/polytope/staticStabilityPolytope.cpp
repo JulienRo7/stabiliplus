@@ -138,7 +138,7 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
   // initialisation of the error
   m_error = p1->measure() + p2->measure() + p3->measure();
 
-  std::cout<<"Initial projection error: "<<m_error<<std::endl;
+  //std::cout<<"Initial projection error: "<<m_error<<std::endl;
 
   while(!stopCriterion())
   {
@@ -168,7 +168,7 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
 
     m_iteration++;
 
-    std::cout<<"iteration-"<<m_iteration<<": "<<m_error<< ", "<<std::endl;
+    //std::cout<<"iteration-"<<m_iteration<<": "<<m_error<< ", "<<std::endl;
   }
   auto stop = std::chrono::high_resolution_clock::now();
 
