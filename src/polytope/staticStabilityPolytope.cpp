@@ -240,3 +240,20 @@ int StaticStabilityPolytope::get_numberOfVertices() const
 {
   return m_points.size();
 }
+
+const std::vector<Eigen::Vector2d> StaticStabilityPolytope::getInnerVertices() const
+{
+  std::vector<Eigen::Vector2d> vertices;
+  
+  auto it_pt = m_points.begin();
+  auto pt = (*it_pt)->next();
+  
+  while(pt != *it_pt)
+    {
+      vertices.push_back(pt->innerVertex());
+      pt = pt->next();
+    }
+  vertices.push_back(pt->innerVertex());
+
+  return vertices;
+}
