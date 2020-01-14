@@ -25,38 +25,102 @@
 #include "problemDescriptor/contactSet.h"
 #include "problemDescriptor/problemDescriptor.h"
 
+/*!
+ * \brief Abstract class for projectors
+ *
+ * This class is virtual.
+ * Projectors compute the projection of high dimensionnal convex discribed using a `ProblemDescriptor` object and return a 2D or 3D convex using the convex projection algorithm.
+ *
+ */
+
 class StabilityPolytope
 {
 public:
   // ----------- constructors and destructor ----------
-  // StabilityPolytope(ContactSet contactSet, int maxIteration, double maxError, Solver solveType);
+
+  /*!
+   * \brief class constructor
+   *
+   * \param inputPD Object describing the convex to project
+   * \param maxIteration Stop criterion for the algorithm
+   * \param maxError Stop criterion for the algorithm
+   * \param solveType Name of the LP solver used
+   */
   StabilityPolytope(std::shared_ptr<ProblemDescriptor> inputPD, int maxIteration, double maxError, Solver solveType);
+
+  /*!
+   * \brief virtual destructor
+   */
   virtual ~StabilityPolytope();
 
   // ----------- main class methods ----------
+  /*!
+   * \brief Initialized the solver with the problem described by the ProblemDescriptor
+   */
   virtual void initSolver() = 0;
+  
   // virtual void solveLP(Eigen::Vector3d const& direction, Eigen::Vector3d &vertex) = 0;
 
+  /*!
+   * \brief Main function to project the convex
+   */
   virtual void projectionStabilityPolyhedron() = 0;
 
+  /*!
+   * \brief Check if the stopCriterion as been reached
+   */
   bool stopCriterion() const; // return true when the algorithm must stop
 
   // ----------- output and display functions ----------
+  /*!
+   * \brief write the output of the projection algorithm to stream using an homemade algorithm
+   * 
+   */
   virtual void writeToStream(std::ofstream & stream) const = 0;
+
+  /*!
+   * \brief return the H-Rep of the projected convex
+   * 
+   * Each `Eigen::Vector4d` represents one hyperplane of the projected convex. 
+   * The first 3 coordinates represent the normal of the hyperplane toward the outside of the polytope
+   * The 4th coodinate is the offset.
+   *
+   */
   virtual std::vector<Eigen::Vector4d> constraintPlanes() const = 0;
+  
+  /*!
+   * \brief Return a point inside the convex polytope: the average sum on all the vertices
+   *
+   */
   virtual Eigen::Vector3d baryPoint() const = 0;
 
   // ----------- getters ----------
+  
+  /*!
+   * \brief returns total time spent computing LPs
+   */
   double LPTime() const;
+
+  /*!
+   * \brief returns time spent initializing the problem
+   */ 
   double initTime() const;
+
+  /*!
+   * \brief returns time spent conputing the inner and outer approximation of the convex
+   */
   double structTime() const;
 
+  /*!
+   * \brief returns pointer to `ProblemDescriptor`
+   */
   virtual inline std::shared_ptr<ProblemDescriptor> problemDescriptor()
   {
     return m_pdPtr;
   }
-  Solver solverType() const;
 
+  
+  Solver solverType() const;
 
   virtual int get_numberOfVertices() const = 0;
 
