@@ -18,49 +18,66 @@
 #include <tinyxml2.h>
 
 class ProblemDescriptor
+
 /*! \brief It describes the polytope with inequalities and the projection with equalities.
+
+  The purpose of this class is to create a problem that defines a high dimensionnal convex that will then be projected to dimension 2 or 3 using the stabilityPolytope class. 
+
+  The convex should decribed by equations of the form:
+      A*x = b
+      F*x <= f
  */
 
 {
 public:
   // ----------- constructors and destructor ----------
+  
   ProblemDescriptor(std::string name="ProblemDescriptor");
   virtual ~ProblemDescriptor();
 
+  // ----------- Main method of the class -------------
+  /*! \brief return the Matrix A
+   */
   inline const Eigen::MatrixXd & getMatrixA()
   {
     return m_A;
   }
-
+  /*! \brief return the vector b
+   */
   inline const Eigen::VectorXd & getVectorB()
   {
-    return m_B;
+    return m_b;
   }
+  /*! \brief return the Matrix F
+   */
   inline const Eigen::MatrixXd & getFrictionF()
   {
     return m_F;
   }
+  /*! \brief return the vector f
+   */
   inline const Eigen::VectorXd & getFrictionVectorf()
   {
     return m_f;
   }
 
+  /*! \brief recompute the matrices A, b, F and f
+   */
   virtual void update() = 0;
 
+  /*! \brief returns the name of the ProblemDescriptor
+   */
   inline const std::string & get_name() const
   {
     return m_name;
   }
 
-  // ---------- static functions ---------
-  static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const & vect);
-
 protected:
   std::string m_name;
-  Eigen::Vector3d const m_gravity;
-  double m_mass;
+  // Eigen::Vector3d const m_gravity;
+  // double m_mass;
   Eigen::MatrixXd m_A;
   Eigen::MatrixXd m_F;
-  Eigen::VectorXd m_B;
+  Eigen::VectorXd m_b;
   Eigen::VectorXd m_f;
 };

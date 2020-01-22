@@ -9,7 +9,7 @@ Experimenter::Experimenter(int mode,
                            bool robust)
 : m_mode(mode), m_numFrictionSides(numFrictionSides), m_solver(solver), m_robust(robust)
 {
-  bool staticCase = false;
+  bool staticCase = !robust;
   m_contactSetPtr = std::make_shared<ContactSet>(staticCase, contact_set_file_name, numFrictionSides);
   stabiliplus_path = "";
   m_contactSetPtr->showContactSet();

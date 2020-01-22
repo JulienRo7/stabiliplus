@@ -57,7 +57,7 @@ void StaticStabilityPolytope::initSolver()
   m_pdPtr->update();
 
  
-  /*
+ 
   std::cout<<"Inside StaticStabilityPolytope: "<<std::endl;
 
   std::cout<<"A matrix is: "<<std::endl<<m_pdPtr->getMatrixA()<<std::endl;
@@ -66,7 +66,7 @@ void StaticStabilityPolytope::initSolver()
   std::cout<<"F matrix is: "<<std::endl<<m_pdPtr->getFrictionF()<<std::endl;
   std::cout<<"f vector is: "<<std::endl<<m_pdPtr->getFrictionVectorf().transpose()<<std::endl;
 
-  */
+
 
   m_lp->buildProblem(m_pdPtr->getVectorB(),  m_pdPtr->getMatrixA(), 
 		    m_pdPtr->getFrictionF(), m_pdPtr->getFrictionVectorf());
