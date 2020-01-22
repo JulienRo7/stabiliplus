@@ -13,7 +13,7 @@ sys.path.append("./python")
 
 from robot_description import Robot
 import static_stability
-import utils as ut
+import utilities as ut
 
 # Print iterations progress
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
