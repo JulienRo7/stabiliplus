@@ -35,7 +35,9 @@ public:
   ~ContactSet();
 
   // ----------- main class methods ----------
-  void update() override;
+  /*! Update the contactSet, changes the matrices size if needed, reset them and recompute them
+   */
+  void update();
 
   /*! Check whether needs to update the matrix size depending on the number of feet and accelerations.
    */

@@ -2,7 +2,7 @@
 
 // using namespace std;
 
-ContactSet::ContactSet(bool staticCase): ProblemDescriptor(),
+ContactSet::ContactSet(bool staticCase): ProblemDescriptor("ContactSet_1"),
 					 m_numberOfFrictionSides(8),
 					 staticCase_(staticCase)
 {
@@ -17,10 +17,12 @@ ContactSet::ContactSet(bool staticCase): ProblemDescriptor(),
   Eigen::Vector3d gravity;
   gravity << 0, 0, -9.81;
   m_accelerations.push_back(gravity);
+
+  //std::cout << "The first constructor for contactSet has been called!" << std::endl;
 }
 
 ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_name, int numFrictionSides):
-  ProblemDescriptor(), staticCase_(staticCase)
+  ProblemDescriptor("ContactSet_2"), staticCase_(staticCase), m_numberOfFrictionSides(numFrictionSides)
 {
   if (staticCase)
     {
@@ -31,6 +33,8 @@ ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_nam
       m_dim = 3;
     }
   loadContactSet(contact_set_file_name);
+
+  //std::cout << "The second constructor for contactSet has been called!" << std::endl;
 }
 
 ContactSet::~ContactSet()
@@ -40,7 +44,7 @@ ContactSet::~ContactSet()
 
 void ContactSet::update()
 {
-
+  //std::cout << "The update method for contactSet has been called!" << std::endl;
   if (!checkMatricesSizes())
     {
       updateMatricesSizes();
@@ -114,9 +118,9 @@ void ContactSet::buildMatrixA()
   {
     m_A.block(6 * i, m_subCols * i, 6, m_subCols) = tempA1;
     
-    Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, 3);
+    Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, m_dim);
     computeMatrixA2(A2, m_accelerations[i]);
-    m_A.block<6, 3>(6 * i, m_globCols - 3) = A2;
+    m_A.block(6 * i, m_globCols - m_dim, 6, m_dim) = A2;
 
   }
 }
@@ -139,12 +143,15 @@ void ContactSet::buildVectorB()
 
 void ContactSet::buildFrictionF()
 {
+  //std::cout << "The friction cones have " << m_numberOfFrictionSides << " sides" << std::endl;
   Eigen::MatrixXd F_contact(m_numberOfFrictionSides+2, 3);
 
   for(int i = 0; i < m_contacts.size(); ++i)
   {
     F_contact = m_contacts[i].linearizedFrictionCone(m_numberOfFrictionSides);
 
+    //std::cout << "For contact " << i << "the linearized Friction Cone is: \n" << F_contact << std::endl;
+      
     for(int j = 0; j < m_accelerations.size(); ++j)
     {
       m_F.block(j * (m_numberOfFrictionSides + 2) * m_contacts.size() + i * (m_numberOfFrictionSides + 2),
@@ -170,7 +177,7 @@ void ContactSet::buildFrictionVectorf()
   // Limitation of the CoM position
   for (int i = 2*m_dim; i>0; i--)
     {
-      m_f[m_globRows-i] = 1000;
+      m_f[m_globRows-i] = 10;
     }
 
   if (m_dim == 3)

@@ -291,7 +291,7 @@ class PostProcessor:
         print("Experiment loaded, mode {} with {} computed points".format(self.mode, self.numComputedPoints))
 
     def display_mode_1(self):
-
+        # print("There are {} inner vertices and {} outer vertices".format(len(self.polytopes[0].innerVertices), len(self.polytopes[0].outerVertices)))
         ax, lines = self.robots[0].display_robot_configuration()
 
         if self.robust:

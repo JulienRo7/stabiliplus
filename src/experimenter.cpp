@@ -10,7 +10,10 @@ Experimenter::Experimenter(int mode,
 : m_mode(mode), m_numFrictionSides(numFrictionSides), m_solver(solver), m_robust(robust)
 {
   bool staticCase = !robust;
+  //std::cout << "Experimenter is creating the contactSet object!" << std::endl;
   m_contactSetPtr = std::make_shared<ContactSet>(staticCase, contact_set_file_name, numFrictionSides);
+  //std::cout << "Experimenter has created the contactSet object!" << std::endl;
+  
   stabiliplus_path = "";
   m_contactSetPtr->showContactSet();
 }
@@ -55,7 +58,7 @@ void Experimenter::run_exp1()
 void Experimenter::run_exp1_static()
 {
   auto start = std::chrono::high_resolution_clock::now();
-  m_contactSetPtr->setStaticCase(true);
+  //m_contactSetPtr->setStaticCase(true);
 
   std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
 
@@ -68,16 +71,17 @@ void Experimenter::run_exp1_static()
   m_polytopes.push_back(polytope);
   m_total_times_ms.push_back(duration.count());
 
-  std::cout << "Static Stability Region computed in " << duration.count() << " microseconds." << std::endl;
-  std::cout << "Init time: " << polytope->initTime() << " microseconds" << std::endl;
-  std::cout << "LP time: " << polytope->LPTime() << " microseconds with solver " << m_solver << std::endl;
-  std::cout << "Structure time: " << polytope->structTime() << " microseconds" << std::endl;
+  std::cout << "Static Stability Region computed in " << duration.count() << " µs for " << polytope->get_numberOfVertices()
+            << " inner Vertices" << std::endl;
+  std::cout << "Init time: " << polytope->initTime() << " µs" << std::endl;
+  std::cout << "LP time: " << polytope->LPTime() << " µs with solver " << m_solver << std::endl;
+  std::cout << "Structure time: " << polytope->structTime() << " µs" << std::endl;
 }
 
 void Experimenter::run_exp1_robust()
 {
   auto start = std::chrono::high_resolution_clock::now();
-  m_contactSetPtr->setStaticCase(false);
+  //m_contactSetPtr->setStaticCase(false);
 
   std::shared_ptr<RobustStabilityPolytope> polytope(new RobustStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
 
@@ -90,16 +94,16 @@ void Experimenter::run_exp1_robust()
   m_polytopes.push_back(polytope);
   m_total_times_ms.push_back(duration.count());
 
-  std::cout << "Computation time: " << duration.count() << "ms for " << polytope->get_numberOfVertices()
+  std::cout << "Computation time: " << duration.count() << "µs for " << polytope->get_numberOfVertices()
             << " inner Vertices"
             << " and " << polytope->get_numberOfOuterVertices() << " outer vertices." << '\n';
   std::cout << "Number of Inner Faces: " << polytope->get_numberOfFaces()
             << ", number of outer faces: " << polytope->get_numberOfOuterFaces() << '\n';
 
-  std::cout << "LP time: " << polytope->LPTime() << " microseconds" << '\n';
-  std::cout << "inner time: " << polytope->get_innerConvexMicro() << " microseconds" << '\n';
-  std::cout << "outer time: " << polytope->get_outerConvexMicro() << " microseconds" << '\n';
-  std::cout << "support time: " << polytope->get_supportFunctionMicro() << " microseconds" << '\n';
+  std::cout << "LP time: " << polytope->LPTime() << " µs" << '\n';
+  std::cout << "inner time: " << polytope->get_innerConvexMicro() << " µs" << '\n';
+  std::cout << "outer time: " << polytope->get_outerConvexMicro() << " µs" << '\n';
+  std::cout << "support time: " << polytope->get_supportFunctionMicro() << " µs" << '\n';
 }
 
 void Experimenter::run_exp2()

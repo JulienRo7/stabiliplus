@@ -22,7 +22,7 @@
 //#include "wrapper/lpsolve_wrapper.h"
 //#include "wrapper/gurobi_wrapper.h"
 
-#include "problemDescriptor/contactSet.h"
+//#include "problemDescriptor/contactSet.h"
 #include "problemDescriptor/problemDescriptor.h"
 
 class StabilityPolytope

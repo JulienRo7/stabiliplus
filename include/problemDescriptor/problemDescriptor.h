@@ -61,7 +61,7 @@ public:
     return m_f;
   }
 
-  /*! \brief recompute the matrices A, b, F and f
+  /*! \brief recompute the matrices A and F and the vectors b and f
    */
   virtual void update() = 0;
 

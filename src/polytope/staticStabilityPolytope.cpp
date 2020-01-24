@@ -54,10 +54,9 @@ void StaticStabilityPolytope::initSolver()
   // std::cout << "Matrix F: " << F << std::endl;
   // std::cout << "Vector f: " << f.transpose() << std::endl;
 
-  m_pdPtr->update();
-
- 
- 
+  m_pdPtr->update(); 
+  //m_pdPtr->showContactSet();
+  
   std::cout<<"Inside StaticStabilityPolytope: "<<std::endl;
 
   std::cout<<"A matrix is: "<<std::endl<<m_pdPtr->getMatrixA()<<std::endl;
