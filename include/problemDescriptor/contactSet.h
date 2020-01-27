@@ -112,6 +112,13 @@ public:
 
   bool hasContactNamed(std::string contactName) const;
 
+  /* \brief accessor to the mass of the robot with the current contact Set
+   */
+  inline const double mass() const
+  {
+    return m_mass;
+  }
+  
   // ----------- setters ----------
   void translateContact(int contactIndex, Eigen::Vector3d translation);
   void updateContact(int contactIndex, Eigen::Matrix4d homTrans);
@@ -132,12 +139,20 @@ public:
     staticCase_ = setTrue;
   }
 
+  /* \brief set the mass of the rbot associated with the current contact Set
+   *  checks if the mass is 0 or lower that 0 
+   */
+  void mass(double mass);
+
   // ---------- static functions ---------
   static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const & vect);
   
 private:
 
   Eigen::Vector3d const m_gravity;
+  /*
+   * Having a coherent mass is important because for this contact set there are force limits on the contact: If the mass is too important then one contact point may not be strong enough to withstand the robot alone. This add some restrictions on the equilibrium region.
+   */
   double m_mass;
 
   /*!

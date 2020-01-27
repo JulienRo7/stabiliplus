@@ -4,7 +4,8 @@
 
 ContactSet::ContactSet(bool staticCase): ProblemDescriptor("ContactSet_1"),
 					 m_numberOfFrictionSides(8),
-					 staticCase_(staticCase)
+					 staticCase_(staticCase),
+					 m_mass(1)
 {
   if (staticCase_)
     {
@@ -22,7 +23,10 @@ ContactSet::ContactSet(bool staticCase): ProblemDescriptor("ContactSet_1"),
 }
 
 ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_name, int numFrictionSides):
-  ProblemDescriptor("ContactSet_2"), staticCase_(staticCase), m_numberOfFrictionSides(numFrictionSides)
+  ProblemDescriptor("ContactSet_2"),
+  staticCase_(staticCase),
+  m_numberOfFrictionSides(numFrictionSides),
+  m_mass(1)
 {
   if (staticCase)
     {
@@ -104,8 +108,8 @@ void ContactSet::computeMatrixA1(Eigen::MatrixXd & A1)
 void ContactSet::computeMatrixA2(Eigen::MatrixXd & A2, Eigen::Vector3d const & acceleration)
 {
   A2.block(0, 0, 3, m_dim) = Eigen::MatrixXd::Zero(3, m_dim);
-  //A2.block(3, 0, 3, m_dim) = -skewSymmetric(m_mass * acceleration).leftCols(m_dim);
-  A2.block(3, 0, 3, m_dim) = -skewSymmetric(acceleration).leftCols(m_dim);
+  A2.block(3, 0, 3, m_dim) = -skewSymmetric(m_mass * acceleration).leftCols(m_dim);
+  //A2.block(3, 0, 3, m_dim) = -skewSymmetric(acceleration).leftCols(m_dim);
 }
 
 void ContactSet::buildMatrixA()
@@ -128,8 +132,8 @@ void ContactSet::buildMatrixA()
 
 void ContactSet::computeVectort(Eigen::VectorXd & t, Eigen::Vector3d const & acceleration)
 {
-  //t.head(3) = -m_mass * acceleration;
-  t.head(3) = -acceleration;
+  t.head(3) = -m_mass * acceleration;
+  //t.head(3) = -acceleration;
   t.tail(3) = Eigen::Vector3d::Zero();
 }
 
@@ -457,6 +461,21 @@ void ContactSet::addContact(std::string contactName, Eigen::Matrix4d homTrans, d
   ContactPoints contact(contactName, friction, fmax, fmin);
   contact.set_contact(homTrans);
   m_contacts.push_back(contact);
+}
+
+
+void ContactSet::mass(double mass)
+{
+  const double eps = 0.00001;
+  if (mass >= eps)
+    {
+      m_mass = mass;
+    }
+  else
+    {
+      std::cout << "The given mass is too small, the mass is set to the minimum: " << eps << std::endl;
+      m_mass = eps;
+    }
 }
 
 // ---------- Static function -----------
