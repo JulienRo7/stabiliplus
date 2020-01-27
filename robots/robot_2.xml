@@ -6,7 +6,7 @@
 
         <ContactPoint name='contact_1'>
           <friction mu='0.5'/>
-	  <flim fmax='10' fmin='4'/>
+	  <flim fmax='10' fmin='0'/>
             <matrix name='position' row='3' column='1'>
                 <line><v>0.0</v></line>
                 <line><v>1.0</v></line>

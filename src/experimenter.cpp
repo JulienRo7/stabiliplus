@@ -25,7 +25,7 @@ void Experimenter::run()
 {
   std::cout << "Running experiment!" << '\n';
   switch(m_mode)
-  {
+    {
     case 1:
       run_exp1();
       break;
@@ -35,6 +35,9 @@ void Experimenter::run()
     case 3:
       run_exp3();
       break;
+    case 4:
+      run_exp4();
+      break;    
     default:
       std::cerr << "Unknown mode" << '\n';
   }
@@ -60,7 +63,7 @@ void Experimenter::run_exp1_static()
   auto start = std::chrono::high_resolution_clock::now();
   //m_contactSetPtr->setStaticCase(true);
 
-  std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSetPtr, 50, 0.05, m_solver));
+  std::shared_ptr<StaticStabilityPolytope> polytope(new StaticStabilityPolytope(m_contactSetPtr, 50, 0.01, m_solver));
 
   polytope->initSolver();
   polytope->projectionStabilityPolyhedron();
@@ -266,6 +269,16 @@ void Experimenter::run_exp3_robust()
     std::cerr << "This experiment requires robot 8 to be loaded!" << '\n';
   }
 }
+
+void Experimenter::run_exp4()
+{
+  std::cout << "#-----------------------------" << std::endl;
+  std::cout << "Running experiment for mode 4!" << std::endl;
+
+  // First add a point with fmax to 0
+  
+}
+
 
 // ---------- outputs and getters -----------
 void Experimenter::save()

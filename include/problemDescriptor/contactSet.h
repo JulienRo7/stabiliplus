@@ -4,8 +4,8 @@
 
 #pragma once
 
-/*
-The robot class contains the description of the robot. It can load it and make other things
+/*!
+The contactSet class contains the description of the contactSet. It can load it and make other things
 */
 
 // standart libraries

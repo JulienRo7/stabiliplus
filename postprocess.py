@@ -473,12 +473,12 @@ class PostProcessor:
 
         ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax), interval=10, blit=False, repeat_delay=200, save_count=1)
 
-        print("Saving the animation...")
-        # moviewriter = FFMpegWriter(fps=20)
-        # moviewriter.setup(fig=fig, outfile="res/video.mp4")
-        ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
-        # moviewriter.finnish()
-        print("Animation saved!")
+        # print("Saving the animation...")
+        # # moviewriter = FFMpegWriter(fps=20)
+        # # moviewriter.setup(fig=fig, outfile="res/video.mp4")
+        # ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
+        # # moviewriter.finnish()
+        # print("Animation saved!")
         plt.show()        
     
     def display_results(self):
@@ -492,9 +492,6 @@ class PostProcessor:
         else:
             print("Unknown Mode {}".format(self.mode))
             assert False
-
-
-
 
 
 if __name__ == '__main__':
