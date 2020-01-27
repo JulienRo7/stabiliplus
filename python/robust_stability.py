@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import robot_description
-import utils as ut
+import utilities as ut
 import static_stability
 
 from random import randint, choice

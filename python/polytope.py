@@ -9,7 +9,7 @@ from random import choice
 import time
 
 import robot_description
-import utils as ut
+import utilities as ut
 
 from cvxopt import matrix
 import cvxopt

@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Eigen3 REQUIRED)
 
-set(CMAKE_CXX_FLAGS "-O2")
+#set(CMAKE_CXX_FLAGS "-O2")
 #set(CMAKE_CXX_FLAGS "-g")
 
 # add_subdirectory(lpsolve55)
