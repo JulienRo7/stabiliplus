@@ -60,5 +60,5 @@ private:
   
   std::vector<std::shared_ptr<ContactSet>> m_contactSets;
   std::vector<std::shared_ptr<StabilityPolytope>> m_polytopes;
-  std::vector<int> m_total_times_ms;
+  std::vector<int> m_total_times;
 };

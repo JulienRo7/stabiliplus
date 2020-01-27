@@ -70,7 +70,7 @@ void Experimenter::run_exp1()
 
   m_contactSets.push_back(contactSet);
   m_polytopes.push_back(polytope);
-  m_total_times_ms.push_back(duration.count());
+  m_total_times.push_back(duration.count());
 
 
   if (m_robust)
@@ -139,7 +139,7 @@ void Experimenter::run_exp2()
 
 	m_contactSets.push_back(rob);
         m_polytopes.push_back(polytope);
-        m_total_times_ms.push_back(duration.count());
+        m_total_times.push_back(duration.count());
       }
     }
   }  
@@ -182,7 +182,7 @@ void Experimenter::run_exp3()
 
       m_contactSets.push_back(contactSet);
       m_polytopes.push_back(polytope);
-      m_total_times_ms.push_back(duration.count());
+      m_total_times.push_back(duration.count());
     }
   // }
   // else
@@ -197,9 +197,75 @@ void Experimenter::run_exp4()
   std::cout << "#-----------------------------" << std::endl;
   std::cout << "Running experiment for mode 4!" << std::endl;
 
-  // First add a point with fmax to 0
+  std::shared_ptr<ContactSet> contactSet;
+  std::shared_ptr<StabilityPolytope> polytope;
   
+  std::string contactName("contact_exp4");
+  
+  Eigen::Matrix4d homTrans;
+  homTrans << 1, 0, 0, 1,
+    0, 1, 0, 1,
+    0, 0, 1, 0,
+    0, 0, 0, 1;
+
+  double fmax(10);
+  double df = fmax/20;
+  int n_pts(60);
+
+  auto f = [&] (int i) {
+    if (i <= 20)
+      {
+	return 0.;
+      }
+    else
+      {
+	if (i>=40)
+	  {
+	    return fmax;
+	  }
+	else
+	  {
+	    return (i-20)*df;
+	  }
+      }
+  };
+
+  
+  for (int i=0; i<= n_pts; i++)
+    {
+      // Load the contact set
+      contactSet = std::make_shared<ContactSet> (!m_robust, m_contactSetFileName, m_numFrictionSides);
+  
+      // Add a contact point with fmax to 0 
+      contactSet->addContact(contactName, homTrans, 0.5, f(i), 0);
+
+      // create and compute the equilibrium polytope
+
+      auto start = std::chrono::high_resolution_clock::now();
+
+      if (m_robust)
+	{
+	  polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
+	}
+      else
+	{
+	  polytope = std::make_shared<StaticStabilityPolytope> (contactSet, 50, 0.01, m_solver);
+	}
+
+      polytope->initSolver();
+      polytope->projectionStabilityPolyhedron();
+
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+      // store everything
+      m_contactSets.push_back(contactSet);
+      m_polytopes.push_back(polytope);
+      m_total_times.push_back(duration.count());
+    }
 }
+
+
 
 
 // ---------- outputs and getters -----------
@@ -279,7 +345,7 @@ void Experimenter::save()
     compPoint->InsertEndChild(robotXML);
 
     tinyxml2::XMLElement * timeXML = doc.NewElement("times");
-    timeXML->SetAttribute("total", m_total_times_ms.at(poly_count));
+    timeXML->SetAttribute("total", m_total_times.at(poly_count));
     timeXML->SetAttribute("LP", poly->LPTime());
     timeXML->SetAttribute("init", poly->initTime());
     timeXML->SetAttribute("struct", poly->structTime());

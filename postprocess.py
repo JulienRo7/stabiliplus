@@ -480,7 +480,39 @@ class PostProcessor:
         # # moviewriter.finnish()
         # print("Animation saved!")
         plt.show()        
-    
+
+    def display_mode_4(self):
+
+        fig = plt.figure()
+        ax = Axes3D(fig)
+
+        lines = []
+
+        def update(frame, lines, ax):
+            ax.cla()
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
+            ax, lines = self.robots[frame].display_robot_configuration(ax)
+
+            # x1 = [v[0] for v in staticPolys[frame].inner_vertices]
+            # x1.append(x1[0])
+            # y1 = [v[1] for v in staticPolys[frame].inner_vertices]
+            # y1.append(y1[0])
+            # lines.extend(ax.plot(x1, y1, color="xkcd:red"))
+
+            lines.extend(self.polytopes[frame].display(ax))
+
+
+        ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax), interval=10, blit=False, repeat_delay=200, save_count=1)
+
+        # print("Saving the animation...")
+        # # moviewriter = FFMpegWriter(fps=20)
+        # # moviewriter.setup(fig=fig, outfile="res/video.mp4")
+        # ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
+        # # moviewriter.finnish()
+        # print("Animation saved!")
+        plt.show()        
+        
     def display_results(self):
 
         if self.mode == 1:
@@ -489,6 +521,8 @@ class PostProcessor:
             self.display_mode_2()
         elif self.mode == 3:
             self.display_mode_3()
+        elif self.mode == 4:
+            self.display_mode_4()
         else:
             print("Unknown Mode {}".format(self.mode))
             assert False
