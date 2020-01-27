@@ -104,7 +104,8 @@ void ContactSet::computeMatrixA1(Eigen::MatrixXd & A1)
 void ContactSet::computeMatrixA2(Eigen::MatrixXd & A2, Eigen::Vector3d const & acceleration)
 {
   A2.block(0, 0, 3, m_dim) = Eigen::MatrixXd::Zero(3, m_dim);
-  A2.block(3, 0, 3, m_dim) = -skewSymmetric(m_mass * acceleration).leftCols(m_dim);
+  //A2.block(3, 0, 3, m_dim) = -skewSymmetric(m_mass * acceleration).leftCols(m_dim);
+  A2.block(3, 0, 3, m_dim) = -skewSymmetric(acceleration).leftCols(m_dim);
 }
 
 void ContactSet::buildMatrixA()
@@ -127,7 +128,8 @@ void ContactSet::buildMatrixA()
 
 void ContactSet::computeVectort(Eigen::VectorXd & t, Eigen::Vector3d const & acceleration)
 {
-  t.head(3) = -m_mass * acceleration;
+  //t.head(3) = -m_mass * acceleration;
+  t.head(3) = -acceleration;
   t.tail(3) = Eigen::Vector3d::Zero();
 }
 
