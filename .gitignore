@@ -1,4 +1,10 @@
+# folders
 build
+doc
+
+# python trash
 *.pyc
+
+# emacs trash
 *~
 *#
