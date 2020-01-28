@@ -112,7 +112,16 @@ public:
 
   bool hasContactNamed(std::string contactName) const;
 
-  /* \brief accessor to the mass of the robot with the current contact Set
+  /*! \brief accessor to the maximal normal force of a contact 
+   */
+  double contactFMax(std::string contactName) const;
+
+  /*! \brief accessor to the minimal normal force of a contact 
+   */
+  double contactFMin(std::string contactName) const;
+
+  
+  /*! \brief accessor to the mass of the robot with the current contact Set
    */
   inline const double mass() const
   {
@@ -130,6 +139,14 @@ public:
   void addContact(std::string contactName);
   void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction = 0.5, double fmax=1000, double fmin=0);
 
+  /*! \brief set the contact maximal normal force
+   */
+  void setContactFMax(double fmax, std::string contactName);
+
+  /*! \brief set the contact minimal normal force
+   */
+  void setContactFMin(double fmin, std::string contactName);
+  
   inline bool staticCase() const
   {
     return staticCase_;

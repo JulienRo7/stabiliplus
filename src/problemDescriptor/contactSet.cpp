@@ -400,29 +400,57 @@ bool ContactSet::hasContactNamed(std::string contactName) const
   return find(names.begin(), names.end(), contactName) != names.end();
 }
 
+double ContactSet::contactFMax(std::string contactName) const
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      return m_contacts[ind].fmax();
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+double ContactSet::contactFMin(std::string contactName) const
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      return m_contacts[ind].fmin();
+    }
+  else
+    {
+      return 0;
+    }
+}
+
 // ------------------ setter -----------------------
 void ContactSet::translateContact(int contactIndex, Eigen::Vector3d translation)
 {
   if(contactIndex >= 0 && contactIndex < m_contacts.size())
-  {
-    m_contacts[contactIndex].translate(translation);
-  }
+    {
+      m_contacts[contactIndex].translate(translation);
+    }
   else
-  {
-    std::cerr << "Error: the contact index is not valid" << '\n';
-  }
+    {
+      std::cerr << "Error: the contact index is not valid" << '\n';
+    }
 }
 
 void ContactSet::updateContact(int contactIndex, Eigen::Matrix4d homTrans)
 {
   if(contactIndex >= 0 && contactIndex < m_contacts.size())
-  {
-    m_contacts[contactIndex].set_contact(homTrans);
-  }
+    {
+      m_contacts[contactIndex].set_contact(homTrans);
+    }
   else
-  {
-    std::cerr << "Error: the contact index is not valid" << '\n';
-  }
+    {
+      std::cerr << "Error: the contact index is not valid" << '\n';
+    }
 }
 
 void ContactSet::updateContact(std::string contactName, Eigen::Matrix4d homTrans)
@@ -463,6 +491,32 @@ void ContactSet::addContact(std::string contactName, Eigen::Matrix4d homTrans, d
   m_contacts.push_back(contact);
 }
 
+void ContactSet::setContactFMax(double fmax, std::string contactName)
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      m_contacts[ind].fmax(fmax);
+    }
+  else
+    {
+      std::cerr << "Error: No such contact in the contactSet" << std::endl;
+    }
+}
+void ContactSet::setContactFMin(double fmin, std::string contactName)
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      m_contacts[ind].fmin(fmin);
+    }
+  else
+    {
+      std::cerr << "Error: No such contact in the contactSet" << std::endl;
+    }
+}
 
 void ContactSet::mass(double mass)
 {
