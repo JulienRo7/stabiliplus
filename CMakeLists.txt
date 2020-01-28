@@ -1,13 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
-
-project(Stabiliplus VERSION 1.0.0)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
-
-set(CMAKE_CXX_FLAGS "-O2")
-#set(CMAKE_CXX_FLAGS "-g")
 
 # add_subdirectory(lpsolve55)
 # find_package(lpsolve55 REQUIRED)
