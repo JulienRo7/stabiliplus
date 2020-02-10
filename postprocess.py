@@ -308,8 +308,21 @@ class PostProcessor:
 
         self.polytopes[0].display(ax)
 
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
+        ax.set_xlim(-1.5, 1.5)
+        ax.set_ylim(-1.5, 1.5)
+        ax.set_zlim(-0.1, 2)
+        
+        ax.set_xlabel("x", size="xx-large")
+        ax.set_ylabel("y", size="xx-large")
+        ax.set_zlabel("z", size="xx-large")
+
+        ax.xaxis.set_label_coords(10, 10)
+
+        
+        ax.xaxis.set_tick_params(labelsize="xx-large")
+        ax.yaxis.set_tick_params(labelsize="xx-large")
+        ax.zaxis.set_tick_params(labelsize="xx-large")
+        
         ax.grid(True)
 
         plt.show()

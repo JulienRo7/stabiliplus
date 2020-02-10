@@ -41,13 +41,15 @@ void RobustStabilityPolytope::initSolver()
   m_lp->buildProblem(m_pdPtr->getVectorB(), m_pdPtr->getMatrixA(), m_pdPtr->getFrictionF(),
                      m_pdPtr->getFrictionVectorf());
 
-  // Eigen::VectorXd B = m_contactSet.buildVectorB();
-  // Eigen::MatrixXd A = m_contactSet.buildMatrixA();
-  // std::cout << "A: "<< '\n' << A << '\n';
-  // Eigen::MatrixXd F = m_contactSet.buildFrictionF();
-  // Eigen::VectorXd f = m_contactSet.buildFrictionVectorf();
+  // Eigen::VectorXd b = m_pdPtr->getVectorB();
+  // Eigen::MatrixXd A = m_pdPtr->getMatrixA();
+  // Eigen::MatrixXd Ab(A.rows(), A.cols()+1);
+  // Ab << A, b;
+  // Eigen::MatrixXd F = m_pdPtr->getFrictionF();
+  // Eigen::VectorXd f = m_pdPtr->getFrictionVectorf();
   // Eigen::MatrixXd Ff(F.rows(), F.cols()+1);
   // Ff << F, f;
+  // std::cout << "Equalities: \n" << Ab << std::endl;
   // std::cout << "Friction: \n" << Ff << std::endl;
 
   auto stop = std::chrono::high_resolution_clock::now();

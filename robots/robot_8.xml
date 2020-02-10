@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <data>
     <robot name='robot_8'>
-        <Mass mass='1.0'/>
+        <Mass mass='40.0'/>
         <NumFeet n_feet='4' />
 
         <ContactPoint name='contact_1'>
           <friction mu='0.5'/>
-	  <flim fmax='5' fmin='1'/>
+	  <flim fmax='200' fmin='1'/>
             <matrix name='position' row='3' column='1'>
                 <line><v>0.0</v></line>
                 <line><v>1.0</v></line>
@@ -17,7 +17,7 @@
 
         <ContactPoint name='contact_2'>
           <friction mu='0.5'/>
-	  <flim fmax='10' fmin='0'/>
+	  <flim fmax='500' fmin='0'/>
             <matrix name='position' row='3' column='1'>
                 <line><v>0.86603</v></line>
                 <line><v>-0.5</v></line>
@@ -28,7 +28,7 @@
 
         <ContactPoint name='contact_3'>
           <friction mu='0.5'/>
-	  <flim fmax='10' fmin='0'/>
+	  <flim fmax='500' fmin='0'/>
           <matrix name='position' row='3' column='1'>
                 <line><v>-0.86603</v></line>
                 <line><v>-0.5</v></line>
@@ -39,7 +39,7 @@
 
         <ContactPoint name='contact_4'>
           <friction mu='0.5'/>
-	  <flim fmax='5' fmin='1'/>
+	  <flim fmax='200' fmin='1'/>
           <matrix name='position' row='3' column='1'>
                 <line><v>0.5</v></line>
                 <line><v>0.5</v></line>
@@ -49,11 +49,54 @@
         </ContactPoint>
     </robot>
 
+    <!-- <accelerations> -->
+    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--         <line><v>0.0</v></line> -->
+    <!--         <line><v>0.0</v></line> -->
+    <!--         <line><v>-9.81</v></line> -->
+    <!--     </matrix> -->
+    <!-- </accelerations> -->
+
     <accelerations>
-        <matrix name='gravity' row='3' column='1'>
-            <line><v>0.0</v></line>
-            <line><v>0.0</v></line>
+        <matrix name='gravity_0' row='3' column='1'>
+            <line><v>0.42</v></line>
+            <line><v>0.42</v></line>
             <line><v>-9.81</v></line>
         </matrix>
+    	<matrix name='gravity_1' row='3' column='1'>
+            <line><v>0.42</v></line>
+            <line><v>-0.42</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+    	<matrix name='gravity_2' row='3' column='1'>
+            <line><v>-0.42</v></line>
+            <line><v>-0.42</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+    	<matrix name='gravity_3' row='3' column='1'>
+            <line><v>-0.42</v></line>
+            <line><v>0.42</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+    	<matrix name='gravity_4' row='3' column='1'>
+            <line><v>0.0</v></line>
+            <line><v>0.0</v></line>
+            <line><v>-10.23</v></line>
+        </matrix>
+    	<matrix name='gravity_5' row='3' column='1'>
+            <line><v>0.0</v></line>
+            <line><v>0.0</v></line>
+            <line><v>-9.38</v></line>
+        </matrix>
+    	<!-- <matrix name='gravity_6' row='3' column='1'> -->
+        <!--     <line><v>-0.3</v></line> -->
+        <!--     <line><v>-0.3</v></line> -->
+        <!--     <line><v>-9.51</v></line> -->
+        <!-- </matrix> -->
+    	<!-- <matrix name='gravity_7' row='3' column='1'> -->
+        <!--     <line><v>-0.3</v></line> -->
+        <!--     <line><v>0.3</v></line> -->
+        <!--     <line><v>-9.51</v></line> -->
+        <!-- </matrix> -->
     </accelerations>
 </data>

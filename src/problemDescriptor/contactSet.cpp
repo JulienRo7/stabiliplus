@@ -10,14 +10,15 @@ ContactSet::ContactSet(bool staticCase): ProblemDescriptor("ContactSet_1"),
   if (staticCase_)
     {
       m_dim = 2;
+      Eigen::Vector3d gravity;
+      gravity << 0, 0, -9.81;
+      m_accelerations.push_back(gravity);
     }
   else
     {
       m_dim = 3;
     }
-  Eigen::Vector3d gravity;
-  gravity << 0, 0, -9.81;
-  m_accelerations.push_back(gravity);
+  
 
   //std::cout << "The first constructor for contactSet has been called!" << std::endl;
 }
@@ -55,7 +56,7 @@ void ContactSet::update()
     }
   
   setZeroMatrices();
-    
+
   buildMatrixA();
   buildVectorB();
   buildFrictionF();
@@ -172,14 +173,16 @@ void ContactSet::buildFrictionF()
 
 void ContactSet::buildFrictionVectorf()
 {
+  int ind = 0;
   for(int i = 0; i < m_contacts.size(); ++i)
   {
-    int ind = i * (m_numberOfFrictionSides + 2) * m_accelerations.size();
-
-    m_f[ind] = m_contacts[i].fmax();
-    m_f[ind + 1] = -m_contacts[i].fmin();
+    for (int j = 0; j < m_accelerations.size(); ++j)
+      {
+	ind = j * m_contacts.size() * (m_numberOfFrictionSides + 2) + i * (m_numberOfFrictionSides + 2);
+	m_f[ind] = m_contacts[i].fmax();
+	m_f[ind + 1] = -m_contacts[i].fmin();
+      }    
   }
-
   // Limitation of the CoM position
   for (int i = 2*m_dim; i>0; i--)
     {
@@ -188,8 +191,8 @@ void ContactSet::buildFrictionVectorf()
 
   if (m_dim == 3)
     {
-      m_f[m_globRows-4]=2;
-      m_f[m_globRows-1]=0;
+      m_f[m_globRows-4]=2; // c_z max
+      m_f[m_globRows-1]=0; //-c_z min
     }
 }
 
