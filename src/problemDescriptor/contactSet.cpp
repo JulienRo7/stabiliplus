@@ -50,10 +50,12 @@ ContactSet::~ContactSet()
 void ContactSet::update()
 {
   //std::cout << "The update method for contactSet has been called!" << std::endl;
-  if (!checkMatricesSizes())
-    {
-      updateMatricesSizes();
-    }
+  // std::cout << "Are the matrice sizes ok? " << (checkMatricesSizes() ? "yes" : "no") << std::endl;
+  // if (checkMatricesSizes())
+  //   {
+      
+  //   }
+  updateMatricesSizes();
   
   setZeroMatrices();
 
@@ -535,6 +537,20 @@ void ContactSet::mass(double mass)
     }
 }
 
+void ContactSet::addCoMAcc(Eigen::Vector3d acceleration)
+{
+  m_accelerations.push_back(acceleration);
+}
+
+void ContactSet::printAcc()
+{
+  std::cout << "Accelerations: " << std::endl;
+  for (auto acc: m_accelerations)
+    {
+      std::cout << acc.transpose() << std::endl;
+    }
+  std::cout << std::endl;
+}
 // ---------- Static function -----------
 
 Eigen::Matrix3d ContactSet::skewSymmetric(Eigen::Vector3d const & vect)

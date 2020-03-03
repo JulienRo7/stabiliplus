@@ -156,17 +156,30 @@ public:
     staticCase_ = setTrue;
   }
 
-  /* \brief set the mass of the rbot associated with the current contact Set
+  /*! \brief set the mass of the rbot associated with the current contact Set
    *  checks if the mass is 0 or lower that 0 
    */
   void mass(double mass);
 
+  /*! \brief Method to add an acceleration to the problem
+   */
+  void addCoMAcc(Eigen::Vector3d acceleration);
+
+  /*!
+   */
+  inline void setFrictionSides(int fricSides)
+  {
+    m_numberOfFrictionSides = fricSides;
+  }
+
+  void printAcc();
+  
   // ---------- static functions ---------
   static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const & vect);
   
 private:
 
-  Eigen::Vector3d const m_gravity;
+  //Eigen::Vector3d const m_gravity;
   /*
    * Having a coherent mass is important because for this contact set there are force limits on the contact: If the mass is too important then one contact point may not be strong enough to withstand the robot alone. This add some restrictions on the equilibrium region.
    */
