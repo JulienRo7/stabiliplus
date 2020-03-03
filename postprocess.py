@@ -208,7 +208,7 @@ class robustPoly(polytope):
 
         return innerline
 
-    def dispOuter(self, ax, dispEdges=True, color="xkcd:kelly green"):
+    def dispOuter(self, ax, dispEdges=True, color="xkcd:purple"):
         # ----------- display of outer polyhedron -----------
         ax.plot(self.outerX, self.outerY, self.outerZ, color=color, marker='o')
 
@@ -216,11 +216,13 @@ class robustPoly(polytope):
             for e in self.outerEdges:
                 ax.plot(e[0], e[1], e[2], color=color)
 
+        return []
+
 
     def display(self, ax, dispInner = True, dispOuter = False):
         lines = []
         if dispInner:
-            lines.extend(self.dispInner(ax))
+            lines.extend(self.dispInner(ax, True, False))
 
         if dispOuter:
             lines.extend(self.dispOuter(ax))
@@ -306,7 +308,7 @@ class PostProcessor:
             ax.plot(x1, y1, color="xkcd:red")
             # ax.plot(x1, y1, color="r")
 
-        self.polytopes[0].display(ax)
+        self.polytopes[0].display(ax, dispInner=True, dispOuter=False)
 
         ax.set_xlim(-1.5, 1.5)
         ax.set_ylim(-1.5, 1.5)
