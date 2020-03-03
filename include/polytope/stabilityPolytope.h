@@ -67,6 +67,12 @@ public:
   virtual void projectionStabilityPolyhedron() = 0;
 
   /*!
+   * \brief free the solver object 
+   * Hopefully usefull when having several instances of stabilitiy polytope
+   */ 
+  virtual void endSolver();
+    
+  /*!
    * \brief Check if the stopCriterion as been reached
    */
   bool stopCriterion() const; // return true when the algorithm must stop
@@ -141,6 +147,7 @@ protected:
   // attributes used for the LP problem
   Solver m_solverType;
   SolverWrapper * m_lp;
+  bool m_solverEnded;
 
   // projection algorithm stop criterion
   int m_iteration;

@@ -5,7 +5,7 @@ StabilityPolytope::StabilityPolytope(std::shared_ptr<ProblemDescriptor> inputPD,
                                      double maxError,
                                      Solver solverType)
 : m_pdPtr(inputPD), m_solverType(solverType), m_iteration(0), m_maxIteration(maxIteration), m_error(1000),
-  m_maxError(maxError), m_LPTime(0), m_initTime(0), m_structTime(0)
+  m_maxError(maxError), m_LPTime(0), m_initTime(0), m_structTime(0), m_solverEnded(false)
 {
   switch(m_solverType)
   {
@@ -27,13 +27,23 @@ StabilityPolytope::StabilityPolytope(std::shared_ptr<ProblemDescriptor> inputPD,
 
 StabilityPolytope::~StabilityPolytope()
 {
-  delete m_lp;
-  m_lp = nullptr;
+  endSolver();
   // delete m_pdPtr;
   // m_pdPtr = nullptr;
 }
 
 // ----------- main class methods ----------
+
+void StabilityPolytope::endSolver()
+{
+  if (!m_solverEnded)
+    {
+      delete m_lp;
+      m_lp = nullptr;
+    }
+  m_solverEnded = true;
+}
+
 
 bool StabilityPolytope::stopCriterion() const // return true when the algorithm must stop
 {
