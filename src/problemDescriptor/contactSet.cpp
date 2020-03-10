@@ -433,6 +433,20 @@ double ContactSet::contactFMin(std::string contactName) const
     }
 }
 
+Eigen::Matrix4d ContactSet::contactHomTrans(std::string contactName) const
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+
+      return m_contacts[ind].get_homTrans();
+    }
+  else
+    {
+      throw(42);// instead of returning 0 throwing is better
+    }
+}
+
 // ------------------ setter -----------------------
 void ContactSet::translateContact(int contactIndex, Eigen::Vector3d translation)
 {

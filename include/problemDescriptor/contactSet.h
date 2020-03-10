@@ -107,9 +107,19 @@ public:
     return m_accelerations.size();
   }
 
+  /*! \brief given a contact Name returns its index
+   *
+   */
   int get_contactIndexFromName(std::string contactName) const;
+  
+  /*! \brief List of the contact points names in the contact set object 
+   *
+   */
   std::vector<std::string> get_contactNames() const;
 
+  /*! \brief Check if the contact Set has a contact with the given name
+   *
+   */
   bool hasContactNamed(std::string contactName) const;
 
   /*! \brief accessor to the maximal normal force of a contact 
@@ -120,24 +130,37 @@ public:
    */
   double contactFMin(std::string contactName) const;
 
-  
   /*! \brief accessor to the mass of the robot with the current contact Set
    */
   inline const double mass() const
   {
     return m_mass;
   }
+
+  /*! \brief returns position and orientatio of a contact given its name
+   */
+  Eigen::Matrix4d contactHomTrans(std::string contactName) const;
   
   // ----------- setters ----------
-  void translateContact(int contactIndex, Eigen::Vector3d translation);
+  void addContact(std::string contactName);
+  void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction = 0.5, double fmax=1000, double fmin=0);
+  
   void updateContact(int contactIndex, Eigen::Matrix4d homTrans);
   void updateContact(std::string contactName, Eigen::Matrix4d homTrans);
 
+  /*!\brief Translate a contact position
+   * @param contactIndex index of the contact
+   * @param translation applied to the contact 
+   */
+  void translateContact(int contactIndex, Eigen::Vector3d translation);
+  /*!\brief Translate a contact position
+   * @param contactName name of the contact
+   * @param translation applied to the contact 
+   */
+  void translateContact(std::string contactName, Eigen::Vector3d translation);
+  
   void removeContact(int contactIndex);
   void removeContact(std::string contactName);
-
-  void addContact(std::string contactName);
-  void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction = 0.5, double fmax=1000, double fmin=0);
 
   /*! \brief set the contact maximal normal force
    */
