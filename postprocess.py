@@ -208,7 +208,7 @@ class robustPoly(polytope):
 
         return innerline
 
-    def dispOuter(self, ax, dispEdges=True, color="xkcd:kelly green"):
+    def dispOuter(self, ax, dispEdges=True, color="xkcd:purple"):
         # ----------- display of outer polyhedron -----------
         ax.plot(self.outerX, self.outerY, self.outerZ, color=color, marker='o')
 
@@ -216,11 +216,13 @@ class robustPoly(polytope):
             for e in self.outerEdges:
                 ax.plot(e[0], e[1], e[2], color=color)
 
+        return []
+
 
     def display(self, ax, dispInner = True, dispOuter = False):
         lines = []
         if dispInner:
-            lines.extend(self.dispInner(ax))
+            lines.extend(self.dispInner(ax, True, False))
 
         if dispOuter:
             lines.extend(self.dispOuter(ax))
@@ -291,7 +293,7 @@ class PostProcessor:
         print("Experiment loaded, mode {} with {} computed points".format(self.mode, self.numComputedPoints))
 
     def display_mode_1(self):
-
+        # print("There are {} inner vertices and {} outer vertices".format(len(self.polytopes[0].innerVertices), len(self.polytopes[0].outerVertices)))
         ax, lines = self.robots[0].display_robot_configuration()
 
         if self.robust:
@@ -306,10 +308,23 @@ class PostProcessor:
             ax.plot(x1, y1, color="xkcd:red")
             # ax.plot(x1, y1, color="r")
 
-        self.polytopes[0].display(ax)
+        self.polytopes[0].display(ax, dispInner=True, dispOuter=False)
 
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
+        ax.set_xlim(-1.5, 1.5)
+        ax.set_ylim(-1.5, 1.5)
+        ax.set_zlim(-0.1, 2)
+        
+        ax.set_xlabel("x", size="xx-large")
+        ax.set_ylabel("y", size="xx-large")
+        ax.set_zlabel("z", size="xx-large")
+
+        ax.xaxis.set_label_coords(10, 10)
+
+        
+        ax.xaxis.set_tick_params(labelsize="xx-large")
+        ax.yaxis.set_tick_params(labelsize="xx-large")
+        ax.zaxis.set_tick_params(labelsize="xx-large")
+        
         ax.grid(True)
 
         plt.show()
@@ -473,14 +488,46 @@ class PostProcessor:
 
         ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax), interval=10, blit=False, repeat_delay=200, save_count=1)
 
-        print("Saving the animation...")
-        # moviewriter = FFMpegWriter(fps=20)
-        # moviewriter.setup(fig=fig, outfile="res/video.mp4")
-        ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
-        # moviewriter.finnish()
-        print("Animation saved!")
+        # print("Saving the animation...")
+        # # moviewriter = FFMpegWriter(fps=20)
+        # # moviewriter.setup(fig=fig, outfile="res/video.mp4")
+        # ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
+        # # moviewriter.finnish()
+        # print("Animation saved!")
         plt.show()        
-    
+
+    def display_mode_4(self):
+
+        fig = plt.figure()
+        ax = Axes3D(fig)
+
+        lines = []
+
+        def update(frame, lines, ax):
+            ax.cla()
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
+            ax, lines = self.robots[frame].display_robot_configuration(ax)
+
+            # x1 = [v[0] for v in staticPolys[frame].inner_vertices]
+            # x1.append(x1[0])
+            # y1 = [v[1] for v in staticPolys[frame].inner_vertices]
+            # y1.append(y1[0])
+            # lines.extend(ax.plot(x1, y1, color="xkcd:red"))
+
+            lines.extend(self.polytopes[frame].display(ax))
+
+
+        ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax), interval=10, blit=False, repeat_delay=200, save_count=1)
+
+        # print("Saving the animation...")
+        # # moviewriter = FFMpegWriter(fps=20)
+        # # moviewriter.setup(fig=fig, outfile="res/video.mp4")
+        # ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
+        # # moviewriter.finnish()
+        # print("Animation saved!")
+        plt.show()        
+        
     def display_results(self):
 
         if self.mode == 1:
@@ -489,12 +536,11 @@ class PostProcessor:
             self.display_mode_2()
         elif self.mode == 3:
             self.display_mode_3()
+        elif self.mode == 4:
+            self.display_mode_4()
         else:
             print("Unknown Mode {}".format(self.mode))
             assert False
-
-
-
 
 
 if __name__ == '__main__':

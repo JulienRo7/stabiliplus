@@ -2,17 +2,44 @@
 
 // using namespace std;
 
-ContactSet::ContactSet(bool staticCase): ProblemDescriptor(),
-					 m_numberOfFeet(0), m_numberOfFrictionSides(8), m_numberOfAccelerations(1),
-					 staticCase_(staticCase)
+ContactSet::ContactSet(bool staticCase): ProblemDescriptor("ContactSet_1"),
+					 m_numberOfFrictionSides(8),
+					 staticCase_(staticCase),
+					 m_mass(1)
 {
-  m_accelerations.push_back(m_gravity);
+  if (staticCase_)
+    {
+      m_dim = 2;
+      Eigen::Vector3d gravity;
+      gravity << 0, 0, -9.81;
+      m_accelerations.push_back(gravity);
+    }
+  else
+    {
+      m_dim = 3;
+    }
+  
+
+  //std::cout << "The first constructor for contactSet has been called!" << std::endl;
 }
 
 ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_name, int numFrictionSides):
-  ProblemDescriptor(), m_numberOfFrictionSides(numFrictionSides), m_numberOfAccelerations(0), staticCase_(staticCase)
+  ProblemDescriptor("ContactSet_2"),
+  staticCase_(staticCase),
+  m_numberOfFrictionSides(numFrictionSides),
+  m_mass(1)
 {
+  if (staticCase)
+    {
+      m_dim = 2;
+    }
+  else
+    {
+      m_dim = 3;
+    }
   loadContactSet(contact_set_file_name);
+
+  //std::cout << "The second constructor for contactSet has been called!" << std::endl;
 }
 
 ContactSet::~ContactSet()
@@ -22,318 +49,155 @@ ContactSet::~ContactSet()
 
 void ContactSet::update()
 {
+  //std::cout << "The update method for contactSet has been called!" << std::endl;
+  // std::cout << "Are the matrice sizes ok? " << (checkMatricesSizes() ? "yes" : "no") << std::endl;
+  // if (checkMatricesSizes())
+  //   {
+      
+  //   }
+  updateMatricesSizes();
+  
+  setZeroMatrices();
 
-  if(needsUpdateSize_())
-  {
-    if(staticCase())
-    {
-      resetStaticMatricies_();
-    }
-    else
-    {
-      resetMatricies_();
-    }
-  }
-  else
-  {
-    setZeroMatricies_();
-  }
-
-  if(staticCase())
-  {
-    buildStaticMatrixA_();
-    buildStaticVectorB_();
-    buildStaticFrictionF_();
-    buildStaticFrictionVectorf_();
-  }
-  else
-  {
-    buildMatrixA_();
-    buildVectorB_();
-    buildFrictionF_();
-    buildFrictionVectorf_();
-  }
+  buildMatrixA();
+  buildVectorB();
+  buildFrictionF();
+  buildFrictionVectorf();
 }
 
-void ContactSet::computeMatrixA1_(Eigen::MatrixXd & A1)
+bool ContactSet::checkMatricesSizes() const
 {
-  // int n_columns = 3 * m_numberOfFeet;
+  return (m_subCols == 3*m_contacts.size() and
+	  m_globCols == m_subCols * m_accelerations.size() + m_dim and
+	  m_subRows == (m_numberOfFrictionSides + 2)* m_contacts.size());
+	  
+}
 
-  // Eigen::MatrixXd A1(6, n_columns);
+void ContactSet::updateMatricesSizes()
+{
+  // Computing the new sizes
+  m_subCols = 3*m_contacts.size();
+  m_globCols = m_subCols * m_accelerations.size() + m_dim;
 
-  for(int i(0); i < m_numberOfFeet; ++i)
+  m_subRows = (m_numberOfFrictionSides + 2)* m_contacts.size();
+  m_globRows = m_subRows * m_accelerations.size() + 2 * m_dim;
+
+  // resizing the matrices
+  m_A.resize(6*m_accelerations.size(), m_globCols);
+  m_b.resize(6*m_accelerations.size(), 1);
+
+  m_F.resize(m_globRows, m_globCols);
+  m_f.resize(m_globRows, 1);
+}
+
+void ContactSet::setZeroMatrices()
+{
+  m_A.setZero();
+  m_b.setZero();
+  m_F.setZero();
+  m_f.setZero();  
+}
+
+
+void ContactSet::computeMatrixA1(Eigen::MatrixXd & A1)
+{
+  for(int i(0); i < m_contacts.size(); ++i)
   {
     A1.block<3, 3>(0, 3 * i) = Eigen::Matrix3d::Identity();
-    A1.block<3, 3>(3, 3 * i) = skewSymmetric(m_feet[i].get_position());
+    A1.block<3, 3>(3, 3 * i) = skewSymmetric(m_contacts[i].get_position());
+  }  
+}
+
+void ContactSet::computeMatrixA2(Eigen::MatrixXd & A2, Eigen::Vector3d const & acceleration)
+{
+  A2.block(0, 0, 3, m_dim) = Eigen::MatrixXd::Zero(3, m_dim);
+  A2.block(3, 0, 3, m_dim) = -skewSymmetric(m_mass * acceleration).leftCols(m_dim);
+  //A2.block(3, 0, 3, m_dim) = -skewSymmetric(acceleration).leftCols(m_dim);
+}
+
+void ContactSet::buildMatrixA()
+{
+  Eigen::MatrixXd tempA1;
+
+  tempA1.setZero(6, m_subCols);
+  computeMatrixA1(tempA1);
+
+  for(int i = 0; i < m_accelerations.size(); ++i)
+  {
+    m_A.block(6 * i, m_subCols * i, 6, m_subCols) = tempA1;
+    
+    Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, m_dim);
+    computeMatrixA2(A2, m_accelerations[i]);
+    m_A.block(6 * i, m_globCols - m_dim, 6, m_dim) = A2;
+
   }
-  
-  // return A1;
 }
 
-void ContactSet::computeMatrixA2_(Eigen::MatrixXd & A2, Eigen::Vector3d const & acceleration)
+void ContactSet::computeVectort(Eigen::VectorXd & t, Eigen::Vector3d const & acceleration)
 {
-  // Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, 3);
-  A2.block<3, 3>(0, 0) = Eigen::Matrix3d::Zero();
-  A2.block<3, 3>(3, 0) = -skewSymmetric(m_mass * acceleration);
-
-  // return A2;
-}
-
-Eigen::VectorXd ContactSet::computeVector_t_(Eigen::Vector3d const & acceleration)
-{
-  Eigen::VectorXd t(6);
-
   t.head(3) = -m_mass * acceleration;
+  //t.head(3) = -acceleration;
   t.tail(3) = Eigen::Vector3d::Zero();
-
-  return t;
 }
 
-/*
-bool ContactSet::needsUpdateStaticSize_()
+void ContactSet::buildVectorB()
 {
-
- if(m_numberOfFeet_ini == m_numberOfFeet )
- {
-   // The number of feet keep the same, then we do not update matrix sizes.
-   return false;
- }else{
-
-   m_numberOfFeet_ini = m_numberOfFeet;
-   // There are new foot added.
-   return false;
- }
-
-}
-*/
-
-bool ContactSet::needsUpdateSize_()
-{
-
-  if((m_numberOfFeet_ini == m_numberOfFeet) && (m_numberOfAccelerations_ini == m_numberOfAccelerations))
+  for(int i = 0; i < m_accelerations.size(); ++i)
   {
-    // The number of feet and accelerations keep the same, then we do not update matrix sizes.
-    // There are new foot or accelerations added.
-    return false;
-  }
-  else
-  {
-    m_numberOfFeet_ini = m_numberOfFeet;
-    m_numberOfAccelerations_ini = m_numberOfAccelerations;
-    return true;
+    Eigen::VectorXd t(6);
+    computeVectort(t, m_accelerations[i]);
+    m_b.segment<6>(6 * i) = t;
   }
 }
 
-void ContactSet::resetMatricies_()
+void ContactSet::buildFrictionF()
 {
-  int const n_columnsA1 = 3 * m_numberOfFeet;
-  int const n_columnsA = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
-  int const n_rowsA = 6 * m_numberOfAccelerations;
-  m_A.resize(n_rowsA, n_columnsA);
-  // m_A.setZero();
+  //std::cout << "The friction cones have " << m_numberOfFrictionSides << " sides" << std::endl;
+  Eigen::MatrixXd F_contact(m_numberOfFrictionSides+2, 3);
 
-  // Eigen::VectorXd B = Eigen::VectorXd::Zero(6 * m_numberOfAccelerations);
-  m_B.resize(6 * m_numberOfAccelerations);
-
-  int const numberOfColumns = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
-  int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
-
-  m_F.resize(numberOfRows, numberOfColumns);
-
-  // int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
-
-  m_f.resize(numberOfRows);
-
-  setZeroMatricies_();
-}
-
-void ContactSet::buildMatrixA_()
-{
-
-  // Eigen::MatrixXd A1(6, n_columnsA1);
-  int const n_columnsA1 = 3 * m_numberOfFeet;
-  int const n_columnsA = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
-  // int const n_rowsA = 6 * m_numberOfAccelerations;
-
-  Eigen::MatrixXd tempA1;
-
-  tempA1.resize(6, n_columnsA1);
-  tempA1.setZero();
-  computeMatrixA1_(tempA1);
-
-  for(int i = 0; i < m_numberOfAccelerations; ++i)
+  for(int i = 0; i < m_contacts.size(); ++i)
   {
-    m_A.block(6 * i, n_columnsA1 * i, 6, n_columnsA1) = tempA1;
+    F_contact = m_contacts[i].linearizedFrictionCone(m_numberOfFrictionSides);
 
-    Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, 3);
-    computeMatrixA2_(A2, m_accelerations[i]);
-    m_A.block<6, 3>(6 * i, n_columnsA - 3) = A2;
-  }
-
-  // return A;
-}
-
-void ContactSet::setZeroMatricies_()
-{
-
-  m_A.setZero();
-
-  m_B.setZero();
-
-  m_F.setZero();
-
-  m_f.setZero();
-}
-void ContactSet::resetStaticMatricies_()
-{
-  int const n_colA1 = 3 * m_numberOfFeet;
-  int const n_colA = n_colA1 + 2;
-  int const n_rowA = 6;
-  m_A.resize(n_rowA, n_colA);
-
-  // b
-  m_B.resize(6);
-
-  // F
-  int const numberOfColumns = 3 * m_numberOfFeet + 2;
-  int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) + 4;
-
-  m_F.resize(numberOfRows, numberOfColumns);
-
-  m_f.resize(numberOfRows);
-
-  setZeroMatricies_();
-}
-
-void ContactSet::buildStaticMatrixA_()
-{
-
-  int const n_colA1 = 3 * m_numberOfFeet;
-
-  Eigen::MatrixXd tempA1;
-  tempA1=Eigen::MatrixXd::Zero(6, n_colA1);
-  // tempA1.setZero(6, n_colA1);
-
-  computeMatrixA1_(tempA1);
-
-  m_A.leftCols(n_colA1) = tempA1;
-  Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(6, 3);
-  computeMatrixA2_(A2, m_gravity);
-  m_A.rightCols(2) = A2.leftCols(2);
-
-  // return A;
-}
-
-void ContactSet::buildVectorB_()
-{
-
-  // Eigen::VectorXd B = Eigen::VectorXd::Zero(6 * m_numberOfAccelerations);
-
-  // m_B.setZero();
-  for(int i = 0; i < m_numberOfAccelerations; ++i)
-  {
-    m_B.segment<6>(6 * i) = computeVector_t_(m_accelerations[i]);
-  }
-  // return B;
-}
-
-void ContactSet::buildStaticVectorB_()
-{
-  m_B = computeVector_t_(m_gravity);
-}
-
-void ContactSet::buildFrictionF_()
-{
-
-  int const numberOfColumns = 3 * m_numberOfFeet * m_numberOfAccelerations + 3;
-  int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
-
-  // m_F.setZero();
-
-  Eigen::MatrixXd F_contact((m_numberOfFrictionSides + 2), 3);
-
-  for(int i = 0; i < m_numberOfFeet; ++i)
-  {
-    F_contact = m_feet[i].linearizedFrictionCone(m_numberOfFrictionSides);
-
-    for(int j = 0; j < m_numberOfAccelerations; ++j)
+    //std::cout << "For contact " << i << "the linearized Friction Cone is: \n" << F_contact << std::endl;
+      
+    for(int j = 0; j < m_accelerations.size(); ++j)
     {
-      m_F.block(j * (m_numberOfFrictionSides + 2) * m_numberOfFeet + i * (m_numberOfFrictionSides + 2),
-                j * 3 * m_numberOfFeet + i * 3, (m_numberOfFrictionSides + 2), 3) = F_contact;
+      m_F.block(j * (m_numberOfFrictionSides + 2) * m_contacts.size() + i * (m_numberOfFrictionSides + 2),
+                j * 3 * m_contacts.size() + i * 3, (m_numberOfFrictionSides + 2), 3) = F_contact;
     }
   }
 
-  m_F.block<3, 3>(numberOfRows - 6, numberOfColumns - 3) = Eigen::Matrix3d::Identity();
-  m_F.bottomRightCorner<3, 3>() = -Eigen::Matrix3d::Identity();
+  m_F.block(m_globRows - 2*m_dim, m_globCols - m_dim, m_dim, m_dim) = Eigen::MatrixXd::Identity(m_dim, m_dim);
+  m_F.bottomRightCorner(m_dim, m_dim) = -Eigen::MatrixXd::Identity(m_dim, m_dim);
 
-  // return F;
-}
+ }
 
-void ContactSet::buildStaticFrictionF_()
+void ContactSet::buildFrictionVectorf()
 {
-  int const numberOfColumns = 3 * m_numberOfFeet + 2;
-  int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) + 4;
-
-  Eigen::MatrixXd F_contact((m_numberOfFrictionSides + 2), 3);
-
-  for(int i = 0; i < m_numberOfFeet; ++i)
+  int ind = 0;
+  for(int i = 0; i < m_contacts.size(); ++i)
   {
-    F_contact = m_feet[i].linearizedFrictionCone(m_numberOfFrictionSides);
-
-    m_F.block(i * (m_numberOfFrictionSides + 2), i * 3, m_numberOfFrictionSides + 2, 3) = F_contact;
+    for (int j = 0; j < m_accelerations.size(); ++j)
+      {
+	ind = j * m_contacts.size() * (m_numberOfFrictionSides + 2) + i * (m_numberOfFrictionSides + 2);
+	m_f[ind] = m_contacts[i].fmax();
+	m_f[ind + 1] = -m_contacts[i].fmin();
+      }    
   }
+  // Limitation of the CoM position
+  for (int i = 2*m_dim; i>0; i--)
+    {
+      m_f[m_globRows-i] = 10;
+    }
 
-  m_F.block<2, 2>(numberOfRows - 4, numberOfColumns - 2) = Eigen::Matrix2d::Identity();
-  m_F.bottomRightCorner<2, 2>() = -Eigen::Matrix2d::Identity();
+  if (m_dim == 3)
+    {
+      m_f[m_globRows-4]=2; // c_z max
+      m_f[m_globRows-1]=0; //-c_z min
+    }
 }
 
-void ContactSet::buildFrictionVectorf_()
-{
-  // int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations + 6;
-  int numberOfRows = m_f.rows();
-  // Eigen::VectorXd f(numberOfRows);
-
-  // double f_max = 10*m_mass;
-
-  for(int i = 0; i < m_numberOfFeet; ++i)
-  {
-    int ind = i * (m_numberOfFrictionSides + 2) * m_numberOfAccelerations;
-
-    m_f[ind] = m_feet[i].fmax();
-    m_f[ind + 1] = -m_feet[i].fmin();
-    // std::cout << "Setting inequalities for " << m_feet[i].get_name() << " fmax=" << m_feet[i].fmax() << "N fmin=" <<
-    // m_feet[i].fmin() << "N" << std::endl;
-  }
-
-  // Limitation of the CoM
-  m_f[numberOfRows - 6] = 1000; // x_max
-  m_f[numberOfRows - 5] = 1000; // y_max
-  m_f[numberOfRows - 4] = 2; // z_max
-  m_f[numberOfRows - 3] = 1000; // -x_min
-  m_f[numberOfRows - 2] = 1000; // -y_min
-  m_f[numberOfRows - 1] = 0; // -z_min
-}
-
-void ContactSet::buildStaticFrictionVectorf_()
-{
-  // int const numberOfRows = m_numberOfFeet * (m_numberOfFrictionSides + 2) + 4;
-
-  int numberOfRows = m_f.rows();
-  // double f_max = 10*m_mass;
-
-  for(int i = 0; i < m_numberOfFeet; i += 1)
-  {
-    int init = i * (m_numberOfFrictionSides + 2);
-    m_f[init] = m_feet[i].fmax();
-    m_f[init + 1] = -m_feet[i].fmin();
-  }
-
-  // Limitation of the CoM
-  m_f[numberOfRows - 4] = 1000; // x_max
-  m_f[numberOfRows - 3] = 1000; // y_max
-  m_f[numberOfRows - 2] = 1000; // -x_min
-  m_f[numberOfRows - 1] = 1000; // -y_min
-}
 
 // ----------- input functions ----------
 void ContactSet::loadContactSet(std::string const & file_name)
@@ -371,11 +235,11 @@ void ContactSet::loadContactSet(std::string const & file_name)
           }
           else if(std::strcmp(childType.c_str(), "NumFeet") == 0)
           {
-            childXML->QueryAttribute("n_feet", &m_numberOfFeet);
+            // childXML->QueryAttribute("n_feet", &m_contacts.size());
           }
           else if(std::strcmp(childType.c_str(), "ContactPoint") == 0)
           {
-            m_feet.push_back(ContactPoints(childXML));
+            m_contacts.push_back(ContactPoints(childXML));
           }
           else
           {
@@ -390,7 +254,7 @@ void ContactSet::loadContactSet(std::string const & file_name)
 
         while(childXML)
         {
-          ++m_numberOfAccelerations;
+          //++m_numberOfAccelerations;
           // std::cout << "Add Acceleration!" << '\n';
           childType = childXML->Value();
           if(std::strcmp(childType.c_str(), "matrix") == 0)
@@ -435,9 +299,9 @@ void ContactSet::showContactSet()
 {
   std::cout << "Contact Set name: " << m_name << std::endl;
   std::cout << "Mass of the robot: " << m_mass << std::endl;
-  std::cout << "Number of feet of the robot: " << m_numberOfFeet << std::endl;
+  std::cout << "Number of feet of the robot: " << m_contacts.size() << std::endl;
 
-  for(auto contact : m_feet)
+  for(auto contact : m_contacts)
   {
     std::cout << "Contact named: " << contact.get_name() << " (fmax=" << contact.fmax() << "N, fmin=" << contact.fmin()
               << "N)" << std::endl;
@@ -465,11 +329,11 @@ void ContactSet::saveContactSet(const std::string & file_name)
     XMLMass->SetAttribute("mass", m_mass);
     XMLContactSet->InsertEndChild(XMLMass);
 
-    tinyxml2::XMLElement * XMLNumFeet = doc.NewElement("NumFeet");
-    XMLNumFeet->SetAttribute("n_feet", m_numberOfFeet);
-    XMLContactSet->InsertEndChild(XMLNumFeet);
+    tinyxml2::XMLElement * XMLNumContacts = doc.NewElement("NumFeet");
+    XMLNumContacts->SetAttribute("n_feet", (int) m_contacts.size());
+    XMLContactSet->InsertEndChild(XMLNumContacts);
 
-    for(auto foot : m_feet)
+    for(auto foot : m_contacts)
     {
       XMLContactSet->InsertEndChild(foot.get_XMLContactPoint(doc));
     }
@@ -480,7 +344,7 @@ void ContactSet::saveContactSet(const std::string & file_name)
   tinyxml2::XMLElement * XMLAccelerations = doc.NewElement("accelerations");
   std::string acc_name;
 
-  for(int i = 0; i < m_numberOfAccelerations; i++)
+  for(int i = 0; i < m_accelerations.size(); i++)
   {
     tinyxml2::XMLElement * XMLAcc = doc.NewElement("matrix");
     acc_name = "acceleration_" + std::to_string(i);
@@ -508,20 +372,11 @@ void ContactSet::saveContactSet(const std::string & file_name)
 
 // ------------------ Getters -----------------------
 
-int ContactSet::get_numberOfFeet() const
-{
-  return m_numberOfFeet;
-}
-
-int ContactSet::get_numberOfAcceletations() const
-{
-  return m_numberOfAccelerations;
-}
-
 int ContactSet::get_contactIndexFromName(std::string contactName) const
 {
+  // TODO : use lambda function and algorithm
   int i(0), index(0);
-  for(auto contact : m_feet)
+  for(auto contact : m_contacts)
   {
     if(contact.get_name() == contactName)
     {
@@ -534,8 +389,9 @@ int ContactSet::get_contactIndexFromName(std::string contactName) const
 
 std::vector<std::string> ContactSet::get_contactNames() const
 {
+  // TODO : use lambda function and algorithm
   std::vector<std::string> names;
-  for(auto contact : m_feet)
+  for(auto contact : m_contacts)
   {
     names.push_back(contact.get_name());
   }
@@ -544,33 +400,76 @@ std::vector<std::string> ContactSet::get_contactNames() const
 
 bool ContactSet::hasContactNamed(std::string contactName) const
 {
+  // TODO : use lambda function and algorithm
   std::vector<std::string> names = get_contactNames();
   return find(names.begin(), names.end(), contactName) != names.end();
+}
+
+double ContactSet::contactFMax(std::string contactName) const
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      return m_contacts[ind].fmax();
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+double ContactSet::contactFMin(std::string contactName) const
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      return m_contacts[ind].fmin();
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+Eigen::Matrix4d ContactSet::contactHomTrans(std::string contactName) const
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+
+      return m_contacts[ind].get_homTrans();
+    }
+  else
+    {
+      throw(42);// instead of returning 0 throwing is better
+    }
 }
 
 // ------------------ setter -----------------------
 void ContactSet::translateContact(int contactIndex, Eigen::Vector3d translation)
 {
-  if(contactIndex >= 0 && contactIndex < m_feet.size())
-  {
-    m_feet[contactIndex].translate(translation);
-  }
+  if(contactIndex >= 0 && contactIndex < m_contacts.size())
+    {
+      m_contacts[contactIndex].translate(translation);
+    }
   else
-  {
-    std::cerr << "Error: the contact index is not valid" << '\n';
-  }
+    {
+      std::cerr << "Error: the contact index is not valid" << '\n';
+    }
 }
 
 void ContactSet::updateContact(int contactIndex, Eigen::Matrix4d homTrans)
 {
-  if(contactIndex >= 0 && contactIndex < m_feet.size())
-  {
-    m_feet[contactIndex].set_contact(homTrans);
-  }
+  if(contactIndex >= 0 && contactIndex < m_contacts.size())
+    {
+      m_contacts[contactIndex].set_contact(homTrans);
+    }
   else
-  {
-    std::cerr << "Error: the contact index is not valid" << '\n';
-  }
+    {
+      std::cerr << "Error: the contact index is not valid" << '\n';
+    }
 }
 
 void ContactSet::updateContact(std::string contactName, Eigen::Matrix4d homTrans)
@@ -578,7 +477,7 @@ void ContactSet::updateContact(std::string contactName, Eigen::Matrix4d homTrans
   if(hasContactNamed(contactName))
   {
     int index = get_contactIndexFromName(contactName);
-    m_feet[index].set_contact(homTrans);
+    m_contacts[index].set_contact(homTrans);
   }
   else
   {
@@ -589,8 +488,8 @@ void ContactSet::updateContact(std::string contactName, Eigen::Matrix4d homTrans
 
 void ContactSet::removeContact(int contactIndex)
 {
-  m_feet.erase(m_feet.begin() + contactIndex);
-  m_numberOfFeet--;
+  m_contacts.erase(m_contacts.begin() + contactIndex);
+  //m_numberOfFeet--;
 }
 
 void ContactSet::removeContact(std::string contactName)
@@ -601,14 +500,76 @@ void ContactSet::removeContact(std::string contactName)
 
 void ContactSet::addContact(std::string contactName)
 {
-  m_feet.push_back(ContactPoints(contactName, 0.5));
-  m_numberOfFeet++;
+  m_contacts.push_back(ContactPoints(contactName, 0.5));
 }
 
 void ContactSet::addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction, double fmax, double fmin)
 {
   ContactPoints contact(contactName, friction, fmax, fmin);
   contact.set_contact(homTrans);
-  m_feet.push_back(contact);
-  m_numberOfFeet++;
+  m_contacts.push_back(contact);
+}
+
+void ContactSet::setContactFMax(double fmax, std::string contactName)
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      m_contacts[ind].fmax(fmax);
+    }
+  else
+    {
+      std::cerr << "Error: No such contact in the contactSet" << std::endl;
+    }
+}
+void ContactSet::setContactFMin(double fmin, std::string contactName)
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      m_contacts[ind].fmin(fmin);
+    }
+  else
+    {
+      std::cerr << "Error: No such contact in the contactSet" << std::endl;
+    }
+}
+
+void ContactSet::mass(double mass)
+{
+  const double eps = 0.00001;
+  if (mass >= eps)
+    {
+      m_mass = mass;
+    }
+  else
+    {
+      std::cout << "The given mass is too small, the mass is set to the minimum: " << eps << std::endl;
+      m_mass = eps;
+    }
+}
+
+void ContactSet::addCoMAcc(Eigen::Vector3d acceleration)
+{
+  m_accelerations.push_back(acceleration);
+}
+
+void ContactSet::printAcc()
+{
+  std::cout << "Accelerations: " << std::endl;
+  for (auto acc: m_accelerations)
+    {
+      std::cout << acc.transpose() << std::endl;
+    }
+  std::cout << std::endl;
+}
+// ---------- Static function -----------
+
+Eigen::Matrix3d ContactSet::skewSymmetric(Eigen::Vector3d const & vect)
+{
+  Eigen::Matrix3d vect_hat;
+  vect_hat << 0, -vect(2), vect(1), vect(2), 0, -vect(0), -vect(1), vect(0), 0;
+  return vect_hat;
 }

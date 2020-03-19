@@ -1,4 +1,14 @@
+# folders
 build
+doc
+
+# python trash
 *.pyc
+
+# emacs trash
 *~
 *#
+
+python/timings.csv
+compile_commands.json
+

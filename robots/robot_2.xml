@@ -6,7 +6,7 @@
 
         <ContactPoint name='contact_1'>
           <friction mu='0.5'/>
-	  <flim fmax='10' fmin='4'/>
+	  <flim fmax='10' fmin='0'/>
             <matrix name='position' row='3' column='1'>
                 <line><v>0.0</v></line>
                 <line><v>1.0</v></line>
@@ -39,25 +39,25 @@
 
     </robot>
     <accelerations>
-        <matrix name='gravity' row='3' column='1'>
-            <line><v>0.0</v></line>
+        <matrix name='A0' row='3' column='1'>
+            <line><v>-2.5</v></line>
             <line><v>0.0</v></line>
             <line><v>-9.81</v></line>
         </matrix>
-        <!-- <matrix name='gravity' row='3' column='1'> -->
-        <!--     <line><v>2.5</v></line> -->
-        <!--     <line><v>0.0</v></line> -->
-        <!--     <line><v>-9.81</v></line> -->
-        <!-- </matrix> -->
-        <!-- <matrix name='gravity' row='3' column='1'> -->
-        <!--     <line><v>0.0</v></line> -->
-        <!--     <line><v>-2.5</v></line> -->
-        <!--     <line><v>-9.81</v></line> -->
-        <!-- </matrix> -->
-        <!-- <matrix name='gravity' row='3' column='1'> -->
-        <!--     <line><v>0.0</v></line> -->
-        <!--     <line><v>2.5</v></line> -->
-        <!--     <line><v>-9.81</v></line> -->
-        <!-- </matrix> -->
+        <matrix name='A1' row='3' column='1'>
+            <line><v>2.5</v></line>
+            <line><v>0.0</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+        <matrix name='A2' row='3' column='1'>
+            <line><v>0.0</v></line>
+            <line><v>-2.5</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
+        <matrix name='A3' row='3' column='1'>
+            <line><v>0.0</v></line>
+            <line><v>2.5</v></line>
+            <line><v>-9.81</v></line>
+        </matrix>
     </accelerations>
 </data>

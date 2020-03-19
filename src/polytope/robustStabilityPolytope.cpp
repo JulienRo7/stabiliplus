@@ -17,6 +17,7 @@ RobustStabilityPolytope::~RobustStabilityPolytope()
     it->finish();
   }
 
+
   // delete m_contactSetPtr;
   // m_contactSetPtr = nullptr;
 }
@@ -41,13 +42,15 @@ void RobustStabilityPolytope::initSolver()
   m_lp->buildProblem(m_pdPtr->getVectorB(), m_pdPtr->getMatrixA(), m_pdPtr->getFrictionF(),
                      m_pdPtr->getFrictionVectorf());
 
-  // Eigen::VectorXd B = m_contactSet.buildVectorB();
-  // Eigen::MatrixXd A = m_contactSet.buildMatrixA();
-  // std::cout << "A: "<< '\n' << A << '\n';
-  // Eigen::MatrixXd F = m_contactSet.buildFrictionF();
-  // Eigen::VectorXd f = m_contactSet.buildFrictionVectorf();
+  // Eigen::VectorXd b = m_pdPtr->getVectorB();
+  // Eigen::MatrixXd A = m_pdPtr->getMatrixA();
+  // Eigen::MatrixXd Ab(A.rows(), A.cols()+1);
+  // Ab << A, b;
+  // Eigen::MatrixXd F = m_pdPtr->getFrictionF();
+  // Eigen::VectorXd f = m_pdPtr->getFrictionVectorf();
   // Eigen::MatrixXd Ff(F.rows(), F.cols()+1);
   // Ff << F, f;
+  // std::cout << "Equalities: \n" << Ab << std::endl;
   // std::cout << "Friction: \n" << Ff << std::endl;
 
   auto stop = std::chrono::high_resolution_clock::now();
@@ -73,27 +76,123 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
 {
   auto structStart = std::chrono::high_resolution_clock::now();
   // std::cout << "Reached here!" << '\n';
-  std::array<Eigen::Vector3d, 4> initialDirections;
+  std::vector<Eigen::Vector3d> initialDirections;
+  std::vector<Eigen::Vector3d> initialPoints;
   Eigen::Vector3d dir;
   Eigen::Vector3d point;
-
+  double theta, phi;
+  
   std::shared_ptr<Vertex> newVertex;
   // std::shared_ptr<Face> dirFace;
 
-  dir << 0, 0, 1;
-  initialDirections[0] = dir;
+  // Finding the first 4 points:
+  //Taking random direction
+  // double dist, area, volume;
+  // Eigen::Vector3d v1, v2, v3;
+  // srand(time(NULL));
+  // while (initialPoints.size()<4)
+  //   {
+  //     // choose a random direction in R^3
+  //     theta = 2*M_PI*(rand()%100)/100.0; // -> generate random number in [0, 2pi[
+  //     phi = M_PI*(rand()%101)/100.0; // -> generates random number in [0, pi]
+  //     std::cout << "Theta: " << theta << " phi: " << phi << std::endl;
+      
+  //     dir << sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi);
+  //     dir = dir.normalized();
+
+  //     // look for the point
+  //     solveLP( dir, point);
+
+  //     // check if the point is far enough of the other points
+  //     bool validPoint = true;
+  //     switch(initialPoints.size())
+  // 	{
+  // 	case 0:
+  // 	  break;
+
+  // 	case 1:
+  // 	  v1 = point-initialPoints.at(0);
+  // 	  dist = (v1).norm();
+  // 	  if (dist < 0.1)
+  // 	    {
+  // 	      validPoint = false;
+  // 	    }
+  // 	  break;
+
+  // 	case 2:
+  // 	  v2 = point-initialPoints.at(0);
+  // 	  area = (v1.cross(v2)).norm();
+  // 	  if (area < 0.05)
+  // 	    {
+  // 	      validPoint = false;
+  // 	    }
+  // 	  break;
+
+  // 	case 3:
+  // 	  v3 = point-initialPoints.at(0);
+  // 	  volume = abs((v1.cross(v2)).dot(v3));
+  // 	  if  (volume < 0.01)
+  // 	    {
+  // 	      validPoint = false;
+  // 	    }
+  // 	  break;
+
+  // 	default:
+  // 	  throw(42);
+  // 	  break;
+  // 	}
+      
+  //     if (validPoint)
+  // 	{
+  // 	  initialPoints.push_back(point);
+  // 	  initialDirections.push_back(dir);
+  // 	}
+  //     else
+  // 	{
+  // 	  std::cout << "Point rejected" << std::endl;
+  // 	}
+  //   }
+
+  
+  
+  //   for (int i = 0; i< 4; i++)
+  //   {
+  //     auto pt = initialPoints.at(i);
+  //     auto dir = initialDirections.at(i);
+
+  //     newVertex = std::make_shared<Vertex>(pt, dir);
+  //     m_vertices.push_back(newVertex);
+  //   }
+
+  dir << 0, 0, 1; 
+  initialDirections.push_back(dir);
   for(int i = 1; i < 4; ++i)
   {
     dir << cos(2 * M_PI * (i - 1) / 3), sin(2 * M_PI * (i - 1) / 3), -1;
     dir = dir.normalized();
-    initialDirections[i] = dir;
+    initialDirections.push_back(dir);
   }
 
-  for(int i = 0; i < 4; ++i)
+  for(auto d: initialDirections)
   {
-    solveLP(initialDirections[i], point);
+    bool validPoint = false;
+    while (!validPoint)
+      {
+	solveLP(d, point);
 
-    newVertex = std::make_shared<Vertex>(point, initialDirections[i]);
+	validPoint = true;
+	for (auto pt: initialPoints)
+	  {
+	    if ((point-pt).norm() < 0.001)
+	      {
+		//std::cout << "######################################################################################################################################\nPoint is too close, try again" << std::endl;
+		validPoint = false;
+	      }
+	  }
+      }
+    
+    initialPoints.push_back(point);
+    newVertex = std::make_shared<Vertex>(point, d);
     m_vertices.push_back(newVertex);
   }
 
@@ -111,6 +210,7 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
 
   computeResidualFromScratch();
 
+  //while(false)
   while(!stopCriterion())
   {
 

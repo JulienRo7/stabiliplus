@@ -45,22 +45,22 @@
         </matrix>
     </accelerations>
     <!-- <accelerations> -->
-    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--     <matrix name='gravity0' row='3' column='1'> -->
     <!--         <line><v>-2.5</v></line> -->
     <!--         <line><v>0.0</v></line> -->
     <!--         <line><v>-9.81</v></line> -->
     <!--     </matrix> -->
-    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--     <matrix name='gravity1' row='3' column='1'> -->
     <!--         <line><v>2.5</v></line> -->
     <!--         <line><v>0.0</v></line> -->
     <!--         <line><v>-9.81</v></line> -->
     <!--     </matrix> -->
-    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--     <matrix name='gravity2' row='3' column='1'> -->
     <!--         <line><v>0.0</v></line> -->
     <!--         <line><v>-2.5</v></line> -->
     <!--         <line><v>-9.81</v></line> -->
     <!--     </matrix> -->
-    <!--     <matrix name='gravity' row='3' column='1'> -->
+    <!--     <matrix name='gravity3' row='3' column='1'> -->
     <!--         <line><v>0.0</v></line> -->
     <!--         <line><v>2.5</v></line> -->
     <!--         <line><v>-9.81</v></line> -->

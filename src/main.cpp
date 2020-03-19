@@ -57,8 +57,8 @@ int main(int argc, char * argv[])
   std::cout << "Mode: " << mode << '\n';
   std::cout << "Robot file: " << file_robot << '\n';
   std::cout << "Number of friction sides: " << numFrictionSides << '\n';
-  std::cout << "Solver: " << solver << '\n';
-  std::cout << "Using robust stability: " << robust << '\n';
+  std::cout << "Solver: " << (solver==GLPK ? "GLPK": (solver==LP_SOLVE ? "LP_SOLVE" : "GUROBI")) << '\n';
+  std::cout << "Using robust stability: " << (robust ? "yes" : "no") << '\n';
   std::cout << '\n';
 
   /*
