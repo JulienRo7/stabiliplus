@@ -189,6 +189,11 @@ tinyxml2::XMLElement * ContactPoints::get_XMLContactPoint(tinyxml2::XMLDocument 
     XMLfriction->SetAttribute("mu", m_frictionCoef);
     XMLContactPoint->InsertEndChild(XMLfriction);
 
+    tinyxml2::XMLElement * XMLforces = doc.NewElement("flim");
+    XMLforces->SetAttribute("fmax", fmax_);
+    XMLforces->SetAttribute("fmin", fmin_);
+    XMLContactPoint->InsertEndChild(XMLforces);
+
     tinyxml2::XMLElement * XMLPosition = doc.NewElement("matrix");
     XMLPosition->SetAttribute("name", "position");
     XMLPosition->SetAttribute("row", 3);
