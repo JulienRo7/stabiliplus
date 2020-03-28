@@ -102,7 +102,7 @@ public:
     return m_contacts.size();
   }
 
-  inline const int get_numberOfAcceletations() const
+  inline const int get_numberOfAccelerations() const
   {
     return m_accelerations.size();
   }

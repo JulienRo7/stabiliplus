@@ -196,18 +196,21 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
     m_vertices.push_back(newVertex);
   }
 
+  
   auto start = std::chrono::high_resolution_clock::now();
   buildInnerPoly();
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   m_innerConvexMicro += duration.count();
 
+  
   start = std::chrono::high_resolution_clock::now();
   buildOuterPoly();
   stop = std::chrono::high_resolution_clock::now();
   duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   m_outerConvexMicro += duration.count();
 
+  
   computeResidualFromScratch();
 
   //while(false)
@@ -215,14 +218,13 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
   {
 
     m_iteration++;
-    // std::cout << "Iteration number: " << m_iteration << ", error: " << m_error << '\n';
+    //std::cout << "Iteration number: " << m_iteration << ", error: " << m_error << '\n';
     auto dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesMeasure);
 
     solveLP(dirFace->get_normal(), point);
 
     newVertex = std::make_shared<Vertex>(point, dirFace->get_normal());
-    m_vertices.push_back(newVertex);
-
+    
     start = std::chrono::high_resolution_clock::now();
     updateInnerPoly(newVertex, dirFace);
     stop = std::chrono::high_resolution_clock::now();
@@ -308,11 +310,21 @@ void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
   std::list<std::shared_ptr<Face>> consideredFaces;
   std::vector<std::shared_ptr<Face>> currentNeighbors;
 
+  // if the new point is in the inner approximation (that should not happen) or on the last face (this can happen), then there is 2 possibilities: i- reject the point but still update the outer approximation ii- split the search face in 3
+  // For now I am rejecting the point but still updating the outer approximation
+  if (dirFace->pointInHalfSpace(newVertex->get_coordinates()))
+    {
+      // std::cout << "Rejected point" << std::endl;
+      return;
+    }
+    
+  m_vertices.push_back(newVertex);
+  
   consideredFaces.push_back(dirFace);
-
+  
   std::vector<std::shared_ptr<Face>> visibleFaces;
   std::vector<std::shared_ptr<Edge>> visibleEdges;
-
+  
   auto currentFace = consideredFaces.begin();
 
   // consider all the faces to be considered
@@ -350,6 +362,9 @@ void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
     currentFace++;
   }
 
+  
+
+  
   // the discrimination of the edges that should be remove could be done in the previous loop
   std::vector<std::shared_ptr<Edge>> edges_to_keep;
   std::vector<std::shared_ptr<Edge>> edges_to_delete;
@@ -370,6 +385,8 @@ void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
     }
   }
 
+  
+  
   // remove old faces
   for(auto it : visibleFaces)
   {
@@ -402,6 +419,7 @@ void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
     }
   }
 
+  
   // ---- create and add the new faces and edges of the inner polyhedron
   std::shared_ptr<Face> newFace;
   std::shared_ptr<Edge> newEdge1;

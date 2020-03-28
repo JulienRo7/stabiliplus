@@ -307,6 +307,12 @@ void ContactSet::showContactSet()
               << "N)" << std::endl;
     //contact.showContactPoint();
   }
+
+  std::cout << "Number of accelerations: " << get_numberOfAccelerations() << std::endl;
+  for (auto acc: m_accelerations)
+    {
+      std::cout << acc.transpose() << std::endl;
+    }
 }
 
 void ContactSet::saveContactSet(const std::string & file_name)

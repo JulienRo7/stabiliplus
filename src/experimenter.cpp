@@ -55,11 +55,11 @@ void Experimenter::run_exp1()
   
   if(m_robust)
   {
-    polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
+    polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.01, m_solver);
   }
   else
   {
-    polytope = std::make_shared<StaticStabilityPolytope> (contactSet, 50, 0.05, m_solver);
+    polytope = std::make_shared<StaticStabilityPolytope> (contactSet, 50, 0.01, m_solver);
   }
   
   polytope->initSolver();
@@ -67,11 +67,10 @@ void Experimenter::run_exp1()
 
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
+  
   m_contactSets.push_back(contactSet);
   m_polytopes.push_back(polytope);
   m_total_times.push_back(duration.count());
-
 
   if (m_robust)
     {

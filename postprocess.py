@@ -222,7 +222,7 @@ class robustPoly(polytope):
     def display(self, ax, dispInner = True, dispOuter = False):
         lines = []
         if dispInner:
-            lines.extend(self.dispInner(ax, True, False))
+            lines.extend(self.dispInner(ax, True, True))
 
         if dispOuter:
             lines.extend(self.dispOuter(ax))
@@ -310,8 +310,11 @@ class PostProcessor:
 
         self.polytopes[0].display(ax, dispInner=True, dispOuter=False)
 
-        ax.set_xlim(-1.5, 1.5)
-        ax.set_ylim(-1.5, 1.5)
+        # ax.set_xlim(-1.5, 1.5)
+        # ax.set_ylim(-1.5, 1.5)
+        # ax.set_zlim(-0.1, 2)
+        ax.set_xlim(-0.5, 0.5)
+        ax.set_ylim(-0.5, 0.5)
         ax.set_zlim(-0.1, 2)
         
         ax.set_xlabel("x", size="xx-large")
