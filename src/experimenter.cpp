@@ -16,6 +16,30 @@ Experimenter::Experimenter(int mode,
 Experimenter::~Experimenter() {}
 
 // ---------- main functions -----------
+void Experimenter::computePoint(std::shared_ptr<ContactSet> contactSet)
+{
+  std::shared_ptr<StabilityPolytope> polytope;
+  auto start = std::chrono::high_resolution_clock::now();
+  if (m_robust)
+    {
+      polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
+    }
+  else
+    {
+      polytope = std::make_shared<StaticStabilityPolytope> (contactSet, 50, 0.01, m_solver);
+    }
+
+  polytope->initSolver();
+  polytope->projectionStabilityPolyhedron();
+  
+  auto stop = std::chrono::high_resolution_clock::now();
+  
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop -start);
+  
+  m_polytopes.push_back(polytope);
+  m_total_times.push_back(duration.count());
+}
+
 void Experimenter::run()
 {
   std::cout << "Running experiment!" << '\n';
@@ -32,7 +56,10 @@ void Experimenter::run()
       break;
     case 4:
       run_exp4();
-      break;    
+      break;
+    case 5:
+      run_exp5();
+      break;
     default:
       std::cerr << "Unknown mode" << '\n';
   }
@@ -197,7 +224,6 @@ void Experimenter::run_exp4()
   std::cout << "Running experiment for mode 4!" << std::endl;
 
   std::shared_ptr<ContactSet> contactSet;
-  std::shared_ptr<StabilityPolytope> polytope;
   
   std::string contactName("contact_exp4");
   
@@ -238,30 +264,73 @@ void Experimenter::run_exp4()
       // Add a contact point with fmax to 0 
       contactSet->addContact(contactName, homTrans, 0.5, f(i), 0);
 
-      // create and compute the equilibrium polytope
-
-      auto start = std::chrono::high_resolution_clock::now();
-
-      if (m_robust)
-	{
-	  polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
-	}
-      else
-	{
-	  polytope = std::make_shared<StaticStabilityPolytope> (contactSet, 50, 0.01, m_solver);
-	}
-
-      polytope->initSolver();
-      polytope->projectionStabilityPolyhedron();
-
-      auto stop = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-      // store everything
+      computePoint(contactSet);
+      
       m_contactSets.push_back(contactSet);
-      m_polytopes.push_back(polytope);
-      m_total_times.push_back(duration.count());
     }
+}
+
+
+void Experimenter::run_exp5()
+{
+  std::cout << "#-----------------------------" << std::endl;
+  std::cout << "Running experiment for mode 5!" << std::endl;
+  std::cout << std::endl;
+
+  std::cout << "Loading files from folder: " << m_contactSetFileName << std::endl;
+  auto start = std::chrono::high_resolution_clock::now();
+  
+  std::vector<std::string> contactSetNames;
+  std::string contactSetName;
+
+  for (auto p: std::filesystem::directory_iterator(m_contactSetFileName))
+    {
+      contactSetNames.push_back(p.path().string());
+    }
+
+  auto grabNum = [](std::string file){
+    int under = file.find("_")+1;
+    int dot = file.find(".");
+
+    return std::stoi(file.substr(under, dot-under));
+  };
+
+  auto compFiles = [grabNum](std::string file1, std::string file2){
+    return grabNum(file1) < grabNum(file2);
+  };
+  
+  std::sort(contactSetNames.begin(), contactSetNames.end(), compFiles);
+
+
+  std::shared_ptr<ContactSet> contactSet;
+  
+  for (auto name: contactSetNames)
+    {
+      contactSet = std::make_shared<ContactSet>(!m_robust, name, m_numFrictionSides);
+      m_contactSets.push_back(contactSet);
+    }
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop-start);
+    
+  std::cout << "Loaded "<< m_contactSets.size() <<  " contact Sets in " << duration.count() << "ms" << std::endl;
+
+  std::cout << "Beginning computation of the equilibrium regions" << std::endl;
+  float cpt(0), max(m_contactSets.size());
+  
+  start = std::chrono::high_resolution_clock::now();
+  for (auto contactSet: m_contactSets)
+    {
+      computePoint(contactSet);
+      cpt+=1.;
+      std::cout << 100*cpt/max << " %\r";
+      std::cout.flush();
+    }
+  stop = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop-start);
+  std::cout << "Computation of the equilibrium regions done in "<< duration.count() << " ms" << std::endl;
+  
+  std::cout << "#-----------------------------" << std::endl;
+  std::cout << std::endl;
 }
 
 
@@ -273,7 +342,7 @@ void Experimenter::save()
 
   // if the res folder doesn't exist, create it
   // std::cout << system("mkdir -p `rospack find stabiliplus`/res") << '\n';
-  std::cout << system("mkdir -p /tmp/polytopes");
+  std::cout << system("mkdir -p /tmp/polytopes")<< " ";
   std::cout << system("mkdir -p /tmp/robots") << '\n';
 
   // creating new xml object

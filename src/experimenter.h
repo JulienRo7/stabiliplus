@@ -13,6 +13,7 @@
 #include <typeinfo> // operator typeid
 #include <vector>
 
+#include <filesystem> // C++ 17 
 class Experimenter
 {
 public:
@@ -25,6 +26,12 @@ public:
   ~Experimenter();
 
   // ---------- main functions -----------
+  /*! \brief given a contact set compute the corresponding equilibrium polytope and store it.
+   */
+  void computePoint(std::shared_ptr<ContactSet> contactSet);
+  
+  /*!
+   */
   void run();
   /*! \brief Experiment 1 compute one equilibrium region for the given parameters
    */
@@ -45,6 +52,11 @@ public:
    * 
    */
   void run_exp4();
+
+  /*! \brief Experiment 5 take as input a folder of contact sets and compute the corresponding equilibrium region for each of them.
+   * The idea of this experiment is to consider different way of computing the equlibrium region with a given set of desired forces for some contact points
+   */
+  void run_exp5();
   
   // ---------- inputs and setters -----------
 

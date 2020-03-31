@@ -1,9 +1,11 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
 
+set(CMAKE_CXX_FLAGS "-lstdc++ -std=c++17")
+set(CMAKE_CXX_COMPILER "/usr/local/bin/gcc")
 # add_subdirectory(lpsolve55)
 # find_package(lpsolve55 REQUIRED)
 # find_package(lpsolve55 REQUIRED)
@@ -41,9 +43,9 @@ target_include_directories(wrappers
   #${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
-target_compile_features(wrappers
-  PRIVATE cxx_std_11
-  )
+# target_compile_features(wrappers
+#   PRIVATE cxx_std_11
+#   )
 
 target_link_libraries(wrappers
   PUBLIC
@@ -71,9 +73,9 @@ target_include_directories(ProblemDescriptor
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
-target_compile_features(ProblemDescriptor
-  PRIVATE cxx_std_11
-  )
+# target_compile_features(ProblemDescriptor
+#   PRIVATE cxx_std_11
+#   )
 
 target_link_libraries(ProblemDescriptor
   PUBLIC
@@ -105,9 +107,9 @@ target_include_directories(StabilityPolytope
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
-target_compile_features(StabilityPolytope
-  PRIVATE cxx_std_11
-  )
+# target_compile_features(StabilityPolytope
+#   PRIVATE cxx_std_11
+#   )
 
 target_link_libraries(StabilityPolytope
   PUBLIC
@@ -128,12 +130,22 @@ target_include_directories(main
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
-target_compile_features(main
-  PRIVATE cxx_std_11
-  )
-  target_link_libraries(main
+
+
+# set_target_properties(main
+#   PROPERTIES
+#   CXX_STANDART 17
+#   CXX_EXTENSIONS OFF
+#   )
+# target_compile_features(main
+#   PRIVATE
+#   cxx_std_17
+#   )
+
+target_link_libraries(main
   PRIVATE
-  ProblemDescriptor StabilityPolytope tinyxml2)
+  ProblemDescriptor StabilityPolytope tinyxml2
+  )
 
 
 
