@@ -11,12 +11,14 @@
 #include <iostream>
 #include <string>
 
+enum ContactType { support, constrained };
+
 class ContactPoints
 {
 public:
   // ------- constructors and destructor -------
   ContactPoints();
-  ContactPoints(std::string name, double frictionCoef, double fmax = 1000, double fmin = 0);
+  ContactPoints(std::string name, double frictionCoef, double fmax = 1000, double fmin = 0, ContactType type = support);
   ContactPoints(tinyxml2::XMLElement * contactPointXML);
   ~ContactPoints();
 
@@ -36,6 +38,16 @@ public:
   double fmax() const;
   double fmin() const;
 
+  inline ContactType contactType() const
+  {
+    return contactType_;
+  }
+
+  inline bool isConstrained() const
+  {
+    return contactType_==ContactType::constrained;
+  }
+  
   // ------- setters -------
   void translate(Eigen::Vector3d trans);
   void set_contact(Eigen::Matrix4d homTrans);
@@ -43,6 +55,8 @@ public:
 
   void fmax(double f);
   void fmin(double f);
+
+  void contactType(ContactType type);
 
 private:
   std::string m_name;
@@ -52,6 +66,8 @@ private:
 
   double fmax_;
   double fmin_;
+
+  ContactType contactType_;
 };
 
 #endif // CONTACTPOINT_H_INCLUDED

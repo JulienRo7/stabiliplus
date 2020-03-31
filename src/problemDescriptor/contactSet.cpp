@@ -453,6 +453,19 @@ Eigen::Matrix4d ContactSet::contactHomTrans(std::string contactName) const
     }
 }
 
+std::vector<std::string> ContactSet::constrainedContactNames() const
+{
+  std::vector<std::string> names;
+  for(auto contact : m_contacts)
+  {
+    if (contact.isConstrained())
+      {
+	names.push_back(contact.get_name());
+      }
+  }
+  return names;
+}
+
 // ------------------ setter -----------------------
 void ContactSet::translateContact(int contactIndex, Eigen::Vector3d translation)
 {
@@ -554,6 +567,20 @@ void ContactSet::mass(double mass)
     {
       std::cout << "The given mass is too small, the mass is set to the minimum: " << eps << std::endl;
       m_mass = eps;
+    }
+}
+
+void ContactSet::updateContactType(std::string contactName, ContactType type)
+{
+  if (hasContactNamed(contactName))
+    {
+      int ind = get_contactIndexFromName(contactName);
+      
+      m_contacts[ind].contactType(type);
+    }
+  else
+    {
+      std::cout << "No contact named " << contactName << std::endl;
     }
 }
 

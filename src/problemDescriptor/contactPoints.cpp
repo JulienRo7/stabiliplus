@@ -8,13 +8,13 @@ ContactPoints::ContactPoints()
 {
 }
 
-ContactPoints::ContactPoints(std::string name, double frictionCoef, double fmax, double fmin)
+ContactPoints::ContactPoints(std::string name, double frictionCoef, double fmax, double fmin, ContactType type)
 : m_name(name), m_frictionCoef(frictionCoef), m_rotation(Eigen::Matrix3d::Zero()), m_position(Eigen::Vector3d::Zero()),
-  fmax_(fmax), fmin_(fmin)
+  fmax_(fmax), fmin_(fmin), contactType_(type)
 {
 }
 
-ContactPoints::ContactPoints(tinyxml2::XMLElement * contactPointXML) : fmax_(1000), fmin_(0)
+ContactPoints::ContactPoints(tinyxml2::XMLElement * contactPointXML) : fmax_(1000), fmin_(0), contactType_(support)
 {
 
   tinyxml2::XMLElement * currentXMLElement = contactPointXML->FirstChildElement();
@@ -37,6 +37,21 @@ ContactPoints::ContactPoints(tinyxml2::XMLElement * contactPointXML) : fmax_(100
       // Get the fmax and fmin
       currentXMLElement->QueryDoubleAttribute("fmax", &fmax_);
       currentXMLElement->QueryDoubleAttribute("fmin", &fmin_);
+    }
+    else if(std::strcmp(currentType.c_str(), "contactType") == 0)
+    {
+      // Get the fmax and fmin
+      std::string type;
+      type = currentXMLElement->Attribute("type");
+
+      if (type == "constrained")
+	{
+	  contactType_ = constrained;
+	}
+      else
+	{
+	  contactType_ = support;
+	}
     }
     else if(std::strcmp(currentType.c_str(), "matrix") == 0)
     {
@@ -193,7 +208,23 @@ tinyxml2::XMLElement * ContactPoints::get_XMLContactPoint(tinyxml2::XMLDocument 
     XMLforces->SetAttribute("fmax", fmax_);
     XMLforces->SetAttribute("fmin", fmin_);
     XMLContactPoint->InsertEndChild(XMLforces);
-
+    
+    tinyxml2::XMLElement * XMLContactType = doc.NewElement("contactType");
+    std::string type;
+    switch (contactType_)
+      {
+      case support:
+	type = "support";
+	break;
+      case constrained:
+	type = "constrained";
+	break;
+      default:
+	type = "support";
+      }
+    XMLContactType->SetAttribute("type", type.c_str());
+    XMLContactPoint->InsertEndChild(XMLContactType);
+    
     tinyxml2::XMLElement * XMLPosition = doc.NewElement("matrix");
     XMLPosition->SetAttribute("name", "position");
     XMLPosition->SetAttribute("row", 3);
@@ -287,4 +318,9 @@ void ContactPoints::fmin(double f)
     fmin_ = 0;
     std::cerr << "Error: fmin should be positive" << std::endl;
   }
+}
+
+void ContactPoints::contactType(ContactType type)
+{
+  contactType_ = type;
 }

@@ -86,8 +86,6 @@ public:
   /*! \brief Build the right hand side of the inequality constraint
    */
   void buildFrictionVectorf();
-
-  
   
   // ----------- input functions ----------
   void loadContactSet(std::string const & file_name);
@@ -140,6 +138,10 @@ public:
   /*! \brief returns position and orientatio of a contact given its name
    */
   Eigen::Matrix4d contactHomTrans(std::string contactName) const;
+
+  /*! \brief return the list of constrained contact
+   */
+  std::vector<std::string> constrainedContactNames() const;
   
   // ----------- setters ----------
   void addContact(std::string contactName);
@@ -194,6 +196,11 @@ public:
   {
     m_numberOfFrictionSides = fricSides;
   }
+
+  /*! \brief setter to change the type of a contact 
+   * The valid values for the type are support or constrained
+   */ 
+  void updateContactType(std::string contactName, ContactType type);
 
   void printAcc();
   
