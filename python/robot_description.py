@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET # phone home!
 
 class Robot():
 
-    def __init__(self, masse, feet, mu, dim=2):
+    def __init__(self, masse, feet, mu, flim=[], dim=2):
 
         # self.gravity = np.array([[0], [0], [-9.81]])
         self.reset_gravity()
@@ -21,6 +21,10 @@ class Robot():
         self.feet = feet
         self.n_feet = len(feet)  # Number of feet of the robot
         self.mu = mu  # list of the friction coeficients associated with each foot.
+        if flim:
+            self.flim = flim
+        else:
+            self.flim = [(0,0)]*len(mu)
 
         #########################################
         # Mathematical Static Model
@@ -262,7 +266,7 @@ class Robot():
 
         return robot
 
-    def parse_contactPoint(contactXML, feet, mu):
+    def parse_contactPoint(contactXML, feet, mu, flim):
         foot = np.eye(4)
 
         for child in contactXML:
@@ -280,13 +284,20 @@ class Robot():
                             foot[i, j] = float(child[i][j].text)
                 else:
                     print("Unknown matrix name: {}".format(child.attrib['name']))
+                    
             elif child.tag == 'rotation':
                 phi = float(child.attrib['phi'])
                 theta = float(child.attrib['theta'])
                 psi = float(child.attrib['psi'])
                 foot[:3,:3] = ut.euler2RotMat(phi, theta, psi)
+                
+            elif child.tag == 'flim':
+                fmax = float(child.attrib['fmax'])
+                fmin = float(child.attrib['fmin'])
+                flim.append((fmax, fmin))
+                
             else:
-                print("Error: Unrecognised tag!")
+                print("Error: Unrecognised tag: {}".format(child.tag))
         feet.append(foot)
 
     # <ContactPoint name='contact_1'>
@@ -302,6 +313,7 @@ class Robot():
     def parse_robot(robotXML):
         feet = []
         mu = []
+        flim = []
         mass = 0
         dim = 3
 
@@ -312,11 +324,11 @@ class Robot():
                     if grandChild.tag == 'Mass':
                         mass = float(grandChild.attrib['mass'])
                     elif grandChild.tag == 'ContactPoint':
-                        Robot.parse_contactPoint(grandChild, feet, mu)
+                        Robot.parse_contactPoint(grandChild, feet, mu, flim)
                     else:
                         pass
 
-        parsed_robot = Robot(mass, feet, mu, dim)
+        parsed_robot = Robot(mass, feet, mu, flim, dim)
         return parsed_robot
 
     def load_from_file(file_name):
