@@ -529,7 +529,15 @@ class PostProcessor:
         # ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
         # # moviewriter.finnish()
         # print("Animation saved!")
-        plt.show()        
+        plt.show()
+
+    def display_mode_5(self):
+        print("Starting display mode 5")
+        plt.plot(self.total_times)
+        plt.xlabel("Contact set number")
+        plt.ylabel("Computing time (ms)")
+        plt.title("Equilibrium region computation time")
+        plt.show()
         
     def display_results(self):
 
@@ -541,9 +549,11 @@ class PostProcessor:
             self.display_mode_3()
         elif self.mode == 4:
             self.display_mode_4()
+        elif self.mode == 5:
+            self.display_mode_4()
+            self.display_mode_5()
         else:
-            print("Unknown Mode {}".format(self.mode))
-            assert False
+            assert False, "Unknown Mode {}".format(self.mode)
 
 
 if __name__ == '__main__':
