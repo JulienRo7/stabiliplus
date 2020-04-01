@@ -189,6 +189,19 @@ std::vector<Eigen::Vector4d> StaticStabilityPolytope::constraintPlanes() const
   return planes;
 }
 
+std::vector<Eigen::Vector3d> StaticStabilityPolytope::vertices() const
+{
+  std::vector<Eigen::Vector3d> vertices;
+  Eigen::Vector3d vertex;
+  for (auto pt: m_points)
+    {
+      vertex << pt->innerVertex(), 0;
+      vertices.push_back(vertex);
+    }
+  
+  return vertices;
+}
+
 Eigen::Vector3d StaticStabilityPolytope::baryPoint() const
 {
   Eigen::Vector2d bary = Eigen::Vector2d::Zero();

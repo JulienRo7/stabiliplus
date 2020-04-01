@@ -852,6 +852,17 @@ std::vector<Eigen::Vector4d> RobustStabilityPolytope::constraintPlanes() const
   return planes;
 }
 
+std::vector<Eigen::Vector3d> RobustStabilityPolytope::vertices() const
+{
+  std::vector<Eigen::Vector3d> vertices;
+  for (auto vertex: m_vertices)
+    {
+      vertices.push_back(vertex->get_coordinates());
+    }
+
+  return vertices;
+}
+
 Eigen::Vector3d RobustStabilityPolytope::baryPoint() const
 {
   Eigen::Vector3d baryPt = Eigen::Vector3d::Zero();

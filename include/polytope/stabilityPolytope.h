@@ -93,6 +93,11 @@ public:
    *
    */
   virtual std::vector<Eigen::Vector4d> constraintPlanes() const = 0;
+
+  /*! \brief return the V-Rep of the projected convex
+   * 
+   */
+  virtual std::vector<Eigen::Vector3d> vertices() const = 0;
   
   /*!
    * \brief Return a point inside the convex polytope: the average sum on all the vertices
@@ -124,7 +129,6 @@ public:
   {
     return m_pdPtr;
   }
-
   
   Solver solverType() const;
 

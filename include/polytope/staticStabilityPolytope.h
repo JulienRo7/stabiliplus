@@ -26,6 +26,8 @@ public:
   // ----- output -----
   void writeToStream(std::ofstream & stream) const override;
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
+  std::vector<Eigen::Vector3d> vertices() const override;
+  
   Eigen::Vector3d baryPoint() const override;
 
   void showPointsNeighbours();
