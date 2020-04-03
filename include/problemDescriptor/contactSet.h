@@ -139,6 +139,10 @@ public:
    */
   Eigen::Matrix4d contactHomTrans(std::string contactName) const;
 
+  /*! \brief check if the contact set has a constrained contact
+   */ 
+  bool hasConstrainedContact() const;
+  
   /*! \brief return the list of constrained contact
    */
   std::vector<std::string> constrainedContactNames() const;

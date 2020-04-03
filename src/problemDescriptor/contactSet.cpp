@@ -453,6 +453,16 @@ Eigen::Matrix4d ContactSet::contactHomTrans(std::string contactName) const
     }
 }
 
+bool ContactSet::hasConstrainedContact() const
+{
+  auto pred =  [](ContactPoints cp){
+    return cp.isConstrained();
+  };
+
+  return std::find_if(m_contacts.begin(), m_contacts.end(), pred)!=m_contacts.end();
+}
+
+
 std::vector<std::string> ContactSet::constrainedContactNames() const
 {
   std::vector<std::string> names;
