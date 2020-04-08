@@ -72,6 +72,13 @@ public:
     return m_name;
   }
 
+  /*! \brief set the name of the ProblemDescriptor
+   */
+  inline void set_name(std::string name)
+  {
+    m_name = name;
+  }
+
 protected:
   std::string m_name;
   // Eigen::Vector3d const m_gravity;

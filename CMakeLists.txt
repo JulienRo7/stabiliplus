@@ -3,6 +3,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
+find_package(Qhull REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-lstdc++ -std=c++17")
 set(CMAKE_CXX_COMPILER "/usr/local/bin/gcc")
@@ -97,6 +98,7 @@ add_library(StabilityPolytope SHARED
   ${PROJECT_SOURCE_DIR}/src/polytope/outervertex.cpp
   ${PROJECT_SOURCE_DIR}/src/polytope/outeredge.cpp
   ${PROJECT_SOURCE_DIR}/src/polytope/outerface.cpp
+  ${PROJECT_SOURCE_DIR}/src/polytope/constrainedEquilibriumPolytope.cpp
   )
 
 target_include_directories(StabilityPolytope
@@ -105,6 +107,7 @@ target_include_directories(StabilityPolytope
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
+  glpk 
   )
 
 # target_compile_features(StabilityPolytope
@@ -116,6 +119,7 @@ target_link_libraries(StabilityPolytope
   Eigen3::Eigen
   wrappers
   PRIVATE
+  qhullcpp qhull_r  
   )
 
 ### Main executable ###

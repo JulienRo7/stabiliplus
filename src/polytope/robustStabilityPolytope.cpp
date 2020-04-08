@@ -256,6 +256,7 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
 Eigen::Vector3d RobustStabilityPolytope::computeInnerPoint()
 {
   // Computation of the inner point: it is used to make sure that the normal of the faces are oriented toward the outside
+  
   m_innerPoint = Eigen::Vector3d::Zero();
   for(auto it : m_vertices)
   {

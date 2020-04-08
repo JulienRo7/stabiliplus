@@ -3,6 +3,7 @@
 #include "polytope/robustStabilityPolytope.h"
 #include "polytope/stabilityPolytope.h"
 #include "polytope/staticStabilityPolytope.h"
+#include "polytope/constrainedEquilibriumPolytope.h"
 #include "problemDescriptor/contactSet.h"
 #include <chrono>
 #include <fstream>

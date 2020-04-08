@@ -39,7 +39,10 @@ ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_nam
     }
   loadContactSet(contact_set_file_name);
 
-  //std::cout << "The second constructor for contactSet has been called!" << std::endl;
+  int dot = contact_set_file_name.find(".");
+  set_name(contact_set_file_name.substr(0, dot));
+  
+  // std::cout << "The second constructor for contactSet has been called!" << std::endl;
 }
 
 ContactSet::~ContactSet()

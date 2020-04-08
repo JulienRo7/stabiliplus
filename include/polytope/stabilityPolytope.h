@@ -16,7 +16,7 @@
 
 // libraries
 #include <Eigen/Dense>
-
+#include <glpk.h> // to compute chebichev center
 // custom libraries
 #include "wrapper/glpk_wrapper.h"
 //#include "wrapper/lpsolve_wrapper.h"
@@ -143,6 +143,13 @@ public:
   void maxIteration(int maxIteration);
 
   // ---------- static functions ---------
+
+  /* \brief Compute the Chebichev center of a set of planes
+   * Chebichev Center is the center of the biggest ball inscribed in the convex set defined by the set of planes
+   * It can also be called the deeppest point in the convex
+   * Here the computation is done only in dimension 3.
+   */
+  Eigen::Vector3d chebichevCenter(std::vector<Eigen::Vector4d> planes) const;
 
 protected:
   // robot:

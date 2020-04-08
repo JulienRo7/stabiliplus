@@ -22,7 +22,14 @@ void Experimenter::computePoint(std::shared_ptr<ContactSet> contactSet)
   auto start = std::chrono::high_resolution_clock::now();
   if (m_robust)
     {
-      polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
+      if (contactSet->hasConstrainedContact())
+	{
+	  polytope = std::make_shared<ConstrainedEquilibriumPolytope> (contactSet, 50, 0.05, m_solver);
+	}
+      else
+	{
+	  polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
+	}
     }
   else
     {
@@ -74,47 +81,26 @@ void Experimenter::run_exp1()
   std::shared_ptr<ContactSet> contactSet;
   contactSet = std::make_shared<ContactSet>(!m_robust, m_contactSetFileName, m_numFrictionSides);
   contactSet->showContactSet();
-
-  auto start = std::chrono::high_resolution_clock::now();
-  //contactSet->setStaticCase(true);
-
-  std::shared_ptr<StabilityPolytope> polytope;
-  
-  if(m_robust)
-  {
-    polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.01, m_solver);
-  }
-  else
-  {
-    polytope = std::make_shared<StaticStabilityPolytope> (contactSet, 50, 0.01, m_solver);
-  }
-  
-  polytope->initSolver();
-  polytope->projectionStabilityPolyhedron();
-
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  
   m_contactSets.push_back(contactSet);
-  m_polytopes.push_back(polytope);
-  m_total_times.push_back(duration.count());
 
-  if (m_robust)
+  computePoint(contactSet);
+  
+  auto polytope = m_polytopes[0];
+  
+  if (m_robust and !contactSet->hasConstrainedContact())
     {
-        std::cout << "Computation time: " << duration.count() << "µs for " << polytope->get_numberOfVertices()
-		  << " inner Vertices"
-		  << " and " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_numberOfOuterVertices() << " outer vertices." << '\n';
-	std::cout << "Number of Inner Faces: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_numberOfFaces()
-		  << ", number of outer faces: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_numberOfOuterFaces() << '\n';
-
-	std::cout << "LP time: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).LPTime() << " µs" << '\n';
-	std::cout << "inner time: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_innerConvexMicro() << " µs" << '\n';
-	std::cout << "outer time: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_outerConvexMicro() << " µs" << '\n';
-	std::cout << "support time: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_supportFunctionMicro() << " µs" << '\n';
+      std::cout << "Computation time: " << m_total_times[0] << "ms for " << polytope->get_numberOfVertices() << " inner Vertices"
+		<< " and " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_numberOfOuterVertices() << " outer vertices." << '\n'
+		<< "Number of Inner Faces: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_numberOfFaces()
+		<< ", number of outer faces: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_numberOfOuterFaces() << '\n'
+	<< "LP time: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).LPTime() << " µs" << '\n'
+	<< "inner time: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_innerConvexMicro() << " µs" << '\n'
+	<< "outer time: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_outerConvexMicro() << " µs" << '\n'
+	<< "support time: " << dynamic_cast<RobustStabilityPolytope&>(*polytope).get_supportFunctionMicro() << " µs" << std::endl;
     }
   else
     {
-      std::cout << "Equilibrium  Region computed in " << duration.count() << " µs for " << polytope->get_numberOfVertices()
+      std::cout << "Equilibrium  Region computed in " << m_total_times[0] << " ms for " << polytope->get_numberOfVertices()
 		<< " inner Vertices" << std::endl;
       std::cout << "Init time: " << polytope->initTime() << " µs" << std::endl;
       std::cout << "LP time: " << polytope->LPTime() << " µs with solver " << m_solver << std::endl;
@@ -320,10 +306,11 @@ void Experimenter::run_exp5()
   start = std::chrono::high_resolution_clock::now();
   for (auto contactSet: m_contactSets)
     {
+      std::cout << contactSet->get_name() << std::endl;
       computePoint(contactSet);
       cpt+=1.;
-      std::cout << 100*cpt/max << " %\r";
-      std::cout.flush();
+      // std::cout << 100*cpt/max << " %\r";
+      // std::cout.flush();
     }
   stop = std::chrono::high_resolution_clock::now();
   duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop-start);
