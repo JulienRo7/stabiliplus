@@ -25,6 +25,7 @@ class ConstrainedEquilibriumPolytope : public StabilityPolytope
   // main functions
   void initSolver() override;
   void projectionStabilityPolyhedron() override;
+  void endSolver() override;
   void writeToStream(std::ofstream & stream) const override;
   
   std::vector<Eigen::Vector4d> constraintPlanes() const override;

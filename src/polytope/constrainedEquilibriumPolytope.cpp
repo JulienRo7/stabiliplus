@@ -38,19 +38,30 @@ ConstrainedEquilibriumPolytope::ConstrainedEquilibriumPolytope(std::shared_ptr<C
 void ConstrainedEquilibriumPolytope::initSolver()
 {
   // init polMax
-  polyMax_->initSolver();
+  
   // init polMin
-  polyMin_->initSolver();
+  
 
 }
 
 void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
 {
   // projection polMax
+  // std::cout << "Projection of the Min Polytope" << std::endl;
+  polyMax_->initSolver();
   polyMax_->projectionStabilityPolyhedron();
+  polyMax_->endSolver();
   // projection polMin
+  // std::cout << "Projection of the Max Polytope" << std::endl;
+  polyMin_->initSolver();
+  // std::cout << "Did I stop here?" << std::endl;
   polyMin_->projectionStabilityPolyhedron();
+  // std::cout << "Did I stop here?" << std::endl;
+  polyMin_->endSolver();
 
+  m_solverEnded = true;
+  // std::cout << "Projections finished" << std::endl;
+  
   // get the planes and vertices from the inner approximation of polMax
   auto maxPlanes = polyMax_->constraintPlanes();
   auto maxVertices = polyMax_->vertices();
@@ -77,6 +88,7 @@ void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
     }
   // std::cout << "End of the list!" << std::endl;
 
+  // std::cout << "Starting Qhull" << std::endl;
   Eigen::Vector3d feasiblePt = chebichevCenter(planes);
   
   orgQhull::Qhull qhull;
@@ -97,7 +109,9 @@ void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
   orgQhull::QhullHyperplane hyperplane;
   Eigen::Vector3d coord;
   double offset;
- 
+
+  // std::cout << "Qhull computations done" << std::endl;
+  // std::cout << "Extrating the results" << std::endl;
   
   for (auto facet: facetList)
     {
@@ -147,6 +161,14 @@ void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
     {
       planes_.push_back(planes.at(v.point().id()));
     }
+
+  std::cout << "Results Extracted" << std::endl;
+}
+
+void ConstrainedEquilibriumPolytope::endSolver()
+{
+  // polyMax_->endSolver();
+  // polyMin_->endSolver();
 }
 
 void ConstrainedEquilibriumPolytope::writeToStream(std::ofstream & stream) const
@@ -184,6 +206,8 @@ void ConstrainedEquilibriumPolytope::writeToStream(std::ofstream & stream) const
       std::cerr << "Error: Output Stream not open." << std::endl;
     }
 }
+
+
 
 std::vector<Eigen::Vector4d> ConstrainedEquilibriumPolytope::constraintPlanes() const
 {
