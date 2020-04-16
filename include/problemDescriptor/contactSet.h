@@ -149,7 +149,7 @@ public:
   
   // ----------- setters ----------
   void addContact(std::string contactName);
-  void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction = 0.5, double fmax=1000, double fmin=0);
+  void addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction = 0.5, double fmax=1000, double fmin=0, ContactType type=ContactType::support);
   
   void updateContact(int contactIndex, Eigen::Matrix4d homTrans);
   void updateContact(std::string contactName, Eigen::Matrix4d homTrans);

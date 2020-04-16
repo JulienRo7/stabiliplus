@@ -535,9 +535,9 @@ void ContactSet::addContact(std::string contactName)
   m_contacts.push_back(ContactPoints(contactName, 0.5));
 }
 
-void ContactSet::addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction, double fmax, double fmin)
+void ContactSet::addContact(std::string contactName, Eigen::Matrix4d homTrans, double friction, double fmax, double fmin, ContactType type)
 {
-  ContactPoints contact(contactName, friction, fmax, fmin);
+  ContactPoints contact(contactName, friction, fmax, fmin, type);
   contact.set_contact(homTrans);
   m_contacts.push_back(contact);
 }
