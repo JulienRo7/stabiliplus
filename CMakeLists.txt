@@ -7,6 +7,12 @@ find_package(Qhull REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-lstdc++ -std=c++17")
 set(CMAKE_CXX_COMPILER "/usr/local/bin/gcc")
+
+# threads
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+
 # add_subdirectory(lpsolve55)
 # find_package(lpsolve55 REQUIRED)
 # find_package(lpsolve55 REQUIRED)
@@ -134,6 +140,12 @@ target_include_directories(main
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
+target_link_libraries(main
+  PRIVATE
+  ProblemDescriptor StabilityPolytope tinyxml2
+  Threads::Threads
+  )
+
 
 
 # set_target_properties(main
@@ -145,12 +157,6 @@ target_include_directories(main
 #   PRIVATE
 #   cxx_std_17
 #   )
-
-target_link_libraries(main
-  PRIVATE
-  ProblemDescriptor StabilityPolytope tinyxml2
-  )
-
 
 
 #### Exporting targets and installing ####

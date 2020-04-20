@@ -162,7 +162,7 @@ void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
       planes_.push_back(planes.at(v.point().id()));
     }
 
-  std::cout << "Results Extracted" << std::endl;
+  //std::cout << "Results Extracted" << std::endl;
 }
 
 void ConstrainedEquilibriumPolytope::endSolver()
