@@ -27,6 +27,8 @@ class ConstrainedEquilibriumPolytope : public StabilityPolytope
   void projectionStabilityPolyhedron() override;
   void endSolver() override;
   void writeToStream(std::ofstream & stream) const override;
+  tinyxml2::XMLElement * xmlPolytope(tinyxml2::XMLDocument & doc) const override;
+  void save(std::string name) const;
   
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
   std::vector<Eigen::Vector3d> vertices() const override;
@@ -34,7 +36,32 @@ class ConstrainedEquilibriumPolytope : public StabilityPolytope
   bool vertexInPlanes(Eigen::Vector3d vertex, std::vector<Eigen::Vector4d> planes, double eps=0.000001) const;
   
   Eigen::Vector3d baryPoint() const override;
+  
+  inline Eigen::Vector3d baryPointMin() const
+  {
+    return polyMin_->baryPoint();
+  }
+  
+  inline Eigen::Vector3d baryPointMax() const
+  {
+    return polyMax_->baryPoint();
+  }
+  
+  Eigen::Vector3d chebichevCenter() const override;
+  
+  inline Eigen::Vector3d chebichevCenterMin() const
+  {
+    return polyMin_->chebichevCenter();
+  }
+  
+  inline Eigen::Vector3d chebichevCenterMax() const
+  {
+    return polyMax_->chebichevCenter();
+  }
+
   int get_numberOfVertices() const override;
+
+  Eigen::Vector3d projectChebMaxOnPolyMin() const;
   
  private:
   std::vector<std::string> constrainedContactNames_;
@@ -48,6 +75,7 @@ class ConstrainedEquilibriumPolytope : public StabilityPolytope
   std::shared_ptr<RobustStabilityPolytope> polyMin_;
 
   std::map<int, Eigen::Vector3d> vertices_;
+
   
   /* pairs of indexes correspodong to the edges
    */

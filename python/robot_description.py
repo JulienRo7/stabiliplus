@@ -295,7 +295,8 @@ class Robot():
                 fmax = float(child.attrib['fmax'])
                 fmin = float(child.attrib['fmin'])
                 flim.append((fmax, fmin))
-                
+            elif child.tag == 'contactType':
+                pass
             else:
                 print("Error: Unrecognised tag: {}".format(child.tag))
         feet.append(foot)

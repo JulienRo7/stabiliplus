@@ -17,6 +17,8 @@
 // libraries
 #include <Eigen/Dense>
 #include <glpk.h> // to compute chebichev center
+#include <tinyxml2.h>
+
 // custom libraries
 #include "wrapper/glpk_wrapper.h"
 //#include "wrapper/lpsolve_wrapper.h"
@@ -85,6 +87,15 @@ public:
   virtual void writeToStream(std::ofstream & stream) const = 0;
 
   /*!
+   * \brief build the xml object describing the polytope
+   */
+  virtual tinyxml2::XMLElement * xmlPolytope(tinyxml2::XMLDocument & doc) const;
+
+  /*! \brief save the polytope in xml format
+   */
+  void saveToFile(std::string fileName) const;
+  
+  /*!
    * \brief return the H-Rep of the projected convex
    * 
    * Each `Eigen::Vector4d` represents one hyperplane of the projected convex. 
@@ -150,6 +161,7 @@ public:
    * Here the computation is done only in dimension 3.
    */
   Eigen::Vector3d chebichevCenter(std::vector<Eigen::Vector4d> planes) const;
+  virtual Eigen::Vector3d chebichevCenter() const;
 
 protected:
   // robot:

@@ -52,6 +52,26 @@ bool StabilityPolytope::stopCriterion() const // return true when the algorithm 
 
 // ----------- output and display functions ----------
 
+// simple implementation of the function in order to not implemented for every subclass
+tinyxml2::XMLElement * StabilityPolytope::xmlPolytope(tinyxml2::XMLDocument & doc) const
+{
+  auto xmlPoly = doc.NewElement("polytope");
+  xmlPoly->SetAttribute("type", "stability");
+  return xmlPoly; 
+}
+
+void StabilityPolytope::saveToFile(std::string fileName) const
+{
+  tinyxml2::XMLDocument doc;
+  
+  auto declaration = doc.NewDeclaration();
+  doc.InsertEndChild(declaration);
+
+  doc.InsertEndChild(xmlPolytope(doc));
+
+  doc.SaveFile(fileName.c_str());
+}
+
 // ----------- getters ----------
 
 double StabilityPolytope::LPTime() const
@@ -72,6 +92,11 @@ double StabilityPolytope::structTime() const
 Solver StabilityPolytope::solverType() const
 {
   return m_solverType;
+}
+
+Eigen::Vector3d StabilityPolytope::chebichevCenter() const
+{
+  return Eigen::Vector3d::Zero();
 }
 // ------------------ setter -----------------------
 

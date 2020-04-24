@@ -43,6 +43,7 @@ public:
 
   // ----------- output and display functions ----------
   void writeToStream(std::ofstream & stream) const override;
+  tinyxml2::XMLElement * xmlPolytope(tinyxml2::XMLDocument & doc) const override;
   void showPoly() const;
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
   std::vector<Eigen::Vector3d> vertices() const override;
@@ -62,6 +63,8 @@ public:
   std::vector<Eigen::Vector3d> get_innerFaceNormals() const;
   std::vector<double> get_innerFaceOffsets() const;
 
+  Eigen::Vector3d chebichevCenter() const override;
+  
   /*
   inline ProblemDescriptor * problemDescriptor() override
   {

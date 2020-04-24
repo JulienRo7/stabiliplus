@@ -263,6 +263,8 @@ Eigen::Vector3d RobustStabilityPolytope::computeInnerPoint()
     m_innerPoint += it->get_coordinates();
   }
   m_innerPoint /= m_vertices.size();
+
+  return m_innerPoint;
 }
 
 void RobustStabilityPolytope::buildInnerPoly()
@@ -771,6 +773,7 @@ double RobustStabilityPolytope::computeResidualFromScratch()
   {
     m_error += it->get_area() * it->get_supportFunction();
   }
+  return m_error;
 }
 
 // ----------- output and display functions ----------
@@ -836,6 +839,68 @@ void RobustStabilityPolytope::showPoly() const
   }
 
   std::cout << '\n';
+}
+
+tinyxml2::XMLElement * RobustStabilityPolytope::xmlPolytope(tinyxml2::XMLDocument & doc) const
+{
+
+  // lambda function to create the xml element corresponding to a vertex
+  auto xmlVertex = [&doc](std::shared_ptr<Vertex> vertex){
+    auto coord = vertex->get_coordinates();
+    auto dir = vertex->get_direction();
+    auto vertexXML = doc.NewElement("vertex");
+
+    vertexXML->SetAttribute("x", coord[0]);
+    vertexXML->SetAttribute("y", coord[1]);
+    vertexXML->SetAttribute("z", coord[2]);
+    vertexXML->SetAttribute("dx", dir[0]);
+    vertexXML->SetAttribute("dy", dir[1]);
+    vertexXML->SetAttribute("dz", dir[2]);
+
+    return vertexXML;
+  };
+
+  // lambda function to create the xml element corresponding to an edge
+  auto xmlEdge = [&doc](std::shared_ptr<Edge> edge){
+    auto coord1 = edge->get_vertex1()->get_coordinates();
+    auto coord2 = edge->get_vertex2()->get_coordinates();
+
+    auto edgeXML = doc.NewElement("edge");
+
+    edgeXML->SetAttribute("x1", coord1[0]);
+    edgeXML->SetAttribute("y1", coord1[1]);
+    edgeXML->SetAttribute("z1", coord1[2]);
+
+    edgeXML->SetAttribute("x2", coord2[0]);
+    edgeXML->SetAttribute("y2", coord2[1]);
+    edgeXML->SetAttribute("z2", coord2[2]);
+
+    return edgeXML;
+  };
+
+  // creating the xml element corresponding to the polytope
+  auto xmlPoly = doc.NewElement("polytope");
+  xmlPoly->SetAttribute("type", "robust");
+  
+  // adding the vertices to the poly
+  tinyxml2::XMLElement * innerVerticesXML = doc.NewElement("innerVertices");
+  xmlPoly->InsertEndChild(innerVerticesXML);
+
+  for (auto vertex: m_vertices)
+    {
+      innerVerticesXML->InsertEndChild(xmlVertex(vertex));
+    }
+
+  // adding the edges to the poly
+  auto innerEdgesXML = doc.NewElement("innerEdges");
+  xmlPoly->InsertEndChild(innerEdgesXML);
+  
+  for (auto edge: m_edges)
+    {
+      innerEdgesXML->InsertEndChild(xmlEdge(edge));
+    }
+  
+  return xmlPoly; 
 }
 
 std::vector<Eigen::Vector4d> RobustStabilityPolytope::constraintPlanes() const
@@ -932,6 +997,11 @@ std::vector<double> RobustStabilityPolytope::get_innerFaceOffsets() const
     innerFaceOffsets.push_back(face->get_offset());
   }
   return innerFaceOffsets;
+}
+
+Eigen::Vector3d RobustStabilityPolytope::chebichevCenter() const
+{
+  return StabilityPolytope::chebichevCenter(constraintPlanes());
 }
 
 // ------------------ setter -----------------------

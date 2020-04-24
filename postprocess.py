@@ -134,7 +134,7 @@ class staticPoly(polytope):
         return lines
         
 class robustPoly(polytope):
-    def __init__(self, file_name):
+    def __init__(self):
         # coordinates of the inner points
         self.innerX = []
         self.innerY = []
@@ -157,7 +157,7 @@ class robustPoly(polytope):
         # list of outer edges, each edge is represented using a 2x3 matrix and each column gives the coordinates of one point
         self.outerEdges = []
 
-        self.readFile(file_name)
+        #self.readFile(file_name)
 
     def readFile(self, file_name):
         file = open(file_name, 'r')
@@ -190,6 +190,31 @@ class robustPoly(polytope):
             else:
                 print("Unrecognise type :", line[0])
 
+    def loadVertexXML(self, xmlVertex):
+        self.innerX.append(float(xmlVertex.attrib['x']))
+        self.innerY.append(float(xmlVertex.attrib['y']))
+        self.innerZ.append(float(xmlVertex.attrib['z']))
+        self.innerU.append(float(xmlVertex.attrib['dx']))
+        self.innerV.append(float(xmlVertex.attrib['dy']))
+        self.innerW.append(float(xmlVertex.attrib['dz']))
+
+    def loadEdgeXML(self, xmlEdge):
+        self.innerEdges.append([[float(xmlEdge.attrib['x1']), float(xmlEdge.attrib['x2'])],
+                                [float(xmlEdge.attrib['y1']), float(xmlEdge.attrib['y2'])],
+                                [float(xmlEdge.attrib['z1']), float(xmlEdge.attrib['z2'])]])
+    
+    def loadXML(self, xmlPoly):
+        for child in xmlPoly:
+            if (child.tag == "innerVertices"):
+                for xmlVertex in child:
+                    self.loadVertexXML(xmlVertex)
+                    
+            elif (child.tag == "innerEdges"):
+                for xmlEdge in child:
+                    self.loadEdgeXML(xmlEdge)
+            else:
+                print("Unrecognized robust polytope tag: ", child.tag)
+                
     def dispInner(self, ax, dispEdges=True, dispInnerNormals=False, color="xkcd:kelly green"):
         # ----------- display of inner polyhedron -----------
         innerline = ax.plot(self.innerX, self.innerY, self.innerZ, 'go')
@@ -219,16 +244,114 @@ class robustPoly(polytope):
         return []
 
 
-    def display(self, ax, dispInner = True, dispOuter = False):
+    def display(self, ax, dispInner = True, dispOuter = False, innerColor="xkcd:green", outerColor="xkcd:purple"):
         lines = []
         if dispInner:
-            lines.extend(self.dispInner(ax, True, True))
+            lines.extend(self.dispInner(ax, True, False, color=innerColor))
 
         if dispOuter:
-            lines.extend(self.dispOuter(ax))
+            lines.extend(self.dispOuter(ax, color=outerColor))
 
         return lines
 
+class ComputationPoint:
+    def __init__(self):
+        self.contactSet = None
+        self.contactSetName = ""
+        self.polyType = ""
+        self.polytopes = []
+
+        # storing the times
+        self.totalTime = 0
+        self.lpTime = 0
+        self.initTime = 0
+        self.structTime = 0
+
+        # storing the solver type
+        self.solver = None
+
+        # storing points
+        self.points = {}
+        self.pointsColor = {}
+        self.pairs = {}
+
+    def loadXML(self, compPoint):
+        for child in compPoint:
+            if child.tag == "poly":
+                # open the file
+                # Find which kind of polytope it is then load it
+                fileName = child.attrib['file_name']
+                compPtTree = ET.parse(fileName)
+                compPtRoot = compPtTree.getroot()
+
+                self.polyType = compPtRoot.attrib['type']
+                if (self.polyType == "robust"):
+                    poly = robustPoly()
+                    poly.loadXML(compPtRoot)
+                    self.polytopes.append(poly)
+                    
+                elif (self.polyType == "constrained"):
+                    poly1 = robustPoly()
+                    poly1.loadXML(compPtRoot[0])
+
+                    poly2 = robustPoly()
+                    poly2.loadXML(compPtRoot[1])
+
+                    self.polytopes.append(poly1)
+                    self.polytopes.append(poly2)
+                    
+                else:
+                    pass
+                
+            elif child.tag == "robot":
+                self.contactSet = Robot.load_from_file(child.attrib['file_name'])
+                self.constacSetName = child.attrib['name']
+
+            elif child.tag == "times":
+                self.totalTime = int(child.attrib['total'])
+                self.lpTime = int(child.attrib['LP'])
+                self.initTime = int(child.attrib['init'])
+                self.structTime = int(child.attrib['struct'])
+
+            elif child.tag == "solver":
+                self.solver = child.attrib['name']
+
+            elif child.tag == "point":
+                name = child.attrib['name']
+                x = float(child.attrib['x'])
+                y = float(child.attrib['y'])
+                z = float(child.attrib['z'])
+                coord = np.reshape(np.array([x, y, z]), (3, 1))
+                
+                self.points[name] = coord
+
+                if ('color' in child.attrib):
+                    self.pointsColor[name] = child.attrib['color']
+            
+            else:
+                print("Unrecognise compPoint tag:", child.tag)
+
+        # looking for the pairs
+        for key in self.points.keys():
+            if key[-4:]=="_Max":
+                minKey = key[:-4]+"_Min"
+                if minKey in self.points.keys():
+                    self.pairs[key] = minKey
+        
+    def displayPolytopes(self, ax=None):
+        lines = []
+        colors = ["xkcd:green", "xkcd:olive", "xkcd:teal"]
+
+        colorIndex = 0
+        
+        for pol in self.polytopes:
+            lines.extend(pol.display(ax, innerColor = colors[colorIndex]))
+            
+            colorIndex +=1
+            if colorIndex >= len(colors):
+                colorIndex = 0
+        
+        return lines
 
 
 class PostProcessor:
@@ -236,42 +359,22 @@ class PostProcessor:
         self.mode = 0
         self.robust = False
         self.numComputedPoints = 0
-        self.robots = []
-        self.robot_names = []
-        self.polytopes = []
 
-        self.solvers = []
-        self.total_times = []
-        self.LPTimes = []
-        self.initTimes = []
-        self.structTimes = []
+        self.computationPoints = []
+        
+        # self.robots = []
+        # self.robot_names = []
+        # self.polytopes = []
+
+        # self.solvers = []
+        # self.total_times = []
+        # self.LPTimes = []
+        # self.initTimes = []
+        # self.structTimes = []
+
+        self.points = {}
         
         self.loadExperiment(file_name)
-
-    def loadCompPoint(self, compPoint):
-
-        for child in compPoint:
-            if child.tag == "poly":
-                if self.robust:
-                    self.polytopes.append(robustPoly(child.attrib['file_name']))
-                else:
-                    self.polytopes.append(staticPoly(child.attrib['file_name']))
-                    
-            elif child.tag == "robot":
-                self.robots.append(Robot.load_from_file(child.attrib['file_name']))
-                self.robot_names.append(child.attrib['name'])
-
-            elif child.tag == "times":
-                self.total_times.append(int(child.attrib['total']))
-                self.LPTimes.append(int(child.attrib['LP']))
-                self.initTimes.append(int(child.attrib['init']))
-                self.structTimes.append(int(child.attrib['struct']))
-
-            elif child.tag == "solver":
-                self.solvers.append(child.attrib['name'])
-            
-            else:
-                print("Unrecognise compPoint tag:", child.tag)
 
     def loadExperiment(self, file_name):
         print("Loading experiment...")
@@ -286,7 +389,9 @@ class PostProcessor:
             elif child.tag == 'numComp':
                 self.numComputedPoints = int(child.attrib['numComputedPoints'])
             elif child.tag == 'compPoint':
-                self.loadCompPoint(child)
+                compPt = ComputationPoint()
+                compPt.loadXML(child)
+                self.computationPoints.append(compPt)
             else:
                 print("Unrecognise tag: ", child.tag)
 
@@ -294,10 +399,10 @@ class PostProcessor:
 
     def display_mode_1(self):
         # print("There are {} inner vertices and {} outer vertices".format(len(self.polytopes[0].innerVertices), len(self.polytopes[0].outerVertices)))
-        ax, lines = self.robots[0].display_robot_configuration()
+        ax, lines = self.computationPoints[0].contactSet.display_robot_configuration()
 
         if self.robust:
-            poly_static = static_stability.static_stability_polyhedron(self.robots[0], 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
+            poly_static = static_stability.static_stability_polyhedron(self.computationPoints[0].contactSet, 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
             poly_static.project_static_stability()
             
             # ----------- display of static stability -----------
@@ -308,8 +413,21 @@ class PostProcessor:
             ax.plot(x1, y1, color="xkcd:red")
             # ax.plot(x1, y1, color="r")
 
-        self.polytopes[0].display(ax, dispInner=True, dispOuter=False)
+        self.computationPoints[0].polytopes[0].display(ax, dispInner=True, dispOuter=False)
 
+        # Displaying the points
+        for ptName in self.computationPoints[0].points.keys():
+            coord = self.computationPoints[0].points[ptName]
+            x = coord[0][0]
+            y = coord[1][0]
+            z = coord[2][0]
+            if (ptName in self.computationPoints[0].pointsColor.keys()):
+                color = self.computationPoints[0].pointsColor[ptName]
+            else:
+                color = "xkcd:red"
+            
+            ax.plot([x],[y],[z], 'o-', color = color)
+        
         # ax.set_xlim(-1.5, 1.5)
         # ax.set_ylim(-1.5, 1.5)
         # ax.set_zlim(-0.1, 2)
@@ -506,22 +624,74 @@ class PostProcessor:
 
         lines = []
 
-        def update(frame, lines, ax):
+        pointsData = {}
+        
+        def update(frame, lines, ax, pointsData):
             ax.cla()
             ax.set_xlabel("X")
             ax.set_ylabel("Y")
-            ax, lines = self.robots[frame].display_robot_configuration(ax)
-
+            # ax, lines = self.computationPoints[frame].contactSet.display_robot_configuration(ax)
+            lines = []
             # x1 = [v[0] for v in staticPolys[frame].inner_vertices]
             # x1.append(x1[0])
             # y1 = [v[1] for v in staticPolys[frame].inner_vertices]
             # y1.append(y1[0])
             # lines.extend(ax.plot(x1, y1, color="xkcd:red"))
+            
+                
+            for ptName in self.computationPoints[frame].points.keys():
+                coord = self.computationPoints[frame].points[ptName]
+                x = coord[0][0]
+                y = coord[1][0]
+                z = coord[2][0]
 
-            lines.extend(self.polytopes[frame].display(ax))
+                if (ptName in self.computationPoints[frame].pointsColor.keys()):
+                    color = self.computationPoints[frame].pointsColor[ptName]
+                else:
+                    color = "xkcd:red"
+                
+                lines.extend(ax.plot([x],[y],[z], 'o-', color=color, label=ptName))
 
+                if (ptName in pointsData.keys()):
+                    data = pointsData[ptName]
+                    data[0].append(x)
+                    data[1].append(y)
+                    data[2].append(z)
+                else:
+                    data = ([x], [y], [z])
+                    pointsData[ptName] = data
 
-        ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax), interval=10, blit=False, repeat_delay=200, save_count=1)
+            for ptName in pointsData.keys():
+                data = pointsData[ptName]
+
+                if (ptName in self.computationPoints[frame].pointsColor.keys()):
+                    color = self.computationPoints[frame].pointsColor[ptName]
+                else:
+                    color = "xkcd:red"
+
+                lines.extend(ax.plot(data[0], data[1], data[2], '-', color=color, alpha=0.2))
+
+                for (key1, key2) in self.computationPoints[frame].pairs.items():
+                    coord1 = self.computationPoints[frame].points[key1]
+                    coord2 = self.computationPoints[frame].points[key2]
+                    x = [coord1[0][0], coord2[0][0]]
+                    y = [coord1[1][0], coord2[1][0]]
+                    z = [coord1[2][0], coord2[2][0]]
+                    
+                    if (key1 in self.computationPoints[frame].pointsColor.keys()):
+                        color = self.computationPoints[frame].pointsColor[key1]
+                    else:
+                        color = "xkcd:red"
+                    
+                    lines.extend(ax.plot(x,y,z, '-', color=color))
+
+            lines.extend(self.computationPoints[frame].displayPolytopes(ax))
+            ax.set_xlim(-0.5, 1.0)
+            ax.set_ylim(-1.0, 0.5)
+            # ax.set_zlim(-0.1, 2)
+
+            
+        ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax, pointsData), interval=10, blit=False, repeat_delay=200, save_count=1)
 
         # print("Saving the animation...")
         # # moviewriter = FFMpegWriter(fps=20)
@@ -533,20 +703,70 @@ class PostProcessor:
 
     def display_mode_5(self):
         print("Starting display mode 5")
-        plt.plot(self.total_times)
+        total_times = [compPt.totalTime for compPt in self.computationPoints]
+        plt.plot(total_times)
         plt.xlabel("Contact set number")
         plt.ylabel("Computing time (ms)")
         plt.title("Equilibrium region computation time")
+        plt.show()
+
+        pointsData = {}
+        pointsColor = {}
+        for compPt in self.computationPoints:
+            for name in compPt.points.keys():
+                coord = compPt.points[name]
+                x = coord[0][0]
+                y = coord[1][0]
+                z = coord[2][0]
+            
+                if (name in pointsData.keys()):
+                    data = pointsData[name]
+                    data[0].append(x)
+                    data[1].append(y)
+                    data[2].append(z)
+                else:
+                    data = ([x], [y], [z])
+                    pointsData[name] = data
+                    pointsColor[name] = compPt.pointsColor[name]
+
+        for name in pointsData.keys():
+            if (name == "chebichev"):
+                data = pointsData[name]
+                color = pointsColor[name]
+
+                plt.plot(data[0], data[1], '-', color=color, label=name)
+                
+            elif (name == "chebichev_Max"):
+                data = pointsData[name]
+                color = pointsColor[name]
+
+                plt.plot(data[0], data[1], '-', color=color)
+            if (name == "baryPoint"):
+                data = pointsData[name]
+                color = pointsColor[name]
+
+                plt.plot(data[0], data[1], '-', color=color, label=name)
+                
+            elif (name == "baryPoint_Max"):
+                data = pointsData[name]
+                color = pointsColor[name]
+
+                plt.plot(data[0], data[1], '-', color=color)
+        plt.legend()
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        ax = plt.gca()
+        ax.set_aspect('equal', 'box')
         plt.show()
         
     def display_results(self):
 
         if self.mode == 1:
             self.display_mode_1()
-        elif self.mode == 2:
-            self.display_mode_2()
-        elif self.mode == 3:
-            self.display_mode_3()
+        # elif self.mode == 2:
+        #     self.display_mode_2()
+        # elif self.mode == 3:
+        #     self.display_mode_3()
         elif self.mode == 4:
             self.display_mode_4()
         elif self.mode == 5:
@@ -559,4 +779,7 @@ class PostProcessor:
 if __name__ == '__main__':
     postProcess = PostProcessor("/tmp/results.xml")
 
+    # postProcess.computationPoints = postProcess.computationPoints[-179:]
+    # postProcess.numComputedPoints = len(postProcess.computationPoints)
+    
     postProcess.display_results()
