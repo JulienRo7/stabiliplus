@@ -72,9 +72,24 @@ public:
   }
 
   */
+
+
+  // this seems to be a bit dangerous: now every body can modify the verties and the faces...
+  inline std::vector<std::shared_ptr<Vertex>> fullVertices() const
+  {
+    return m_vertices;
+  }
+
+  inline std::vector<std::shared_ptr<Face>> fullFaces() const
+  {
+    return m_faces;
+  }
+  
   // ----------- setters ----------
 
   // ---------- static functions ---------
+
+
 
 private:
   // ContactSet * m_contactSetPtr;

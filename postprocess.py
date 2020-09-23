@@ -4,10 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation, FFMpegWriter
-import xml.etree.ElementTree as ET # phone home!
 
+from matplotlib.tri import Triangulation
+from matplotlib.colors import LightSource
+
+import xml.etree.ElementTree as ET # phone home!
 import sys
 
+from scipy.spatial import ConvexHull
 
 sys.path.append("./python")
 
@@ -215,9 +219,11 @@ class robustPoly(polytope):
             else:
                 print("Unrecognized robust polytope tag: ", child.tag)
                 
-    def dispInner(self, ax, dispEdges=True, dispInnerNormals=False, color="xkcd:kelly green"):
+    def dispInner(self, ax, dispEdges=True, dispInnerNormals=False, dispVertexes=True, color="xkcd:kelly green"):
         # ----------- display of inner polyhedron -----------
-        innerline = ax.plot(self.innerX, self.innerY, self.innerZ, 'go')
+        innerline = []
+        if dispVertexes:
+            innerline = ax.plot(self.innerX, self.innerY, self.innerZ, color=color, marker='o')
 
         if dispInnerNormals:
             scale = 0.2
@@ -253,7 +259,88 @@ class robustPoly(polytope):
             lines.extend(self.dispOuter(ax, color=outerColor))
 
         return lines
+    
+    def flatDisplay(self, ax, color="xkcd:maroon", name=""):
+        self.innerX
+        self.innerY
+        inner = []
+        for i in range(len(self.innerX)):
+            inner.append([self.innerX[i], self.innerY[i]])
+            
+        conv = ConvexHull(np.reshape(np.array(inner), (len(self.innerX), 2)))
+        x = [self.innerX[i] for i in conv.vertices]
+        y = [self.innerY[i] for i in conv.vertices]
 
+        x.append(x[0])
+        y.append(y[0])
+
+        if (name == ""):
+            ax.plot(x, y, color=color)
+        else:
+            ax.plot(x, y, color=color, label=name)
+
+    def sideDisplay(self, ax, color="xkcd:green", name=""):
+        # build the triangulation object
+        # to get the list of triangular faces -> scipy.spatial.ConvexHull
+        # self.innerX
+        # self.innerY
+        # self.innerZ
+        numPts = len(self.innerX)
+        points = np.array([self.innerX, self.innerY, self.innerZ])
+        np.reshape(points, (numPts, 3))
+        
+        convex = ConvexHull(points.T)
+        # create the triangulation object in order to get the edges in a simple way...
+        triangle = Triangulation(self.innerX, self.innerY, convex.simplices)
+        light = LightSource(0, 70) 
+        # cmap=plt.get_cmap('gist_earth')
+        # rgb = light.shade(self.innerZ, cmap)
+        print(self.innerX)
+        print(self.innerY)
+        print(self.innerZ)
+
+        print(convex.points.T)
+        
+        points = [c for c in convex.points.T]
+        ax.plot_trisurf(self.innerX, self.innerY, convex.simplices, self.innerZ,
+        # ax.plot_trisurf(self.innerX, self.innerY, self.innerZ, 
+                         color=color, alpha=0.6, shade=True)
+        # plotting the edges:
+        # for e in triangle.edges:
+        #     edge = [e[0], e[1]]
+        #     ax.plot([self.innerX[e[0]], self.innerX[e[1]]],
+        #             [self.innerY[e[0]], self.innerY[e[1]]],
+        #             [self.innerZ[e[0]], self.innerZ[e[1]]],
+        #             color=color, linewidth=0.3)
+
+        # # plotting the normals...
+        # scale = 0.2
+        # X = []
+        # Y = []
+        # Z = []
+
+        # U = []
+        # V = []
+        # W = []
+        
+        # for simplice, equation in zip( convex.simplices, convex.equations):
+        #     X.append(sum([self.innerX[i] for i in simplice])/3)
+        #     Y.append(sum([self.innerY[i] for i in simplice])/3)
+        #     Z.append(sum([self.innerZ[i] for i in simplice])/3)
+
+        #     U.append(equation[0])
+        #     V.append(equation[1])
+        #     W.append(equation[2])
+
+        # ax.quiver(X, Y, Z, U, V, W, color="xkcd:salmon")
+
+            
+            
+            
+        
+        
+    
+    
 class ComputationPoint:
     def __init__(self):
         self.contactSet = None
@@ -293,11 +380,10 @@ class ComputationPoint:
                 elif (self.polyType == "constrained"):
                     poly1 = robustPoly()
                     poly1.loadXML(compPtRoot[0])
-
+                    self.polytopes.append(poly1)
+                    
                     poly2 = robustPoly()
                     poly2.loadXML(compPtRoot[1])
-
-                    self.polytopes.append(poly1)
                     self.polytopes.append(poly2)
                     
                 else:
@@ -428,10 +514,10 @@ class PostProcessor:
             
             ax.plot([x],[y],[z], 'o-', color = color)
         
-        # ax.set_xlim(-1.5, 1.5)
-        # ax.set_ylim(-1.5, 1.5)
+        ax.set_xlim(-0.0, 1.5)
+        ax.set_ylim(-0.0, 1.5)
         # ax.set_zlim(-0.1, 2)
-        ax.set_xlim(-0.5, 0.5)
+        # ax.set_xlim(-0.5, 0.5)
         ax.set_ylim(-0.5, 0.5)
         ax.set_zlim(-0.1, 2)
         
@@ -639,7 +725,8 @@ class PostProcessor:
             # lines.extend(ax.plot(x1, y1, color="xkcd:red"))
             
                 
-            for ptName in self.computationPoints[frame].points.keys():
+            # for ptName in self.computationPoints[frame].points.keys():
+            for ptName in ["comQP"]:
                 coord = self.computationPoints[frame].points[ptName]
                 x = coord[0][0]
                 y = coord[1][0]
@@ -661,7 +748,8 @@ class PostProcessor:
                     data = ([x], [y], [z])
                     pointsData[ptName] = data
 
-            for ptName in pointsData.keys():
+            # for ptName in pointsData.keys():
+            for ptName in ["comQP"]:
                 data = pointsData[ptName]
 
                 if (ptName in self.computationPoints[frame].pointsColor.keys()):
@@ -690,7 +778,6 @@ class PostProcessor:
             ax.set_ylim(-1.0, 0.5)
             # ax.set_zlim(-0.1, 2)
 
-            
         ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax, pointsData), interval=10, blit=False, repeat_delay=200, save_count=1)
 
         # print("Saving the animation...")
@@ -702,13 +789,13 @@ class PostProcessor:
         plt.show()
 
     def display_mode_5(self):
-        print("Starting display mode 5")
-        total_times = [compPt.totalTime for compPt in self.computationPoints]
-        plt.plot(total_times)
-        plt.xlabel("Contact set number")
-        plt.ylabel("Computing time (ms)")
-        plt.title("Equilibrium region computation time")
-        plt.show()
+        # print("Starting display mode 5")
+        # total_times = [compPt.totalTime for compPt in self.computationPoints]
+        # plt.plot(total_times)
+        # plt.xlabel("Contact set number")
+        # plt.ylabel("Computing time (ms)")
+        # plt.title("Equilibrium region computation time")
+        # plt.show()
 
         pointsData = {}
         pointsColor = {}
@@ -730,33 +817,123 @@ class PostProcessor:
                     pointsColor[name] = compPt.pointsColor[name]
 
         for name in pointsData.keys():
-            if (name == "chebichev"):
+            # if (name == "chebichev"):
+            #     data = pointsData[name]
+            #     color = pointsColor[name]
+
+            #     plt.plot(data[0], data[1], '-', color=color, label=name)
+                
+            # elif (name == "chebichev_Max"):
+            #     data = pointsData[name]
+            #     color = pointsColor[name]
+
+            #     plt.plot(data[0], data[1], '-', color=color)
+            # elif (name == "baryPoint"):
+            #     data = pointsData[name]
+            #     color = pointsColor[name]
+
+            #     plt.plot(data[0], data[1], '-', color=color, label=name)
+                
+            # elif (name == "baryPoint_Max"):
+            #     data = pointsData[name]
+            #     color = pointsColor[name]
+
+            #     plt.plot(data[0], data[1], '-', color=color)
+
+            if (name == "comQP"):
                 data = pointsData[name]
                 color = pointsColor[name]
 
                 plt.plot(data[0], data[1], '-', color=color, label=name)
-                
-            elif (name == "chebichev_Max"):
+            elif (name == "comQP_Max"):
                 data = pointsData[name]
                 color = pointsColor[name]
 
-                plt.plot(data[0], data[1], '-', color=color)
-            if (name == "baryPoint"):
-                data = pointsData[name]
-                color = pointsColor[name]
+                # plt.plot(data[0], data[1], '-', color=color)
 
-                plt.plot(data[0], data[1], '-', color=color, label=name)
-                
-            elif (name == "baryPoint_Max"):
-                data = pointsData[name]
-                color = pointsColor[name]
+        # plot the feet position...
+        # NonConservativeContactSet_0 = self.computationPoints[0].contactSet
+        # NonConservativeContactSet_end = self.computationPoints[-1].contactSet
 
-                plt.plot(data[0], data[1], '-', color=color)
-        plt.legend()
-        plt.xlabel('X')
-        plt.ylabel('Y')
-        ax = plt.gca()
-        ax.set_aspect('equal', 'box')
+        # ConservativeContactSet = Robot(NonConservativeContactSet_0.masse, NonConservativeContactSet_0.feet[:-5], NonConservativeContactSet_0.mu[:-5], flim=NonConservativeContactSet_0.flim[:-5], dim = 3)
+                                     
+        # x0, y0 = NonConservativeContactSet_0.support_polygon()
+        # plt.plot(x0, y0, color="k", label="Initial Non Conservative Support Polygon", linestyle="-.")
+        # x1, y1 = NonConservativeContactSet_end.support_polygon()
+        # plt.plot(x1, y1, color="k", label="Final Non Conservative Support Polygon", linestyle=":")
+
+        # x2, y2 = ConservativeContactSet.support_polygon()
+        # plt.plot(x2, y2, color="k", label="Conservative Support Polygon", linestyle="--")
+
+        # ax = plt.gca()
+        
+        # indexes = [0, 20, 40, 60, 80, 100]
+        # colors = ["xkcd:green", "xkcd:lime green", "xkcd:pale yellow", "xkcd:goldenrod", "xkcd:orange", "xkcd:red"]
+        # # labels = ["F=0N", "F=90N", "F=180N", "F=270N", "F=360N", "F=450N"]
+        # labels = ["x=0.98m", "x=1.04m", "x=1.10m", "x=1.16m", "x=1.22m", "x=1.28m"]
+        
+        # for i in range(len(indexes)):
+        #     ind = indexes[i]
+        #     poly = self.computationPoints[ind].polytopes[0]
+        #     poly.flatDisplay(ax, color=colors[i], name=labels[i])
+
+
+        # ax.set_title("Evolution of the Equilibrium Region as function of the X position of the Third Contact for F=100N")
+        
+        # # ax.set_title("Evolution of the Equilibrium Region as function of the Contact Force")
+        # ax.legend()
+        # plt.xlabel('X')
+        # plt.ylabel('Y')
+        # ax.set_xlim(-0.0, 1.2)
+        # ax.set_ylim(-0.6, 0.4)
+        # ax.set_aspect('equal', 'box')
+        # plt.show()
+
+        # # plotting the forces...
+        # fig = plt.figure()
+        # axX = fig.add_subplot(3, 1, 1)
+        # axY = fig.add_subplot(3, 1, 2)
+        # axZ = fig.add_subplot(3, 1, 3)
+
+        # forceLF = pointsData["forceLF"]
+        # colorLF = pointsColor["forceLF"]
+        # forceRF = pointsData["forceRF"]
+        # colorRF = pointsColor["forceRF"]
+        # forceRH = pointsData["forceRH"]
+        # colorRH = pointsColor["forceRH"]
+
+        # axX.plot(forceLF[0], color=colorLF, label="LF")
+        # axY.plot(forceLF[1], color=colorLF, label="LF")
+        # axZ.plot(forceLF[2], '.-', color=colorLF, label="LF")
+
+        # axX.plot(forceRF[0], color=colorRF, label="RF")
+        # axY.plot(forceRF[1], color=colorRF, label="RF")
+        # axZ.plot(forceRF[2], color=colorRF, label="RF")
+        
+        # axX.plot(forceRH[0], color=colorRH, label="RH")
+        # axY.plot(forceRH[1], color=colorRH, label="RH")
+        # axZ.plot(forceRH[2], color=colorRH, label="RH")
+
+        # axX.set_title("Forces on the X axis")
+        # axX.grid()
+        # axX.legend()
+
+        # axY.set_title("Forces on the Y axis")
+        # axY.grid()
+        # axY.legend()
+
+        # axZ.set_title("Forces on the Z axis")
+        # axZ.grid()
+        # axZ.legend()
+        
+        # plt.show()
+
+        fig2 = plt.figure()
+        ax2 = fig2.add_subplot(projection="3d")
+
+        poly = self.computationPoints[0].polytopes[0]
+        poly.sideDisplay(ax2)
+
         plt.show()
         
     def display_results(self):
@@ -770,7 +947,7 @@ class PostProcessor:
         elif self.mode == 4:
             self.display_mode_4()
         elif self.mode == 5:
-            self.display_mode_4()
+            # self.display_mode_4()
             self.display_mode_5()
         else:
             assert False, "Unknown Mode {}".format(self.mode)

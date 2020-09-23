@@ -12,9 +12,10 @@
 
 #include "problemDescriptor/contactSet.h"
 
-#include "libqhullcpp/Qhull.h"
-#include "libqhullcpp/QhullFacetList.h"
-#include "libqhullcpp/QhullFacetSet.h"
+// qhull
+#include <libqhullcpp/Qhull.h>
+#include <libqhullcpp/QhullFacetList.h>
+#include <libqhullcpp/QhullFacetSet.h>
 
 class ConstrainedEquilibriumPolytope : public StabilityPolytope
 {
@@ -61,7 +62,11 @@ class ConstrainedEquilibriumPolytope : public StabilityPolytope
 
   int get_numberOfVertices() const override;
 
-  Eigen::Vector3d projectChebMaxOnPolyMin() const;
+  // Eigen::Vector3d projectChebMaxOnPolyMin() const;
+  inline std::shared_ptr<RobustStabilityPolytope> polyMin() const
+  {
+    return polyMin_;
+  }
   
  private:
   std::vector<std::string> constrainedContactNames_;

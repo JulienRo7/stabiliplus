@@ -5,6 +5,9 @@ project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
 find_package(Qhull REQUIRED)
 
+find_package(sch-core REQUIRED)
+find_package(eigen-quadprog REQUIRED)
+
 set(CMAKE_CXX_FLAGS "-lstdc++ -std=c++17")
 set(CMAKE_CXX_COMPILER "/usr/local/bin/gcc")
 # add_subdirectory(lpsolve55)
@@ -119,7 +122,8 @@ target_link_libraries(StabilityPolytope
   Eigen3::Eigen
   wrappers
   PRIVATE
-  qhullcpp qhull_r  
+  qhullcpp
+  qhull_r
   )
 
 ### Main executable ###
@@ -127,6 +131,8 @@ target_link_libraries(StabilityPolytope
 add_executable(main
   ${PROJECT_SOURCE_DIR}/src/main.cpp
   ${PROJECT_SOURCE_DIR}/src/experimenter.cpp
+  ${PROJECT_SOURCE_DIR}/src/CoMQP.cpp
+  ${PROJECT_SOURCE_DIR}/src/PointProjector.cpp
   )
 
 target_include_directories(main
@@ -149,6 +155,9 @@ target_include_directories(main
 target_link_libraries(main
   PRIVATE
   ProblemDescriptor StabilityPolytope tinyxml2
+  sch-core::sch-core
+  eigen-quadprog::eigen-quadprog
+  -lm
   )
 
 

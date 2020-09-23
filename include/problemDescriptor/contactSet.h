@@ -32,6 +32,13 @@ public:
   // ----------- constructors and destructor ----------
   ContactSet(bool staticCase);
   ContactSet(bool staticCase, std::string const & robot_file_name, int numFrictionSides = 8);
+
+  /*! \brief Copy constructor
+   */
+  //ContactSet(const ContactSet& other);
+  
+  /*! \brief destructor
+   */
   ~ContactSet();
 
   // ----------- main class methods ----------
@@ -146,6 +153,10 @@ public:
   /*! \brief return the list of constrained contact
    */
   std::vector<std::string> constrainedContactNames() const;
+
+  /*! \brief return the number on constrained contacts
+   */
+  int numberConstrainedContacts() const;
   
   // ----------- setters ----------
   void addContact(std::string contactName);
@@ -201,12 +212,30 @@ public:
     m_numberOfFrictionSides = fricSides;
   }
 
+  inline int frictionSides() const
+  {
+    return m_numberOfFrictionSides;
+  }
+
   /*! \brief setter to change the type of a contact 
    * The valid values for the type are support or constrained
    */ 
   void updateContactType(std::string contactName, ContactType type);
 
   void printAcc();
+
+  inline const int globRows() const
+  {
+    return m_globRows;
+  }
+  
+  inline const int globCols() const
+  {
+    return m_globCols;
+  }
+
+  Eigen::VectorXd Ydes() const;
+  Eigen::MatrixXd forcePos() const;
   
   // ---------- static functions ---------
   static Eigen::Matrix3d skewSymmetric(Eigen::Vector3d const & vect);

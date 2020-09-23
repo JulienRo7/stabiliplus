@@ -45,6 +45,24 @@ ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_nam
   // std::cout << "The second constructor for contactSet has been called!" << std::endl;
 }
 
+// ContactSet::ContactSet(const ContactSet& other):
+//   ProblemDescriptor("ContactSet_copy"),
+//   staticCase_(other.staticCase_),
+//   m_numberOfFrictionSides(other.m_numberOfFrictionSides),
+//   m_mass(other.m_mass),
+//   m_dim(other.m_dim)
+// {
+//   for (auto contact: other.m_contacts)
+//     {
+//       m_contacts.push_back(contact);
+//     }
+
+//   for (auto acc: other.m_accelerations)
+//     {
+//       m_accelerations.push_back(acc);
+//     }
+// }
+
 ContactSet::~ContactSet()
 {
   // std::cout << "ContactSet destructor called!" << '\n';
@@ -201,6 +219,60 @@ void ContactSet::buildFrictionVectorf()
     }
 }
 
+Eigen::VectorXd ContactSet::Ydes() const
+{
+  // m_globCols = m_subCols * m_accelerations.size() + m_dim;
+  // m_subCols = 3*m_contacts.size();
+
+  Eigen::VectorXd subYdes = Eigen::VectorXd::Zero(m_subCols);
+  Eigen::Vector3d f = Eigen::Vector3d::Zero();
+  Eigen::Matrix3d rot = Eigen::Matrix3d::Identity();
+  
+  for (int i = 0; i<m_contacts.size(); i++)
+    {
+      if (m_contacts[i].isConstrained())
+	{
+	  f[2] = m_contacts[i].fmax();
+	  rot = m_contacts[i].get_rotation();
+	  subYdes.segment<3>(3*i) = rot * f;
+	}
+    }
+  
+  Eigen::VectorXd Ydes(m_globCols);
+  for (int i = 0; i<m_accelerations.size(); i++)
+    {
+      Ydes.segment(m_subCols * i, m_subCols) = subYdes;
+    }
+
+  return Ydes;
+}
+
+Eigen::MatrixXd ContactSet::forcePos() const
+{
+  //   m_subCols = 3*m_contacts.size();
+  // m_globCols = m_subCols * m_accelerations.size() + m_dim;
+
+  // m_subRows = (m_numberOfFrictionSides + 2)* m_contacts.size();
+  // m_globRows = m_subRows * m_accelerations.size() + 2 * m_dim;
+  Eigen::MatrixXd F = Eigen::MatrixXd::Zero(m_contacts.size() * m_accelerations.size(), m_globCols);
+  Eigen::MatrixXd subF = Eigen::MatrixXd::Zero(m_contacts.size(), m_subCols);
+  Eigen::Vector3d fMin;
+  Eigen::Matrix3d rot;
+  fMin << 0, 0, -1;
+  
+  for (int i = 0; i < m_contacts.size(); i++)
+    {
+      rot = m_contacts[i].get_rotation();
+      subF.block<1, 3>(i, 3*i) = (rot * fMin).transpose();
+    }
+
+  for (int i = 0; i < m_accelerations.size(); i++)
+    {
+      F.block(i * m_contacts.size(), i * m_subCols, m_contacts.size(), m_subCols) = subF;
+    }
+
+  return F;
+}
 
 // ----------- input functions ----------
 void ContactSet::loadContactSet(std::string const & file_name)
@@ -479,6 +551,13 @@ std::vector<std::string> ContactSet::constrainedContactNames() const
   return names;
 }
 
+int ContactSet::numberConstrainedContacts() const
+{
+  return std::count_if(m_contacts.begin(), m_contacts.end(), [](auto c){
+      return c.isConstrained();
+    });
+}
+
 // ------------------ setter -----------------------
 void ContactSet::translateContact(int contactIndex, Eigen::Vector3d translation)
 {
@@ -611,6 +690,8 @@ void ContactSet::printAcc()
     }
   std::cout << std::endl;
 }
+
+
 // ---------- Static function -----------
 
 Eigen::Matrix3d ContactSet::skewSymmetric(Eigen::Vector3d const & vect)
@@ -619,3 +700,5 @@ Eigen::Matrix3d ContactSet::skewSymmetric(Eigen::Vector3d const & vect)
   vect_hat << 0, -vect(2), vect(1), vect(2), 0, -vect(0), -vect(1), vect(0), 0;
   return vect_hat;
 }
+
+

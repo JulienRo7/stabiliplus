@@ -9,6 +9,7 @@ ConstrainedEquilibriumPolytope::ConstrainedEquilibriumPolytope(std::shared_ptr<C
 
   // create a copy of the contactSet contactMax with fmax assigned to the constrained contacts
   contactSetMax_ = std::make_shared<ContactSet> (*contactSet);
+  
   // create a copy of the contactSet contactMin with fmin assigned to the constrained contacts
   contactSetMin_ = std::make_shared<ContactSet> (*contactSet);
 
@@ -30,8 +31,10 @@ ConstrainedEquilibriumPolytope::ConstrainedEquilibriumPolytope(std::shared_ptr<C
 
   // create a stability region polMax with contactMax
   polyMax_ = std::make_shared<RobustStabilityPolytope> (contactSetMax_, maxIteration, maxError, solverType);
+
   // create a stability region polMin with contactMin
   polyMin_ = std::make_shared<RobustStabilityPolytope> (contactSetMin_, maxIteration, maxError, solverType);
+
 }
 
 void ConstrainedEquilibriumPolytope::initSolver()
@@ -57,89 +60,113 @@ void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
   m_solverEnded = true;
 
   // // get the planes and vertices from the inner approximation of polMax
-  // auto maxPlanes = polyMax_->constraintPlanes();
+  auto maxPlanes = polyMax_->constraintPlanes();
   auto maxVertices = polyMax_->vertices();
 
   // // get the planes and vertices from the inner approximation of polMin
-  // auto minPlanes = polyMin_->constraintPlanes();
+  auto minPlanes = polyMin_->constraintPlanes();
   auto minVertices = polyMin_->vertices();
    
-
   std::vector<Eigen::Vector3d> vertices;
   vertices.insert(vertices.end(), maxVertices.begin(), maxVertices.end());
   vertices.insert(vertices.end(), minVertices.begin(), minVertices.end());
 
+  /* to compute the intersection I have two solutions:
+   * 1- Use QHull to compute it directly
+   * 2- Take the points in min that are in max and take the point in max that are in min
+
+   * First solution seems to be the best
+   * Second Solution is tricky and should be last resort
+   */ 
+
+
+  
   // // compute the intersection of polMax and polMin using qhull
   // // planes_.insert(planes_.end(), maxPlanes.begin(), maxPlanes.end());
-  // std::vector<Eigen::Vector4d> planes;
-  // planes.insert(planes.end(), maxPlanes.begin(), maxPlanes.end());
+  std::vector<Eigen::Vector4d> planes;
+  planes.insert(planes.end(), maxPlanes.begin(), maxPlanes.end());
   // planes.insert(planes.end(), minPlanes.begin(), minPlanes.end());
-
-  // // running Qhull
+  planes_ = {};
+  planes_ = planes;
+  
+  // running Qhull
   // std::vector<double> planes_coord;
   
-  // // std::cout << "List of the planes: " << std::endl;
+  // std::cout << "List of the planes: " << std::endl;
   // for (auto plane: planes)
   //   {
   //     planes_coord.push_back(plane[0]);
   //     planes_coord.push_back(plane[1]);
   //     planes_coord.push_back(plane[2]);
-  //     planes_coord.push_back(-plane[3]);    
+  //     planes_coord.push_back(-plane[3]);
+  //     std::cout << plane.transpose() << std::endl;
   //   }
-  // // std::cout << "End of the list!" << std::endl;
+  // std::cout << "End of the list!" << std::endl;
 
-  std::vector<double> ptsCoord;
-  for (auto v:vertices)
-    {
-      ptsCoord.push_back(v[0]);
-      ptsCoord.push_back(v[1]);
-      ptsCoord.push_back(v[2]);
-    }
+  // std::vector<double> ptsCoord;
+  // for (auto v:vertices)
+  //   {
+  //     ptsCoord.push_back(v[0]);
+  //     ptsCoord.push_back(v[1]);
+  //     ptsCoord.push_back(v[2]);
+  //   }
   
   // // std::cout << "Starting Qhull" << std::endl;
-  // Eigen::Vector3d feasiblePt = chebichevCenter(planes);
+  // Eigen::Vector3d feasiblePt = StabilityPolytope::chebichevCenter(planes);
+  // std::cout << "[Stabiliplus] feasible Point is: " << feasiblePt.transpose() << std::endl;
   
-  orgQhull::Qhull qhull;
-
+  // orgQhull::Qhull qhull;
+  // // qhull.setOutputStream(&std::cout);
+  // // qhull.enableOutputStream();
+  
   // std::vector<double> fpCoords;
   // fpCoords.push_back(feasiblePt[0]);
   // fpCoords.push_back(feasiblePt[1]);
   // fpCoords.push_back(feasiblePt[2]);
   // orgQhull::Coordinates feasiblePoint(fpCoords);
-  // qhull.setFeasiblePoint(feasiblePoint);
   
-  qhull.runQhull("", 3, vertices.size(), ptsCoord.data(), "s n");
+  
+  // qhull.runQhull("", 4, planes.size(), planes_coord.data(), "H Fp Fv");
+  // qhull.runQhull("", 3, vertices.size(), ptsCoord.data(), "s n");
 
-  auto facetList = qhull.facetList().toStdVector();
-  // store in planes_ the facets
-  Eigen::Vector4d plane;
+  // I guess it is time for some display
+  
+  // auto facetList = qhull.facetList().toStdVector();
+  // // store in planes_ the facets
+  // Eigen::Vector4d plane;
 
-  //std::cout << "List of the planes according to QHull:" << std::endl;
-  for (auto facet: facetList)
-  {
-    plane << *(facet.hyperplane().coordinates()),
-      *(facet.hyperplane().coordinates()+1),
-      *(facet.hyperplane().coordinates()+2),
-      -facet.hyperplane().offset();
-    //std::cout << "Plane: " << plane.transpose() << std::endl;
-  }
+  // //std::cout << "List of the planes according to QHull:" << std::endl;
+  // for (auto facet: facetList)
+  // {
+  //   auto innerPlane = facet.hyperplane();
+  //   plane << innerPlane[0],
+  //     innerPlane[1],
+  //     innerPlane[2],
+  //     -innerPlane.offset();
+  //   // plane << *(facet.hyperplane().coordinates()),
+  //   //   *(facet.hyperplane().coordinates()+1),
+  //   //   *(facet.hyperplane().coordinates()+2),
+  //   //   -facet.hyperplane().offset();
+
+  //   planes_.push_back(plane);
+  // }
   //std::cout << "End of the list of planes " << std::endl;
     
   
-  auto qhullVertices = qhull.vertexList().toStdVector();
-  // store in vertices_ the vertices
+  // auto qhullVertices = qhull.vertexList().toStdVector();
+  // // store in vertices_ the vertices
   
-  Eigen::Vector3d vertex;
-  int index = 0;
+  // Eigen::Vector3d vertex;
+  // int index = 0;
   
-  for (auto v: qhullVertices)
-    {
-      vertex << *(v.point().coordinates()),
-	*(v.point().coordinates()+1),
-	*(v.point().coordinates()+2);
-      vertices_[index] = vertex;
-      index ++;
-    }
+  // for (auto v: qhullVertices)
+  //   {
+  //     vertex << *(v.point().coordinates()),
+  // 	*(v.point().coordinates()+1),
+  // 	*(v.point().coordinates()+2);
+  //     vertices_[index] = vertex;
+  //     index ++;
+  //   }
   
   // //std::cout << qhull.facetList();
   
@@ -202,6 +229,7 @@ void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
 
   // std::cout << "Results Extracted" << std::endl;
   // std::cout << "Projected ChebichevCenter: " << projectChebMaxOnPolyMin().transpose() << std::endl;
+
 }
 
 void ConstrainedEquilibriumPolytope::endSolver()
@@ -318,9 +346,9 @@ Eigen::Vector3d ConstrainedEquilibriumPolytope::chebichevCenter() const
   // center /= 2;
 
   // return center;
-  projectChebMaxOnPolyMin();
+  //projectChebMaxOnPolyMin();
   
-  return polyMax_->chebichevCenter();
+  return StabilityPolytope::chebichevCenter(planes_);
 }
 
 int ConstrainedEquilibriumPolytope::get_numberOfVertices() const
@@ -328,12 +356,97 @@ int ConstrainedEquilibriumPolytope::get_numberOfVertices() const
   return vertices_.size();
 }
 
-Eigen::Vector3d ConstrainedEquilibriumPolytope::projectChebMaxOnPolyMin() const
-{
+// Eigen::Vector3d ConstrainedEquilibriumPolytope::projectChebMaxOnPolyMin() const
+// {
   
-  // create the sch-core object
-  
+//   // create the sch-core S_Polyhedron object
 
-  // project
-  return Eigen::Vector3d::Zero();
-}
+//   sch::S_Polyhedron poly;
+//   auto polyAlgo = poly.getPolyhedronAlgorithm();
+  
+//   /*
+//     First add the vertices:
+//     - get them from the poly object
+//     - create a S_PolyhedronVertex Object 
+//     - add it the S_Polyhedron object using the right method
+//   */
+
+//   sch::S_PolyhedronVertex *v;
+//   Eigen::Vector3d coord;
+  
+//   for (auto vertex: polyMin_->fullVertices())
+//     {
+//       v = new sch::S_PolyhedronVertex();
+//       coord = vertex->get_coordinates();
+//       v->setCoordinates(coord[0], coord[1], coord[2]);
+//       v->setNumber(unsigned (vertex->get_index()));
+//       polyAlgo->vertexes_.push_back(v);
+//     }
+  
+//   /*
+//     Second add the normal/faces
+//     - Get the faces from the polytope object
+//     - create the corresponding PolyhedronTriangle Object
+//         - normal 
+// 	- corresponding vertices
+//     - add it to the S_Polyhedron
+
+//     Third add the neighboring vertices
+//     - Go through the edges of the polytope object 
+//     - Or add them when creating the triangles
+//   */
+
+//   int a, b, c;
+//   sch::S_PolyhedronVertex *va, *vb, *vc;
+  
+//   for (auto face: polyMin_->fullFaces())
+//     {
+
+//       sch::PolyhedronTriangle t;
+//       coord = face->get_normal();
+
+//       t.normal.Set(coord[0], coord[1], coord[2]);
+//       t.normal.normalize();
+
+//       a = face->get_vertex1()->get_index();
+//       b = face->get_vertex2()->get_index();
+//       c = face->get_vertex3()->get_index();
+
+//       auto pred_a = [&a](sch::S_PolyhedronVertex *v){
+// 	return v->getNumber() == a;
+//       };
+//       va = *(std::find_if(polyAlgo->vertexes_.begin(), polyAlgo->vertexes_.end(), pred_a));
+
+//       auto pred_b = [&b](sch::S_PolyhedronVertex *v){
+// 	return v->getNumber() == b;
+//       };
+//       vb = *(std::find_if(polyAlgo->vertexes_.begin(), polyAlgo->vertexes_.end(), pred_b));
+
+//       auto pred_c = [&c](sch::S_PolyhedronVertex *v){
+// 	return v->getNumber() == c;
+//       };
+//       vc = *(std::find_if(polyAlgo->vertexes_.begin(), polyAlgo->vertexes_.end(), pred_c));
+
+//       va->addNeighbor(vb);
+//       va->addNeighbor(vc);
+
+//       vb->addNeighbor(va);
+//       vb->addNeighbor(vc);
+
+//       vc->addNeighbor(va);
+//       vc->addNeighbor(vb);
+      
+//       polyAlgo->triangles_.push_back(t);
+//     }
+  
+//   /*
+//     Forth apply the finishing method
+//     - updateFastArrays
+//     - deleteVertexesWithoutNeighbors
+//    */
+//   polyAlgo->updateVertexNeighbors();
+//   polyAlgo->updateFastArrays();
+  
+//   // project
+//   return Eigen::Vector3d::Zero();
+// }

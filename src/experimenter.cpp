@@ -13,6 +13,7 @@ void ComputationPoint::compute() {
   auto start = std::chrono::high_resolution_clock::now();
   if (robust_)
     {
+      
       if (contactSet_->hasConstrainedContact())
 	{
 	  polytope_ = std::make_shared<ConstrainedEquilibriumPolytope> (contactSet_, maxIt_, precision_, solver_);
@@ -35,7 +36,13 @@ void ComputationPoint::compute() {
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop -start);
   
   totalTime_ = duration.count();
-  
+
+  // Compute the points that need to be saved using the lambda functions
+  computeOptimQP();
+  for (auto& cptPt: computerPoints_)
+    {
+      computedPoints_[cptPt.first] = cptPt.second(this);
+    }
 }
 
 void ComputationPoint::display() const
@@ -65,11 +72,66 @@ void ComputationPoint::printTimings() const
       std::cout << "Structure time: " << polytope_->structTime() << " µs" << std::endl;
     }
 }
+
+void ComputationPoint::computeOptimQP()
+{
+  comQP_ = std::make_shared<CoMQP>();
+  comQP_->setContactSet(contactSet_);
+  comQP_->dontConsiderConstrained();
+
+  // objective CoM
+  // Eigen::Vector3d com =  poly->chebichevCenter();
+  Eigen::Vector3d com =  polytope_->baryPoint();
+  com(2) = 0.75;
+    
+  comQP_->solve(com);
+
+  // computing the contact forces.
+  auto result = comQP_->resultVector();
+
+  // the first 4x3 lines correspond to LF
+  forceLF_ = Eigen::Vector3d::Zero();
+  for (int i = 0; i < 4; i++)
+    {
+      forceLF_ += result.segment<3>(3*i);
+    }
   
+  // the next 4x3 lines correspond to RF
+  forceRF_ = Eigen::Vector3d::Zero();
+  for (int i = 0; i<4; i++)
+    {
+      forceRF_ += result.segment<3>(4*3+3*i);
+    }
+  
+  // if there are more then 4x3 + 4x3 + 3 variable the next 5x3 variables correspond to RH
+  forceRH_ = Eigen::Vector3d::Zero();
+  if (result.size() > 27)
+    {
+      for (int i = 0; i<5; i++)
+	{
+	  forceRH_ += result.segment<3>(24 + 3 * i);
+	}
+    }
+}
+
+Eigen::Vector3d ComputationPoint::getOptimCoM() const
+{
+  auto com = comQP_->resultCoM();
+  std::cout << "The QP is solved, the result is " << com.transpose() << std::endl;
+  return com;
+}
+
+
+void ComputationPoint::addLambda(std::string name, std::function<Eigen::Vector3d(ComputationPoint*)> computer, std::string color)
+{
+  computerPoints_[name]=computer;
+  computedPointsColor_[name]=color;
+}
+
 tinyxml2::XMLElement * ComputationPoint::xmlComputationPoint(tinyxml2::XMLDocument & doc, int index) const
 {  
   // get index from name? maybe...
-    
+  
   // Saving the polytope: this should depend on the type of polytope (constrained Equilibrium need to save two polytopes) Maybe I should consider saving polytopes as xml...
   std::string poly_name;
   poly_name = "/tmp/polytopes/polytope_" + std::to_string(index) + ".xml";
@@ -143,7 +205,7 @@ tinyxml2::XMLElement * ComputationPoint::xmlComputationPoint(tinyxml2::XMLDocume
 
     ptXML->SetAttribute("x", coord[0]);
     ptXML->SetAttribute("y", coord[1]);
-    ptXML->SetAttribute("z", 0.74);
+    ptXML->SetAttribute("z", coord[2]);
 
     ptXML->SetAttribute("color", color.c_str());
 
@@ -151,37 +213,12 @@ tinyxml2::XMLElement * ComputationPoint::xmlComputationPoint(tinyxml2::XMLDocume
   };
 
   Eigen::Vector3d point;
-  
-  if (contactSet_->hasConstrainedContact())
+
+  for (auto& cptPt: computedPoints_)
     {
-      auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (polytope_);
-
-      point = poly->baryPointMin();
-      addPoint(point, "baryPoint_Min", "xkcd:red");
-
-      point = poly->baryPointMax();
-      addPoint(point, "baryPoint_Max", "xkcd:red");
-
-      point = poly->chebichevCenterMin();
-      addPoint(point, "chebichev_Min", "xkcd:blue");
-
-      point = poly->chebichevCenterMax();
-      addPoint(point, "chebichev_Max", "xkcd:blue");
-      
+      addPoint(cptPt.second, cptPt.first, computedPointsColor_.at(cptPt.first));
     }
-  else
-    {
-      point = polytope_->baryPoint();
-      addPoint(point, "baryPoint", "xkcd:red");
-
-      point = polytope_->chebichevCenter();
-      addPoint(point, "chebichev", "xkcd:blue");
-    }
-  
-  // if constrained
-  
-  
-  
+    
   return xmlComputationPoint;
 }
 
@@ -401,7 +438,7 @@ void Experimenter::run_exp5()
   std::cout << "Loading files from folder: " << m_contactSetFileName << std::endl;
   
   std::vector<std::string> contactSetNames;
-
+  
   for (auto p: std::filesystem::directory_iterator(m_contactSetFileName))
     {
       contactSetNames.push_back(p.path().string());
@@ -420,12 +457,95 @@ void Experimenter::run_exp5()
   std::sort(contactSetNames.begin(), contactSetNames.end(), compFiles);
 
   std::cout << "Found "<< contactSetNames.size() << " contactSet files" << std::endl;
+
+  // creating the lambda functions
+  auto computerBaryPoint = [](ComputationPoint * comptPt){
+    auto poly = comptPt->polytope();
+    return poly->baryPoint();
+  };
+
+  auto computerChebichev = [](ComputationPoint * comptPt){
+    auto poly = comptPt->polytope();
+    return poly->chebichevCenter();
+  };
+
+  auto computerBaryPointMin = [](ComputationPoint * comptPt){
+    auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+    return poly->baryPointMin();
+  };
+
+  auto computerBaryPointMax = [](ComputationPoint * comptPt){
+    auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+    return poly->baryPointMax();
+  };
+
+  auto computerChebichevMin = [](ComputationPoint * comptPt){
+    auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+    return poly->chebichevCenterMin();
+  };
   
+  auto computerChebichevMax = [](ComputationPoint * comptPt){
+    auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+    return poly->chebichevCenterMax();
+  };  
+
+  auto computerCoMQP = [](ComputationPoint * comptPt){
+    return comptPt->getOptimCoM();
+  };
+
+  // auto computerCoMQPProjected = [](ComputationPoint * comptPt){
+        
+  //   auto contactSet = comptPt->contactSet();
+  //   auto comQP = CoMQP(contactSet);
+
+  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+  //   Eigen::Vector3d com = poly->chebichevCenterMax();
+  //   com(2) = 0.75;
+    
+  //   comQP.solve(com);
+    
+  //   return comQP.resultCoM();
+  // };
+
+  auto forceLF = [](ComputationPoint * comptPt){
+    return comptPt->getForceLF();
+  };
+
+  auto forceRF = [](ComputationPoint * comptPt){
+    return comptPt->getForceRF();
+  };
+
+  auto forceRH = [](ComputationPoint * comptPt){
+    return comptPt->getForceRH();
+  };
+  
+  // creating the ComputationPoint obejcts
   std::shared_ptr<ComputationPoint> compPt;
   
   for (auto name: contactSetNames)
     {
       compPt = std::make_shared<ComputationPoint> (name, m_numFrictionSides, m_solver, m_robust);
+      // if (compPt->contactSet()->hasConstrainedContact())
+      // 	{
+      // 	  // compPt->addLambda("baryPoint_Min", computerBaryPointMin, "xkcd:red");
+      // 	  // compPt->addLambda("baryPoint_Max", computerBaryPointMax, "xkcd:red");
+      // 	  // compPt->addLambda("chebichev_Min", computerChebichevMin, "xkcd:blue");
+      // 	  // compPt->addLambda("chebichev_Max", computerChebichevMax, "xkcd:blue");
+      // 	  // compPt->addLambda("comQP_min", computerCoMQPProjected, "xkcd:purple");
+      // 	  compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
+      // 	}
+      // else
+      // 	{
+      // 	  // compPt->addLambda("baryPoint", computerBaryPoint, "xkcd:red");
+      // 	  // compPt->addLambda("chebichev", computerChebichev, "xkcd:blue");
+      // 	  compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
+      // 	}
+      compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
+      
+      compPt->addLambda("forceLF", forceLF, "xkcd:red");
+      compPt->addLambda("forceRF", forceRF, "xkcd:blue");
+      compPt->addLambda("forceRH", forceRH, "xkcd:green");
+      
       computationPoints_.push_back(compPt);
     }
 
@@ -435,7 +555,6 @@ void Experimenter::run_exp5()
   auto start = std::chrono::high_resolution_clock::now();
   for (auto compPt : computationPoints_)
     {
-      
       compPt->compute();
       cpt+=1.;
       std::cout << 100*cpt/max << " %\r";
@@ -449,8 +568,6 @@ void Experimenter::run_exp5()
   std::cout << "#-----------------------------" << std::endl;
   std::cout << std::endl;
 }
-
-
 
 
 // ---------- outputs and getters -----------

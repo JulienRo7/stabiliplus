@@ -5,6 +5,10 @@
 #include "polytope/staticStabilityPolytope.h"
 #include "polytope/constrainedEquilibriumPolytope.h"
 #include "problemDescriptor/contactSet.h"
+
+#include "CoMQP.h"
+#include "PointProjector.h"
+
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -13,6 +17,8 @@
 #include <tinyxml2.h>
 #include <typeinfo> // operator typeid
 #include <vector>
+
+#include <functional> // C++ 11
 
 #include <filesystem> // C++ 17
 
@@ -26,11 +32,42 @@ class ComputationPoint
 
   void display() const;
   void printTimings() const;
+
+  void computeOptimQP();
+  inline Eigen::Vector3d getForceLF() const
+  {
+    return forceLF_;
+  }
+  
+  inline Eigen::Vector3d getForceRF() const
+  {
+    return forceRF_;
+  }
+  
+  inline Eigen::Vector3d getForceRH() const
+  {
+    return forceRH_;
+  }
+  
+  Eigen::Vector3d getOptimCoM() const;
+
+  // setter
+  void addLambda(std::string name, std::function<Eigen::Vector3d(ComputationPoint*)> computer, std::string color="xkcd:red");
   
   // getter
   inline int totalTime() const
   {
     return totalTime_;
+  }
+
+  inline std::shared_ptr<ContactSet> contactSet() const
+  {
+    return contactSet_;
+  }
+
+  inline std::shared_ptr<StabilityPolytope> polytope() const
+  {
+    return polytope_;
   }
   
   tinyxml2::XMLElement * xmlComputationPoint(tinyxml2::XMLDocument & doc, int index) const;
@@ -47,6 +84,18 @@ class ComputationPoint
   std::shared_ptr<ContactSet> contactSet_;
   std::shared_ptr<StabilityPolytope> polytope_;
   int totalTime_;
+
+  /* \brief List of lambda function that compute points that will be saved
+     each lambda function should take as argument a pointer to a computation point (I guess...)
+   */
+  std::map<std::string, std::function<Eigen::Vector3d(ComputationPoint*)>> computerPoints_; 
+  std::map<std::string, Eigen::Vector3d> computedPoints_;
+  std::map<std::string, std::string> computedPointsColor_;
+
+  std::shared_ptr<CoMQP> comQP_;
+  Eigen::Vector3d forceLF_;
+  Eigen::Vector3d forceRF_;
+  Eigen::Vector3d forceRH_;
   
 }; // class ComputationPoint
 
