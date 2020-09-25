@@ -48,15 +48,17 @@ void ConstrainedEquilibriumPolytope::initSolver()
 
 void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
 {
+  // std::cout << "Computing Constrained Polytope" << std::endl;
   // projection polMax
   polyMax_->initSolver();
   polyMax_->projectionStabilityPolyhedron();
   polyMax_->endSolver();
+  // std::cout << "PolyMax Computed" << std::endl;
   // projection polMin
   polyMin_->initSolver();
   polyMin_->projectionStabilityPolyhedron();
   polyMin_->endSolver();
-
+  // std::cout << "PolyMin Computed!" << std::endl;
   m_solverEnded = true;
 
   // // get the planes and vertices from the inner approximation of polMax
@@ -64,12 +66,12 @@ void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
   auto maxVertices = polyMax_->vertices();
 
   // // get the planes and vertices from the inner approximation of polMin
-  auto minPlanes = polyMin_->constraintPlanes();
-  auto minVertices = polyMin_->vertices();
+  // auto minPlanes = polyMin_->constraintPlanes();
+  // auto minVertices = polyMin_->vertices();
    
   std::vector<Eigen::Vector3d> vertices;
   vertices.insert(vertices.end(), maxVertices.begin(), maxVertices.end());
-  vertices.insert(vertices.end(), minVertices.begin(), minVertices.end());
+  // vertices.insert(vertices.end(), minVertices.begin(), minVertices.end());
 
   /* to compute the intersection I have two solutions:
    * 1- Use QHull to compute it directly
@@ -330,12 +332,13 @@ bool ConstrainedEquilibriumPolytope::vertexInPlanes(Eigen::Vector3d vertex, std:
 
 Eigen::Vector3d ConstrainedEquilibriumPolytope::baryPoint() const
 {
-  Eigen::Vector3d baryPt = Eigen::Vector3d::Zero();
+  // Eigen::Vector3d baryPt = Eigen::Vector3d::Zero();
 
-  baryPt = polyMin_->baryPoint()+polyMax_->baryPoint();
-  baryPt /= 2;
+  // baryPt = polyMin_->baryPoint()+polyMax_->baryPoint();
+  // baryPt /= 2;  
 
-  return baryPt;
+  // return baryPt;
+  return polyMax_->baryPoint();
 }
 
 Eigen::Vector3d ConstrainedEquilibriumPolytope::chebichevCenter() const
