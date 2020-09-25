@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 17)
 
 project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
@@ -8,8 +10,7 @@ find_package(Qhull REQUIRED)
 find_package(sch-core REQUIRED)
 find_package(eigen-quadprog REQUIRED)
 
-set(CMAKE_CXX_FLAGS "-lstdc++ -std=c++17")
-set(CMAKE_CXX_COMPILER "/usr/local/bin/gcc")
+
 # add_subdirectory(lpsolve55)
 # find_package(lpsolve55 REQUIRED)
 # find_package(lpsolve55 REQUIRED)
@@ -123,7 +124,8 @@ target_link_libraries(StabilityPolytope
   wrappers
   PRIVATE
   qhullcpp
-  qhull_r
+  # qhull_r
+  qhullstatic_r
   )
 
 ### Main executable ###
