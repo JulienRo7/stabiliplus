@@ -231,7 +231,6 @@ void ConstrainedEquilibriumPolytope::projectionStabilityPolyhedron()
 
   // std::cout << "Results Extracted" << std::endl;
   // std::cout << "Projected ChebichevCenter: " << projectChebMaxOnPolyMin().transpose() << std::endl;
-
 }
 
 void ConstrainedEquilibriumPolytope::endSolver()

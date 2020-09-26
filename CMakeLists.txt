@@ -6,9 +6,12 @@ set(CMAKE_CXX_STANDARD 17)
 project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
 find_package(Qhull REQUIRED)
-
 find_package(sch-core REQUIRED)
 find_package(eigen-quadprog REQUIRED)
+# threads
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 
 
 # add_subdirectory(lpsolve55)
@@ -142,6 +145,15 @@ target_include_directories(main
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
+target_link_libraries(main
+  PRIVATE
+  ProblemDescriptor StabilityPolytope tinyxml2
+  Threads::Threads
+  sch-core::sch-core
+  eigen-quadprog::eigen-quadprog
+  -lm
+  )
+
 
 
 # set_target_properties(main
@@ -153,16 +165,6 @@ target_include_directories(main
 #   PRIVATE
 #   cxx_std_17
 #   )
-
-target_link_libraries(main
-  PRIVATE
-  ProblemDescriptor StabilityPolytope tinyxml2
-  sch-core::sch-core
-  eigen-quadprog::eigen-quadprog
-  -lm
-  )
-
-
 
 #### Exporting targets and installing ####
 

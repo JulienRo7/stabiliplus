@@ -12,7 +12,11 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+
 #include <memory>
+#include <thread>
+#include <atomic>
+
 #include <string>
 #include <tinyxml2.h>
 #include <typeinfo> // operator typeid
@@ -139,6 +143,11 @@ public:
    * The idea of this experiment is to consider different way of computing the equlibrium region with a given set of desired forces for some contact points
    */
   void run_exp5();
+
+  /*! \brief Similar to exp 5 but uses Threads
+   * thtis fucnction is used to find the bugs that appear when stabiliplus is used in a thred in the mc_box_pusher_controller
+   */
+  void run_exp6();
   
   // ---------- inputs and setters -----------
 
