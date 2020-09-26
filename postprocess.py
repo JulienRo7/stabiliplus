@@ -949,6 +949,8 @@ class PostProcessor:
         elif self.mode == 5:
             # self.display_mode_4()
             self.display_mode_5()
+        elif self.mode == 6:
+            self.display_mode_4()
         else:
             assert False, "Unknown Mode {}".format(self.mode)
 

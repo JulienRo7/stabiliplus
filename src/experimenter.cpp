@@ -13,21 +13,24 @@ void ComputationPoint::compute() {
   auto start = std::chrono::high_resolution_clock::now();
   if (robust_)
     {
+      // if (contactSet->hasConstrainedContact())
+      // 	{
+      // 	  std::cout << "Constrained Equilibrium Polytope!" << std::endl;
+      // 	  polytope = std::make_shared<ConstrainedEquilibriumPolytope> (contactSet, 50, 0.05, m_solver);
+      // 	}
+      // else
+      // 	{
+      // 	  std::cout << "Robust Equilibrium Polytope!" << std::endl;
+      // 	  polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
+      // 	}
+      polytope_ = std::make_shared<RobustStabilityPolytope> (contactSet_, 50, 0.05, solver_);
       
-      if (contactSet_->hasConstrainedContact())
-	{
-	  polytope_ = std::make_shared<ConstrainedEquilibriumPolytope> (contactSet_, maxIt_, precision_, solver_);
-	}
-      else
-	{
-	  polytope_ = std::make_shared<RobustStabilityPolytope> (contactSet_, maxIt_, precision_, solver_);
-	}
     }
   else
     {
       polytope_ = std::make_shared<StaticStabilityPolytope> (contactSet_, maxIt_, precision_, solver_);
     }
-
+  
   polytope_->initSolver();
   polytope_->projectionStabilityPolyhedron();
   
@@ -35,7 +38,7 @@ void ComputationPoint::compute() {
   
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop -start);
 
-  polytope->endSolver();
+  polytope_->endSolver();
   
   totalTime_ = duration.count();
 
@@ -584,7 +587,6 @@ void Experimenter::run_exp6()
   auto start = std::chrono::high_resolution_clock::now();
   
   std::vector<std::string> contactSetNames;
-  std::string contactSetName;
 
   for (auto p: std::filesystem::directory_iterator(m_contactSetFileName))
     {
@@ -594,7 +596,6 @@ void Experimenter::run_exp6()
   auto grabNum = [](std::string file){
     int under = file.find("_")+1;
     int dot = file.find(".");
-
     return std::stoi(file.substr(under, dot-under));
   };
 
@@ -604,111 +605,66 @@ void Experimenter::run_exp6()
   
   std::sort(contactSetNames.begin(), contactSetNames.end(), compFiles);
 
+  std::vector<std::shared_ptr<ContactSet>> contactSets;
   std::shared_ptr<ContactSet> contactSet;
   
   for (auto name: contactSetNames)
     {
       contactSet = std::make_shared<ContactSet>(!m_robust, name, m_numFrictionSides);
-      m_contactSets.push_back(contactSet);
+      contactSets.push_back(contactSet);
     }
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop-start);
     
-  std::cout << "Loaded "<< m_contactSets.size() <<  " contact Sets in " << duration.count() << "ms" << std::endl;
+  std::cout << "Loaded "<< contactSets.size() <<  " contact Sets in " << duration.count() << "ms" << std::endl;
 
   std::cout << "Beginning computation of the equilibrium regions" << std::endl;
-  int cpt(0), max(m_contactSets.size());
+  int cpt(0), max(contactSets.size());
 
-  std::shared_ptr<std::thread> threadComputation;
-  std::atomic<bool> computing = false;
-
-  std::shared_ptr<std::thread> threadTesting;
-  bool testing = false;
-  std::atomic<bool> testingFinished = false;
-  
-  auto contact = m_contactSets.begin();
-  bool tested = true;
-  std::shared_ptr<StabilityPolytope> poly;
-
-  // start the first computation before the loop begins
-  auto computePointWrapper = [&](){
-    computing = true;
-    computePoint(*(contact));
-    computing = false;
-  };
-
-  int polyTestedCpt = 0;
-  auto testPoly = [&](std::shared_ptr<StabilityPolytope> poly){
-    testingFinished = false;
-    
-    std::vector<Eigen::Vector4d> planes;
-    Eigen::Vector3d normal;
-    double offset;
-
-    planes = poly->constraintPlanes();
-    
-    for (auto p: planes)
-      {
-	normal = p.head<3>();
-	offset = p[3];
-	if (normal.norm()<= 0.5)
-	  {
-	    throw(42);
-	  }
-      }
-    
-    polyTestedCpt++;
-    // std::cout << "Tested " << polyTestedCpt << " polytopes (thread id: "<< std::this_thread::get_id() << " )" << std::endl;
-    testingFinished = true;
-  };
-  
-  threadComputation = std::make_shared<std::thread> (computePointWrapper);
- 
-  while (contact!=m_contactSets.end() or !tested)
+  for (auto contact: contactSets)
     {
-      // check the advancement of the computation
-      if (!computing)
-	{
-	  // store the result
-	  threadComputation->join(); 
-	  //poly = *(m_polytopes.end()-1);
-	  std::cout << "Computed polytope " << poly << std::endl;
-	  tested = false;
-	  // increment the pointer
-	  contact++;
-	  if (contact!=m_contactSets.end())
-	    {
-	      // start the next computation
-	      threadComputation = std::make_shared<std::thread> (computePointWrapper);
-	    }
-	}
-      // check if the last one has been tested
+      // auto contact = m_contactSets.at(0);
+      std::cout << "Computing contactSet: " << contact->get_name() << std::endl;
 
-      if (!tested)
-	{ // do the test
-	  // testPoly(poly);
-	  // cpt++;
-	  // tested = true;
-	  if (!testing)
-	    {
-	      testing =true;
-	      std::cout << "Testing polytope " << poly << std::endl;
-	      threadTesting = std::make_shared<std::thread> (testPoly, poly);
-	    }
-	  else
-	    {
-	      if (testingFinished)
-		{
-		  threadTesting->join();
-		  cpt ++;
-		  tested = true;
-		  testing = false;
-		}
-	    }
-  	  // get the bary point
-	  // get the planes
-	  // do the verification
-	}	  
+      auto compute = [this](std::shared_ptr<RobustStabilityPolytope> polytope){
+	// polytope->initSolver();
+	polytope->projectionStabilityPolyhedron();
+	// polytope->endSolver();
+	// polytope->showPoly();
+      };
+
+      std::shared_ptr<RobustStabilityPolytope> polyNormal, polyThread;
+      polyNormal = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, this->m_solver);
+      polyThread = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, this->m_solver);
+
+      polyThread->initSolver();
+      std::thread myThread(compute, polyThread);
+      myThread.join();
+      polyThread->endSolver();
+
+      polyNormal->initSolver();
+      compute(polyNormal);
+      polyNormal->endSolver();
+      
+      std::cout << "Computations done!" << std::endl;
+      std::cout << "Let's compare the results:" << std::endl;
+      polyNormal->showPoly();
+      // polyThread->showPoly();
+      // 0- checkbasic stuff
+      if (polyNormal->get_numberOfVertices() != polyThread->get_numberOfVertices())
+	{
+	  std::cout << "Wrong number of vertices!" << std::endl;
+	  throw 42;
+	}
+      // 1- check that the indexes are different for edges, vertices, faces
+      auto vertices1 = polyNormal->vertices();
+      auto vertices2 = polyThread->vertices();
+      
+      // 2- check the position of the points
+      // 3- check if the structure is the same
+
+
+      std::cout << "Everything seems fine\n" << std::endl;
     }
 
   // if no one failed maybe start again
@@ -716,8 +672,6 @@ void Experimenter::run_exp6()
   std::cout << "#-----------------------------" << std::endl;
   std::cout << std::endl;
 }
-
-
 
 // ---------- outputs and getters -----------
 void Experimenter::save()
