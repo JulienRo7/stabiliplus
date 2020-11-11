@@ -150,6 +150,16 @@ public:
     return m_maxIteration; 
   }
 
+  inline int getIteration() const
+  {
+    return m_iteration;
+  }
+
+  inline double getError() const
+  {
+    return m_error;
+  }
+
   // ----------- setters ----------
   void maxIteration(int maxIteration);
 
