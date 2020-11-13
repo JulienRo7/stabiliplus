@@ -123,7 +123,7 @@ class Robot():
             R = self.feet[i]
             circle = np.matmul(R, Circle)
 
-            lines.append(ax.plot_trisurf(circle[0, :], circle[1, :], circle[2, :], color='k', alpha='0.5'))
+            lines.append(ax.plot_trisurf(circle[0, :], circle[1, :], circle[2, :], color='k', alpha=0.5))
             lines.append(ax.quiver(R[0, 3], R[1, 3], R[2, 3], -R[0, 2], -R[1, 2], -
                              R[2, 2], length=3*radius, arrow_length_ratio=0.1, pivot='tip', colors=['k']))
 

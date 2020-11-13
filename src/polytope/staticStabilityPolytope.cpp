@@ -177,6 +177,27 @@ void StaticStabilityPolytope::writeToStream(std::ofstream & stream) const
   }
 }
 
+void StaticStabilityPolytope::showPoly() const
+{
+  int cpt = 0;
+  auto showPt = [&cpt](std::shared_ptr<StaticPoint> pt){
+    std::cout << "  Vertex " << std::to_string(cpt) << std::endl;
+    std::cout << "    Coord: " << pt->innerVertex().transpose() << std::endl;
+    cpt ++;
+  };
+  
+  std::cout << "List of vertices: " << std::endl;
+  auto it_pt = m_points.begin();
+  auto pt = (*it_pt)->next();
+
+  while(pt != *it_pt)
+    {
+      showPt(pt);
+      pt = pt->next();
+    }
+  showPt(pt);
+}
+
 std::vector<Eigen::Vector4d> StaticStabilityPolytope::constraintPlanes() const
 {
   std::vector<Eigen::Vector4d> planes;
