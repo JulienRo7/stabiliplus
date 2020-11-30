@@ -25,6 +25,7 @@ public:
 
   // ----- output -----
   void writeToStream(std::ofstream & stream) const override;
+  tinyxml2::XMLElement * xmlPolytope(tinyxml2::XMLDocument & doc) const override;
   void showPoly() const;
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
   std::vector<Eigen::Vector3d> vertices() const override;

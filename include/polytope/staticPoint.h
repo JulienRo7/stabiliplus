@@ -8,6 +8,7 @@
 
 // libraries
 #include <Eigen/Dense>
+#include <tinyxml2.h>
 
 enum StaticMeasure
 {
@@ -32,6 +33,7 @@ public:
   void computeSupport();
   // ----- outputs -----
   void writeToStream(std::ofstream & file_stream) const;
+  tinyxml2::XMLElement * xmlStaticPoint(tinyxml2::XMLDocument & doc) const;
   Eigen::Vector4d plane() const;
 
   // ----- getters -----

@@ -39,16 +39,31 @@ void StaticStabilityPolytope::initSolver()
   m_pdPtr->update(); 
   //m_pdPtr->showContactSet();
   
+  // In the static case these matrices are not the right ones-> need to remove the columns and lines corresponding to z?
+  
+  auto A = m_pdPtr->getMatrixA(); // remove the last column
+  unsigned int numCols = A.cols()-1;
+  A.conservativeResize(6,numCols);
+  auto b = m_pdPtr->getVectorB(); // don't change
+  
+  auto G = m_pdPtr->getFrictionF(); // remove last column and 2 lines (n and n-3)
+  unsigned int numRows = G.rows();
+  G.block(numRows-4,0,3,numCols)=G.block(numRows-3, 0, 3, numCols);
+  G.conservativeResize(numRows-2, numCols);
+  
+  auto h = m_pdPtr->getFrictionVectorf(); // remove lines n and n-3
+  h.segment(numRows-4,3) = h.segment(numRows-3,3);
+  h.conservativeResize(numRows-2);    
+
   // std::cout<<"Inside StaticStabilityPolytope: "<<std::endl;
+    
+  // std::cout<<"A matrix is: "<<std::endl<< A <<std::endl;
+  // std::cout<<"B vector is: "<<std::endl<< b.transpose() <<std::endl;
 
-  // std::cout<<"A matrix is: "<<std::endl<<m_pdPtr->getMatrixA()<<std::endl;
-  // std::cout<<"B vector is: "<<std::endl<<m_pdPtr->getVectorB().transpose()<<std::endl;
-
-  // std::cout<<"F matrix is: "<<std::endl<<m_pdPtr->getFrictionF()<<std::endl;
-  // std::cout<<"f vector is: "<<std::endl<<m_pdPtr->getFrictionVectorf().transpose()<<std::endl;
-
-  m_lp->buildProblem(m_pdPtr->getVectorB(),  m_pdPtr->getMatrixA(), 
-		    m_pdPtr->getFrictionF(), m_pdPtr->getFrictionVectorf());
+  // std::cout<<"F matrix is: "<<std::endl<< G <<std::endl;
+  // std::cout<<"f vector is: "<<std::endl<< h.transpose() <<std::endl;
+  
+  m_lp->buildProblem(b, A, G, h); // #NotationConsistency
 
   auto stop = std::chrono::high_resolution_clock::now();
 
@@ -175,6 +190,25 @@ void StaticStabilityPolytope::writeToStream(std::ofstream & stream) const
   {
     std::cout << "Error: Output stream not open." << std::endl;
   }
+}
+
+tinyxml2::XMLElement * StaticStabilityPolytope::xmlPolytope(tinyxml2::XMLDocument & doc) const
+{
+  auto xmlPoly = doc.NewElement("polytope");
+  xmlPoly->SetAttribute("type", "static");
+
+  auto it_pt = m_points.begin();
+  auto pt = (*it_pt)->next();
+  
+  while(pt != *it_pt)
+    {
+      xmlPoly->InsertEndChild(pt->xmlStaticPoint(doc));
+      pt = pt->next();
+    }
+  xmlPoly->InsertEndChild(pt->xmlStaticPoint(doc));
+  
+  return xmlPoly;
+  
 }
 
 void StaticStabilityPolytope::showPoly() const

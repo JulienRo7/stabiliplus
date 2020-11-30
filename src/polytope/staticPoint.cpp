@@ -85,6 +85,30 @@ void StaticPoint::writeToStream(std::ofstream & file_stream) const
               << m_normal(0) << ";" << m_normal(1) << ";" << std::endl;
 }
 
+tinyxml2::XMLElement * StaticPoint::xmlStaticPoint(tinyxml2::XMLDocument & doc) const
+{
+  auto staticPointXML = doc.NewElement("staticPoint");
+
+  auto vecToXML = [&doc, &staticPointXML](Eigen::Vector2d vec, std::string name){
+    auto vecXML = doc.NewElement(name.c_str());
+    vecXML->SetAttribute("x", vec(0));
+    vecXML->SetAttribute("y", vec(1));
+    staticPointXML->InsertEndChild(vecXML);
+  };
+  
+  // inner vertex
+  vecToXML(m_innerVertex, "InnerVertex");
+  // search direction
+  vecToXML(m_searchDir, "SearchDirection");
+  // outer vertex
+  vecToXML(m_outerVertex, "OuterVertex");
+  // normal
+  vecToXML(m_normal, "Normal");
+
+  return staticPointXML;
+  
+}
+
 Eigen::Vector4d StaticPoint::plane() const
 {
   double offset = m_innerVertex.transpose() * m_normal;

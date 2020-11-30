@@ -66,10 +66,11 @@ void StabilityPolytope::saveToFile(std::string fileName) const
   
   auto declaration = doc.NewDeclaration();
   doc.InsertEndChild(declaration);
-
+  
   doc.InsertEndChild(xmlPolytope(doc));
-
+  
   doc.SaveFile(fileName.c_str());
+  // std::cout << "[StabilityPolytope::saveToFile] I reach here 3!" << std::endl;
 }
 
 // ----------- getters ----------
