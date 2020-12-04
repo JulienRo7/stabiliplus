@@ -41,7 +41,10 @@ public:
   std::shared_ptr<StaticPoint> prec() const;
 
   
-  Eigen::Vector2d innerVertex() const;
+  inline Eigen::Vector2d innerVertex() const
+  {
+    return m_innerVertex;
+  }
   inline int size() const
   {
     return static_cast<int>(innerVertex().size());
@@ -56,11 +59,22 @@ public:
   }
 
   // -- easy access for the vertex 
-
-  Eigen::Vector2d searchDir() const;
-  Eigen::Vector2d normal() const;
-  Eigen::Vector2d outerVertex() const;
-  double measure() const;
+  inline Eigen::Vector2d searchDir() const
+  {
+    return m_searchDir;
+  }
+  inline Eigen::Vector2d normal() const
+  {
+    return m_normal;
+  } 
+  inline Eigen::Vector2d outerVertex() const
+  {
+    return m_outerVertex;
+  }
+  inline double measure() const
+  {
+    return m_measure;
+  }
 
   // ----- setters -----
   void next(std::shared_ptr<StaticPoint> next_pt);

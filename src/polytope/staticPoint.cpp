@@ -129,31 +129,6 @@ std::shared_ptr<StaticPoint> StaticPoint::prec() const
   return m_prec;
 }
 
-Eigen::Vector2d StaticPoint::innerVertex() const
-{
-  return m_innerVertex;
-}
-
-Eigen::Vector2d StaticPoint::searchDir() const
-{
-  return m_searchDir;
-}
-
-Eigen::Vector2d StaticPoint::normal() const
-{
-  return m_normal;
-}
-
-Eigen::Vector2d StaticPoint::outerVertex() const
-{
-  return m_outerVertex;
-}
-
-double StaticPoint::measure() const
-{
-  return m_measure;
-}
-
 // ----- setters -----
 
 void StaticPoint::next(std::shared_ptr<StaticPoint> next_pt)

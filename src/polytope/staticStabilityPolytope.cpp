@@ -200,9 +200,18 @@ tinyxml2::XMLElement * StaticStabilityPolytope::xmlPolytope(tinyxml2::XMLDocumen
   auto it_pt = m_points.begin();
   auto pt = (*it_pt)->next();
   
+  // only insert the point if the normal is  not too close
+  Eigen::Vector2d prevNormal = (*it_pt)->normal();
+  double thres = 5e-2;
   while(pt != *it_pt)
     {
-      xmlPoly->InsertEndChild(pt->xmlStaticPoint(doc));
+      auto normal = pt->normal();
+      double dist = (normal-prevNormal).norm();
+      if (dist >= thres)
+	{
+	  xmlPoly->InsertEndChild(pt->xmlStaticPoint(doc));
+	  prevNormal = normal;
+	}
       pt = pt->next();
     }
   xmlPoly->InsertEndChild(pt->xmlStaticPoint(doc));
@@ -234,13 +243,27 @@ void StaticStabilityPolytope::showPoly() const
 
 std::vector<Eigen::Vector4d> StaticStabilityPolytope::constraintPlanes() const
 {
-  std::vector<Eigen::Vector4d> planes;
+  std::vector<Eigen::Vector4d> planes;  
 
-  for(auto pt : m_points)
-  {
-    planes.push_back(pt->plane());
-  }
-
+  auto it_pt = m_points.begin();
+  auto pt = (*it_pt)->next();
+  
+  // only insert the point if the normal is  not too close
+  Eigen::Vector2d prevNormal = (*it_pt)->normal();
+  double thres = 5e-2;
+  while(pt != *it_pt)
+    {
+      auto normal = pt->normal();
+      double dist = (normal-prevNormal).norm();
+      if (dist >= thres)
+	{
+	  planes.push_back(pt->plane());
+	  prevNormal = normal;
+	}
+      pt = pt->next();
+    }
+  planes.push_back(pt->plane());
+  
   return planes;
 }
 
