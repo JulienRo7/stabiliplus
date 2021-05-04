@@ -71,7 +71,7 @@ void ComputationPoint::printTimings() const
   else
     {
       std::cout << "Equilibrium  Region computed in " << totalTime_ << " ms for " << polytope_->get_numberOfVertices()
-		<< " inner Vertices" << std::endl;
+      		<< " inner Vertices" << std::endl;
       std::cout << "Init time: " << polytope_->initTime() << " µs" << std::endl;
       std::cout << "LP time: " << polytope_->LPTime() << " µs with solver " << solver_ << std::endl;
       std::cout << "Structure time: " << polytope_->structTime() << " µs" << std::endl;
@@ -284,7 +284,9 @@ void Experimenter::run_exp1()
   computationPoints_.push_back(compPt);
   
   compPt->compute();
-  compPt->printTimings();  
+  // compPt->printTimings();
+      
+      
   
 }
 
