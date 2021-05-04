@@ -317,8 +317,7 @@ void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
   // For now I am rejecting the point but still updating the outer approximation
   if (dirFace->pointInHalfSpace(newVertex->get_coordinates()))
     {
-      // std::cout << "Rejected point" << std::endl;
-      return;
+      throw std::range_error("[Stabiliplus][UpdateInnerPoly] New point not in the right halfspace of the search face");
     }
     
   m_vertices.push_back(newVertex);
