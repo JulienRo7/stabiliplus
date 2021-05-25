@@ -1,5 +1,4 @@
 #include "polytope/robustStabilityPolytope.h"
-
 // using namespace std;
 
 // inherited constructor
@@ -173,27 +172,26 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
     initialDirections.push_back(dir);
   }
 
+  std::cout << "[RobustStabilityPolytope][projectionStabilityPolyhedron] Initial Vertices: " << std::endl;
   for(auto d: initialDirections)
   {
     bool validPoint = false;
     while (!validPoint)
       {
-	solveLP(d, point);
-
-	validPoint = true;
-	for (auto pt: initialPoints)
-	  {
-	    if ((point-pt).norm() < 0.001)
-	      {
-		//std::cout << "######################################################################################################################################\nPoint is too close, try again" << std::endl;
-		validPoint = false;
-	      }
-	  }
+        solveLP(d, point);
+        validPoint = true;
+	      for (auto pt: initialPoints)
+        {
+          if ((point-pt).norm() < 0.001)
+          {
+            validPoint = false;
+          }
+        }
       }
-    
-    initialPoints.push_back(point);
-    newVertex = std::make_shared<Vertex>(point, d);
-    m_vertices.push_back(newVertex);
+      initialPoints.push_back(point);
+      newVertex = std::make_shared<Vertex>(point, d);
+      newVertex->show();
+      m_vertices.push_back(newVertex);
   }
 
   
@@ -212,6 +210,8 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
 
   
   computeResidualFromScratch();
+
+  std::cout << "[RobustStabilityPolytope][projectionStabilityPolyhedron] Initialization done!" << std::endl;
 
   //while(false)
   while(!stopCriterion())
@@ -317,6 +317,8 @@ void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
   // For now I am rejecting the point but still updating the outer approximation
   if (dirFace->pointInHalfSpace(newVertex->get_coordinates()))
     {
+      dirFace->show();
+      newVertex->show();
       throw std::range_error("[Stabiliplus][UpdateInnerPoly] New point not in the right halfspace of the search face");
     }
     

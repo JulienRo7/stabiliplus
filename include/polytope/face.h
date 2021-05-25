@@ -54,6 +54,11 @@ public:
 
   double get_measure() const;
 
+  void inline show() const
+  {
+    std::cout << "Face " << m_index << ": " << m_normal.transpose() << " " << m_offset << std::endl;
+  }
+
   // ---------- setters ----------
   void set_area_null();
   void set_supportPoint(std::shared_ptr<OuterVertex> supportPoint);

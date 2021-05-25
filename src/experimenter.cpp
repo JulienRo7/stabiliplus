@@ -479,25 +479,25 @@ void Experimenter::run_exp5()
     return poly->chebichevCenter();
   };
 
-  auto computerBaryPointMin = [](ComputationPoint * comptPt){
-    auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-    return poly->baryPointMin();
-  };
+  // auto computerBaryPointMin = [](ComputationPoint * comptPt){
+  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+  //   return poly->baryPointMin();
+  // };
 
-  auto computerBaryPointMax = [](ComputationPoint * comptPt){
-    auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-    return poly->baryPointMax();
-  };
+  // auto computerBaryPointMax = [](ComputationPoint * comptPt){
+  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+  //   return poly->baryPointMax();
+  // };
 
-  auto computerChebichevMin = [](ComputationPoint * comptPt){
-    auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-    return poly->chebichevCenterMin();
-  };
+  // auto computerChebichevMin = [](ComputationPoint * comptPt){
+  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+  //   return poly->chebichevCenterMin();
+  // };
   
-  auto computerChebichevMax = [](ComputationPoint * comptPt){
-    auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-    return poly->chebichevCenterMax();
-  };  
+  // auto computerChebichevMax = [](ComputationPoint * comptPt){
+  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
+  //   return poly->chebichevCenterMax();
+  // };  
 
   auto computerCoMQP = [](ComputationPoint * comptPt){
     return comptPt->getOptimCoM();

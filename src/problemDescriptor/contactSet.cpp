@@ -365,7 +365,7 @@ void ContactSet::loadContactSet(std::string const & file_name)
   }
   else
   {
-    std::cerr << "Failed to open the XML description file" << std::endl;
+    std::cerr << "Failed to open the XML description file: " << file_name << std::endl;
   }
 }
 

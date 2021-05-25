@@ -6,6 +6,9 @@
 #include <memory>
 #include <vector>
 
+#include <iostream>
+
+
 class Vertex
 {
 public:
@@ -22,6 +25,11 @@ public:
   Eigen::Vector3d get_coordinates() const;
   Eigen::Vector3d get_direction() const;
   double get_offset() const;
+
+  void inline show() const
+  {
+    std::cout << "Vertex " << m_index << ": " << m_coordinates.transpose() << std::endl;
+  }
 
 private:
   static int GlobalVertexCounter;

@@ -5,13 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
-find_package(Qhull REQUIRED)
 find_package(sch-core REQUIRED)
 find_package(eigen-quadprog REQUIRED)
 # threads
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-
 
 
 # add_subdirectory(lpsolve55)
@@ -25,12 +23,6 @@ find_package(Threads REQUIRED)
 #find_file(gurobi_c++_lib libgurobi_c++.a
 #  PATH $ENV{GUROBI_HOME}/lib/
 #  )
-
-#message("gurobi_c++_lib is: ")
-#message(${gurobi_c++_lib})
-#
-#message("gurobi_lib is: ")
-#message(${gurobi_lib})
 
 ### wrapper library ###
 
@@ -50,10 +42,6 @@ target_include_directories(wrappers
   # PRIVATE
   #${CMAKE_CURRENT_SOURCE_DIR}/src
   )
-
-# target_compile_features(wrappers
-#   PRIVATE cxx_std_11
-#   )
 
 target_link_libraries(wrappers
   PUBLIC
@@ -81,9 +69,6 @@ target_include_directories(ProblemDescriptor
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
-# target_compile_features(ProblemDescriptor
-#   PRIVATE cxx_std_11
-#   )
 
 target_link_libraries(ProblemDescriptor
   PUBLIC
@@ -105,7 +90,6 @@ add_library(StabilityPolytope SHARED
   ${PROJECT_SOURCE_DIR}/src/polytope/outervertex.cpp
   ${PROJECT_SOURCE_DIR}/src/polytope/outeredge.cpp
   ${PROJECT_SOURCE_DIR}/src/polytope/outerface.cpp
-  ${PROJECT_SOURCE_DIR}/src/polytope/constrainedEquilibriumPolytope.cpp
   )
 
 target_include_directories(StabilityPolytope
@@ -117,18 +101,11 @@ target_include_directories(StabilityPolytope
   glpk 
   )
 
-# target_compile_features(StabilityPolytope
-#   PRIVATE cxx_std_11
-#   )
-
 target_link_libraries(StabilityPolytope
   PUBLIC
   Eigen3::Eigen
   wrappers
   PRIVATE
-  qhullcpp
-  # qhull_r
-  qhullstatic_r
   )
 
 ### Main executable ###
