@@ -101,7 +101,14 @@ public:
   virtual Eigen::Vector3d baryPoint() const = 0;
 
   // ----------- getters ----------
-  
+
+  inline const int getIteration(){
+    return m_iteration;
+  }
+  inline const double getError(){
+    return m_error;
+  }
+
   /*!
    * \brief returns total time spent computing LPs
    */

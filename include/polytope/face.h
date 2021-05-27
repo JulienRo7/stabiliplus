@@ -22,7 +22,7 @@ public:
        Eigen::Vector3d innerPoint);
   ~Face();
 
-  void init();
+  bool init();
   void finish();
 
   bool isSame(Face const & b) const;

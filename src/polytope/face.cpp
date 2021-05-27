@@ -48,12 +48,13 @@ Face::~Face()
   m_supportPoint = 0;
 }
 
-void Face::init() // this function needs to be called after creating a new face because shared_from_this cannot be used
+bool Face::init() // this function needs to be called after creating a new face because shared_from_this cannot be used
                   // in the constructor.
 {
-  m_edge1->addFace(shared_from_this());
-  m_edge2->addFace(shared_from_this());
-  m_edge3->addFace(shared_from_this());
+  if(!m_edge1->addFace(shared_from_this())){return false;};
+  if(!m_edge2->addFace(shared_from_this())){return false;};
+  if(!m_edge3->addFace(shared_from_this())){return false;};
+  return true;
 }
 
 void Face::finish() // this function needs to be called before destroying a face because shared_from_this cannot be used
