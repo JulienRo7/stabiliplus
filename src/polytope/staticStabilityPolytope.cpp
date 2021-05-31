@@ -73,6 +73,14 @@ void StaticStabilityPolytope::solveLP(Eigen::Vector2d const & direction, Eigen::
 
 void StaticStabilityPolytope::projectionStabilityPolyhedron()
 {
+  bool ok = this->computeProjectionStabilityPolyhedron();
+  if(ok==false){
+    std::cout << "\n method failed!" << std::endl; //TODO How to deal with this case?
+  }
+}
+
+bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
+{
   auto start = std::chrono::high_resolution_clock::now();
   // initialization of the algorithm
   Eigen::Vector2d dir, vertex;
@@ -116,7 +124,12 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
 
   // initialisation of the error
   m_error = p1->measure() + p2->measure() + p3->measure();
-
+  if(m_error==0){
+    return false; //NOTE the constraints might correspond to an empty set?
+  }
+  if(m_error<=0){
+    return false; //TODO this should not happen
+  }
   //std::cout<<"Initial projection error: "<<m_error<<std::endl;
 
   while(!stopCriterion())
@@ -141,6 +154,9 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
 
     m_error += (*p_max)->measure();
     m_error += p->measure();
+    if(m_error<0){
+      return false; //TODO
+    }
 
     m_points.push_back(p);
     // showPointsNeighbours();
@@ -154,6 +170,7 @@ void StaticStabilityPolytope::projectionStabilityPolyhedron()
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
   m_structTime = duration.count() - m_LPTime;
+  return true;
 }
 
 // ----- output -----
@@ -233,6 +250,23 @@ const std::vector<Eigen::Vector2d> StaticStabilityPolytope::getInnerVertices() c
       pt = pt->next();
     }
   vertices.push_back(pt->innerVertex());
+
+  return vertices;
+}
+
+const std::vector<Eigen::Vector2d> StaticStabilityPolytope::getOuterVertices() const
+{
+  std::vector<Eigen::Vector2d> vertices;
+  
+  auto it_pt = m_points.begin();
+  auto pt = (*it_pt)->next();
+  
+  while(pt != *it_pt)
+    {
+      vertices.push_back(pt->outerVertex());
+      pt = pt->next();
+    }
+  vertices.push_back(pt->outerVertex());
 
   return vertices;
 }
