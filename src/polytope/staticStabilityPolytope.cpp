@@ -73,9 +73,8 @@ void StaticStabilityPolytope::solveLP(Eigen::Vector2d const & direction, Eigen::
 
 void StaticStabilityPolytope::projectionStabilityPolyhedron()
 {
-  bool ok = this->computeProjectionStabilityPolyhedron();
-  if(ok==false){
-    std::cout << "\n method failed!" << std::endl; //TODO How to deal with this case?
+  if(!this->computeProjectionStabilityPolyhedron()){
+    throw std::runtime_error("method failed!");
   }
 }
 
@@ -123,6 +122,7 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   p1->prec(p3);
 
   // initialisation of the error
+  std::for_each(m_points.begin(), m_points.end(), [](auto p){p->updateMeasure();});
   m_error = p1->measure() + p2->measure() + p3->measure();
   if(m_error==0){
     return false; //NOTE the constraints might correspond to an empty set?
@@ -136,29 +136,34 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   {
     //std::cout << "##### Iteration " << m_iteration+1 << " #####" << std::endl;
     //std::cout << "Error " << m_error << " (m_maxError: " << m_maxError << ") \n";
-    auto p_max = std::max_element(m_points.begin(), m_points.end(), **(m_points.begin()));
-    auto p_next = (*p_max)->next();
+    auto p_max = *(std::max_element(m_points.begin(), m_points.end(), **(m_points.begin())));
+    auto p_next = p_max->next();
 
     // update the error
-    m_error -= (*p_max)->measure();
+    m_error -= p_max->measure();
 
-    dir = (*p_max)->normal();
+    dir = p_max->normal();
     solveLP(dir, vertex);
     std::shared_ptr<StaticPoint> p(new StaticPoint(dir, vertex));
 
     // !!! Warning: the order here is important in order to avoid issue when the new point is close to the old one
     p_next->prec(p);
     p->next(p_next);
-    p->prec(*p_max);
-    (*p_max)->next(p);
+    p->prec(p_max);
+    p_max->next(p);
 
-    m_error += (*p_max)->measure();
+    m_points.push_back(p);
+    
+    p->updateMeasure();
+    p_max->updateMeasure();
+    
+
+    m_error += p_max->measure();
     m_error += p->measure();
     if(m_error<0){
       return false; //TODO
     }
-
-    m_points.push_back(p);
+    
     // showPointsNeighbours();
 
     m_iteration++;
