@@ -38,6 +38,11 @@ public:
   const std::vector<Eigen::Vector2d> getInnerVertices() const;
   const std::vector<Eigen::Vector2d> getOuterVertices() const;
   
+  inline const std::vector<std::shared_ptr<StaticPoint>> getStaticPoints() const
+  {
+    return m_points;
+  }
+
   /*
   inline std::shared_ptr<ProblemDescriptor>* problemDescriptor() override
   {

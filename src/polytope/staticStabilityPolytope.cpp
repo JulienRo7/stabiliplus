@@ -85,35 +85,24 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   Eigen::Vector2d dir, vertex;
 
   // inner vertices
-  dir << 1, 0;
+  dir << 1.0, 0.0;
+  vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
-  //std::cout << "Fisrt vertex: " << vertex.transpose()<<std::endl; 
-  //std::cout << "Fisrt vertex dir: " << dir.transpose()<<std::endl; 
-
   std::shared_ptr<StaticPoint> p1(new StaticPoint(dir, vertex));
   m_points.push_back(p1);
 
+
   dir << cos(2 * M_PI / 3), sin(2 * M_PI / 3);
   vertex<< 0.0 , 0.0;
-
   solveLP(dir, vertex);
-  //std::cout << "Second vertex: " << vertex.transpose()<<std::endl; 
-  //std::cout << "Second vertex dir: " << dir.transpose()<<std::endl; 
-
-
   std::shared_ptr<StaticPoint> p2(new StaticPoint(dir, vertex));
   m_points.push_back(p2);
   p1->next(p2);
   p2->prec(p1);
 
   dir << cos(4 * M_PI / 3), sin(4 * M_PI / 3);
-
   vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
-  //std::cout << "Third vertex: " << vertex.transpose()<<std::endl; 
-  //std::cout << "Third vertex dir: " << dir.transpose()<<std::endl; 
-
-
   std::shared_ptr<StaticPoint> p3(new StaticPoint(dir, vertex));
   m_points.push_back(p3);
   p2->next(p3);
@@ -124,11 +113,14 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   // initialisation of the error
   std::for_each(m_points.begin(), m_points.end(), [](auto p){p->updateMeasure();});
   m_error = p1->measure() + p2->measure() + p3->measure();
+
   if(m_error==0){
     return false; //NOTE the constraints might correspond to an empty set?
+    // if we have an empty set, it should be checked using the area of the initial inner region
+    // and maybe use the area of the outer region as a double check
   }
   if(m_error<=0){
-    return false; //TODO this should not happen
+    return false; //TODO this should not happen or the set is not convex
   }
   //std::cout<<"Initial projection error: "<<m_error<<std::endl;
 
