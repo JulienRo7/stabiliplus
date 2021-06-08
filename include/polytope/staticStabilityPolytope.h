@@ -37,6 +37,7 @@ public:
   int get_numberOfVertices() const;
   const std::vector<Eigen::Vector2d> getInnerVertices() const;
   const std::vector<Eigen::Vector2d> getOuterVertices() const;
+  const void getRandomFeasiblePoint(Eigen::Vector2d & point) const;
   
   /*
   inline std::shared_ptr<ProblemDescriptor>* problemDescriptor() override

@@ -61,6 +61,7 @@ public:
   std::vector<Eigen::Vector3d> get_innerFaceNormals() const;
   std::vector<double> get_innerFaceOffsets() const;
   const std::vector<Eigen::Vector3d> getInnerVertices() const;
+  const void getRandomFeasiblePoint(Eigen::Vector3d & point) const;
 
   /*
   inline ProblemDescriptor * problemDescriptor() override

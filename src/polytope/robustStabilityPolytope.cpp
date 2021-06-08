@@ -910,4 +910,14 @@ const std::vector<Eigen::Vector3d> RobustStabilityPolytope::getInnerVertices() c
   return vertices;
 }
 
+const void RobustStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector3d & point) const
+{
+  point.setZero();
+  for(auto it : m_vertices)
+  {
+    const double r = ((double) rand() / (RAND_MAX)); //random number between 0 and 1
+    point += r * it->get_coordinates();
+  }
+}
+
 // ------------------ setter -----------------------

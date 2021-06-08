@@ -270,3 +270,17 @@ const std::vector<Eigen::Vector2d> StaticStabilityPolytope::getOuterVertices() c
 
   return vertices;
 }
+
+const void StaticStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector2d & point) const
+{
+  auto it_pt = m_points.begin();
+  auto pt = (*it_pt)->next();
+  
+  point.setZero();
+  while(pt != *it_pt)
+  {
+    const double r = ((double) rand() / (RAND_MAX)); //random number between 0 and 1
+    point += r * pt->innerVertex();
+    pt = pt->next();
+  }
+}
