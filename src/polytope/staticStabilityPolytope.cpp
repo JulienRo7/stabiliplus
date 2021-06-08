@@ -277,10 +277,16 @@ const void StaticStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector2d & poi
   auto pt = (*it_pt)->next();
   
   point.setZero();
+  const double dist = ((double) rand() / (RAND_MAX)); //random number between 0 (=point on origin) and 1 (=point on convex hull)
+  Eigen::VectorXd weights = Eigen::VectorXd::Random(m_points.size());
+  weights = weights.cwiseAbs();
+  weights.normalize();
+  weights = weights * dist;
+  int counter = 0;
   while(pt != *it_pt)
   {
-    const double r = ((double) rand() / (RAND_MAX)); //random number between 0 and 1
-    point += r * pt->innerVertex();
+    point += weights(counter) * pt->innerVertex();
     pt = pt->next();
+    counter++;
   }
 }

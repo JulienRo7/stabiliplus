@@ -913,10 +913,16 @@ const std::vector<Eigen::Vector3d> RobustStabilityPolytope::getInnerVertices() c
 const void RobustStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector3d & point) const
 {
   point.setZero();
+  const double dist = ((double) rand() / (RAND_MAX)); //random number between 0 (=point on origin) and 1 (=point on convex hull)
+  Eigen::VectorXd weights = Eigen::VectorXd::Random(m_vertices.size());
+  weights = weights.cwiseAbs();
+  weights.normalize();
+  weights = weights * dist;
+  int counter = 0;
   for(auto it : m_vertices)
   {
-    const double r = ((double) rand() / (RAND_MAX)); //random number between 0 and 1
-    point += r * it->get_coordinates();
+    point += weights(counter) * it->get_coordinates();
+    counter++;
   }
 }
 
