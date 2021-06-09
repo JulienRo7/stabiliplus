@@ -82,7 +82,7 @@ class ComputationPoint
   int numFrictionSides_;
 
   int maxIt_ = 50;
-  double precision_ = 0.05;
+  double precision_ = 1e-3;
   Solver solver_ = Solver::GLPK;
 
   std::shared_ptr<ContactSet> contactSet_;

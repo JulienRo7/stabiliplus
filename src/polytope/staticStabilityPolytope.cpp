@@ -41,19 +41,10 @@ void StaticStabilityPolytope::initSolver()
   
   // In the static case these matrices are not the right ones-> need to remove the columns and lines corresponding to z?
   
-  auto A = m_pdPtr->getMatrixA(); // remove the last column
-  unsigned int numCols = A.cols()-1;
-  A.conservativeResize(6,numCols);
-  auto b = m_pdPtr->getVectorB(); // don't change
-  
-  auto G = m_pdPtr->getFrictionF(); // remove last column and 2 lines (n and n-3)
-  unsigned int numRows = G.rows();
-  G.block(numRows-4,0,3,numCols)=G.block(numRows-3, 0, 3, numCols);
-  G.conservativeResize(numRows-2, numCols);
-  
-  auto h = m_pdPtr->getFrictionVectorf(); // remove lines n and n-3
-  h.segment(numRows-4,3) = h.segment(numRows-3,3);
-  h.conservativeResize(numRows-2);    
+  auto A = m_pdPtr->getMatrixA(); 
+  auto b = m_pdPtr->getVectorB();  
+  auto G = m_pdPtr->getFrictionF();
+  auto h = m_pdPtr->getFrictionVectorf();
 
   // std::cout<<"Inside StaticStabilityPolytope: "<<std::endl;
     
@@ -134,7 +125,7 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
     // if we have an empty set, it should be checked using the area of the initial inner region
     // and maybe use the area of the outer region as a double check
   }
-  if(m_error<=0){
+  if(m_error<-1e-10){
     return false; //TODO this should not happen or the set is not convex
   }
   //std::cout<<"Initial projection error: "<<m_error<<std::endl;
@@ -167,7 +158,7 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
 
     m_error += p_max->measure();
     m_error += p->measure();
-    if(m_error<0){
+    if(m_error<-1e-10){
       return false; //TODO
     }
     

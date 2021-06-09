@@ -157,6 +157,11 @@ public:
     return m_maxIteration; 
   }
 
+  inline double getMaxError() const
+  {
+    return m_maxError;
+  }
+
   inline int getIteration() const
   {
     return m_iteration;

@@ -52,6 +52,13 @@ double Vertex::get_offset() const
 {
   return m_offset;
 }
+
+// ----------- getters ----------
+void Vertex::set_coordinates(Eigen::Vector3d coord)
+{
+  m_coordinates = coord;
+}
+
 // ----------- operators overloading ----------
 bool operator==(Vertex const & a, Vertex const & b)
 {

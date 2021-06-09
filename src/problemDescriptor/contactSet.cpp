@@ -20,7 +20,7 @@ ContactSet::ContactSet(bool staticCase): ProblemDescriptor("ContactSet_1"),
     }
   
 
-  //std::cout << "The first constructor for contactSet has been called!" << std::endl;
+  // std::cout << "The first constructor for contactSet has been called!" << std::endl;
 }
 
 ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_name, int numFrictionSides):
@@ -39,9 +39,9 @@ ContactSet::ContactSet(bool staticCase, std::string const & contact_set_file_nam
     }
   loadContactSet(contact_set_file_name);
 
-  int dot = contact_set_file_name.find(".");
+  int dot = contact_set_file_name.rfind(".");
   set_name(contact_set_file_name.substr(0, dot));
-  
+    
   // std::cout << "The second constructor for contactSet has been called!" << std::endl;
 }
 

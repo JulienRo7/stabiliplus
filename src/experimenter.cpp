@@ -13,16 +13,27 @@ void ComputationPoint::compute() {
   auto start = std::chrono::high_resolution_clock::now();
   if (robust_)
     {
-      polytope_ = std::make_shared<RobustStabilityPolytope> (contactSet_, 20, 0.05, solver_);
+      polytope_ = std::make_shared<RobustStabilityPolytope> (contactSet_, maxIt_, precision_, solver_);
     }
   else
     {
       polytope_ = std::make_shared<StaticStabilityPolytope> (contactSet_, maxIt_, precision_, solver_);
     }
-  
+
   polytope_->initSolver();
-  polytope_->projectionStabilityPolyhedron();
-  
+
+  try
+  {
+    polytope_->projectionStabilityPolyhedron();
+  }
+  catch (const std::runtime_error& e)
+  {
+    std::cout << "Error: " << polytope_->getError() << " precision: " << polytope_->getMaxError() << std::endl;
+    std::cout << "Iteration: " << polytope_->getIteration() << " maxIt: " << polytope_->getMaxIteration() << std::endl;
+    throw e;
+  }
+  std::cout << "Error: " << polytope_->getError() << " precision: " << polytope_->getMaxError() << std::endl;
+  std::cout << "Iteration: " << polytope_->getIteration() << " maxIt: " << polytope_->getMaxIteration() << std::endl;
   auto stop = std::chrono::high_resolution_clock::now();
   
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop -start);

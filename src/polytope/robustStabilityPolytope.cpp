@@ -96,9 +96,9 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
     solveLP(d, point);
     for (auto pt: initialPoints)
     {
-      if ((point-pt).norm() < 0.001) //TODO allow the user to modify this threshold
+      if ((point-pt).norm() < 1e-5) //TODO allow the user to modify this threshold
       {
-        // std::cout << "Point is too close, stopping" << std::endl;
+        std::cout << "Point is too close, stopping" << std::endl;
         return false;
       }
     }
@@ -113,6 +113,7 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
 
   bool ok;
   if(m_error<0){
+    std::cerr << "[Stabiliplus][RobustStabilityPolytope] Found negative error after initialization" << std::endl;
     return false; //TODO
   }
 
@@ -122,20 +123,25 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
     auto dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesMeasure);
     solveLP(dirFace->get_normal(), point);
     newVertex = std::make_shared<Vertex>(point, dirFace->get_normal());
-    ok = updateInnerPoly(newVertex, dirFace);
-    if(!ok)
+
+    if(!updateInnerPoly(newVertex, dirFace))
     {
+      std::cerr << "[Stabiliplus][RobustStabilityPolytope] Failled to update the inner polytope" << std::endl;
       return false;
     }
+
     if(m_faces.size()==0)
     {
+      std::cerr << "[Stabiliplus][RobustStabilityPolytope] No faces after updating inner polytope" << std::endl;
       return false;
     }
-    ok = updateOuterPoly(newVertex, dirFace);
-    if(!ok)
+
+    if(!updateOuterPoly(newVertex, dirFace))
     {
+      std::cerr << "[Stabiliplus][RobustStabilityPolytope] Failled to update the outer polytope" << std::endl;
       return false;
     }
+
     updateSupportFunctions(dirFace);
     // à modifier -> à ne pas refaire de zéro
     computeResidualFromScratch();
@@ -208,12 +214,20 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
   //   i- reject the point but still update the outer approximation 
   //   ii- split the search face in 3
   // For now I am rejecting the point but still updating the outer approximation
-  if (dirFace->pointInHalfSpace(newVertex->get_coordinates()))
+  if (dirFace->pointInHalfSpace(newVertex->get_coordinates())) // if the vertex is on the plane then it is considered in...
     {
-      // dirFace->show();
-      // newVertex->show();
-      // throw std::range_error("[Stabiliplus][UpdateInnerPoly] New point not in the right halfspace of the search face");
-      return false; //TODO false because the point is not added
+      double d = dirFace->get_normal().dot(newVertex->get_coordinates()) - dirFace->get_offset();
+      if (d<-1e-10)
+      {
+        std::cerr << "The distance to the plane is: " << d << std::endl;
+        return false;
+      }
+      else
+      {
+
+        newVertex->set_coordinates(newVertex->get_coordinates() + d * dirFace->get_normal());
+        // std::cout << "It is ok, the vertex is on the face. Let's split the face" << std::endl;
+      }
     }
     
   m_vertices.push_back(newVertex);

@@ -113,7 +113,7 @@ class staticPoly(polytope):
 
         if display_searchDirs:
             for v,d in zip(self.innerVertices, self.searchDirs):
-                lines.append(ax.arrow(v[0], v[1], scale*d[0], scale*d[1], color='r'))
+                lines.append(ax.quiver(v[0], v[1], 0, scale*d[0], scale*d[1], 0, color='r'))
                 
         if display_normals:
             m_x = [(v1[0]+v2[0])/2 for v1,v2 in zip(self.innerVertices[:-1], self.innerVertices[1:])]

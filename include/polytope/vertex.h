@@ -31,6 +31,9 @@ public:
     std::cout << "Vertex " << m_index << ": " << m_coordinates.transpose() << std::endl;
   }
 
+  // ----- Getters -----
+  void set_coordinates(Eigen::Vector3d coord);
+
 private:
   static int GlobalVertexCounter;
   int m_index;
