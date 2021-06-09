@@ -22,6 +22,7 @@ public:
   void solveLP(Eigen::Vector2d const & direction, Eigen::Vector2d & vertex);
 
   void projectionStabilityPolyhedron() override;
+  bool computeProjectionStabilityPolyhedron();
 
   // ----- output -----
   void writeToStream(std::ofstream & stream) const override;
@@ -39,7 +40,13 @@ public:
 
   int get_numberOfVertices() const;
   const std::vector<Eigen::Vector2d> getInnerVertices() const;
+  const std::vector<Eigen::Vector2d> getOuterVertices() const;
   
+  inline const std::vector<std::shared_ptr<StaticPoint>> getStaticPoints() const
+  {
+    return m_points;
+  }
+
   /*
   inline std::shared_ptr<ProblemDescriptor>* problemDescriptor() override
   {
