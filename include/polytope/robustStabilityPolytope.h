@@ -29,12 +29,13 @@ public:
   void solveLP(Eigen::Vector3d const & direction, Eigen::Vector3d & vertex);
 
   void projectionStabilityPolyhedron() override;
+  bool computeProjectionStabilityPolyhedron();
 
   Eigen::Vector3d computeInnerPoint();
   void buildInnerPoly();
-  void updateInnerPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace);
+  bool updateInnerPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace);
   void buildOuterPoly();
-  void updateOuterPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace);
+  bool updateOuterPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace);
 
   void updateSupportFunctions(std::shared_ptr<Face> & dirFace);
   bool computeSupportFunction(std::shared_ptr<Face> & face, const std::shared_ptr<OuterVertex> & initPoint);
@@ -62,6 +63,7 @@ public:
 
   std::vector<Eigen::Vector3d> get_innerFaceNormals() const;
   std::vector<double> get_innerFaceOffsets() const;
+  const std::vector<Eigen::Vector3d> getInnerVertices() const;
 
   Eigen::Vector3d chebichevCenter() const override;
   
@@ -111,9 +113,9 @@ private:
   // options
 
   // time measures
-  double m_innerConvexMicro;
-  double m_outerConvexMicro;
-  double m_supportFunctionMicro;
+  double m_innerConvexMicro=0;
+  double m_outerConvexMicro=0;
+  double m_supportFunctionMicro=0;
 };
 
 #endif // ROBUST_STABILITY_POLYTOPE_H_INCLUDE

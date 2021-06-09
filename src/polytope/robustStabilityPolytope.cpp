@@ -25,7 +25,7 @@ RobustStabilityPolytope::~RobustStabilityPolytope()
 void RobustStabilityPolytope::initSolver()
 {
   // m_contactSetPtr = static_cast<ContactSet*>(m_pdPtr);
-  auto start = std::chrono::high_resolution_clock::now();
+
 
   /*
     m_lp->buildProblem(m_contactSetPtr->buildVectorB(),
@@ -51,29 +51,27 @@ void RobustStabilityPolytope::initSolver()
   // Ff << F, f;
   // std::cout << "Equalities: \n" << Ab << std::endl;
   // std::cout << "Friction: \n" << Ff << std::endl;
-
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  m_initTime = duration.count();
 }
 
 void RobustStabilityPolytope::solveLP(Eigen::Vector3d const & direction, Eigen::Vector3d & vertex)
 {
-  auto start = std::chrono::high_resolution_clock::now();
   m_lp->set_searchDirection(direction);
 
   m_lp->solveProblem();
 
   vertex = m_lp->get_result();
-
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  m_LPTime += duration.count();
 }
 
 void RobustStabilityPolytope::projectionStabilityPolyhedron()
 {
-  auto structStart = std::chrono::high_resolution_clock::now();
+  bool ok = this->computeProjectionStabilityPolyhedron();
+  if(ok==false){
+    std::cout << "\n method failed!" << std::endl; //TODO How to deal with this case?
+  }
+}
+
+bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
+{
   // std::cout << "Reached here!" << '\n';
   std::vector<Eigen::Vector3d> initialDirections;
   std::vector<Eigen::Vector3d> initialPoints;
@@ -82,86 +80,6 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
   double theta, phi;
   
   std::shared_ptr<Vertex> newVertex;
-  // std::shared_ptr<Face> dirFace;
-
-  // Finding the first 4 points:
-  //Taking random direction
-  // double dist, area, volume;
-  // Eigen::Vector3d v1, v2, v3;
-  // srand(time(NULL));
-  // while (initialPoints.size()<4)
-  //   {
-  //     // choose a random direction in R^3
-  //     theta = 2*M_PI*(rand()%100)/100.0; // -> generate random number in [0, 2pi[
-  //     phi = M_PI*(rand()%101)/100.0; // -> generates random number in [0, pi]
-  //     std::cout << "Theta: " << theta << " phi: " << phi << std::endl;
-      
-  //     dir << sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi);
-  //     dir = dir.normalized();
-
-  //     // look for the point
-  //     solveLP( dir, point);
-
-  //     // check if the point is far enough of the other points
-  //     bool validPoint = true;
-  //     switch(initialPoints.size())
-  // 	{
-  // 	case 0:
-  // 	  break;
-
-  // 	case 1:
-  // 	  v1 = point-initialPoints.at(0);
-  // 	  dist = (v1).norm();
-  // 	  if (dist < 0.1)
-  // 	    {
-  // 	      validPoint = false;
-  // 	    }
-  // 	  break;
-
-  // 	case 2:
-  // 	  v2 = point-initialPoints.at(0);
-  // 	  area = (v1.cross(v2)).norm();
-  // 	  if (area < 0.05)
-  // 	    {
-  // 	      validPoint = false;
-  // 	    }
-  // 	  break;
-
-  // 	case 3:
-  // 	  v3 = point-initialPoints.at(0);
-  // 	  volume = abs((v1.cross(v2)).dot(v3));
-  // 	  if  (volume < 0.01)
-  // 	    {
-  // 	      validPoint = false;
-  // 	    }
-  // 	  break;
-
-  // 	default:
-  // 	  throw(42);
-  // 	  break;
-  // 	}
-      
-  //     if (validPoint)
-  // 	{
-  // 	  initialPoints.push_back(point);
-  // 	  initialDirections.push_back(dir);
-  // 	}
-  //     else
-  // 	{
-  // 	  std::cout << "Point rejected" << std::endl;
-  // 	}
-  //   }
-
-  
-  
-  //   for (int i = 0; i< 4; i++)
-  //   {
-  //     auto pt = initialPoints.at(i);
-  //     auto dir = initialDirections.at(i);
-
-  //     newVertex = std::make_shared<Vertex>(pt, dir);
-  //     m_vertices.push_back(newVertex);
-  //   }
 
   dir << 0, 0, 1; 
   initialDirections.push_back(dir);
@@ -172,85 +90,57 @@ void RobustStabilityPolytope::projectionStabilityPolyhedron()
     initialDirections.push_back(dir);
   }
 
-  std::cout << "[RobustStabilityPolytope][projectionStabilityPolyhedron] Initial Vertices: " << std::endl;
+  // std::cout << "[RobustStabilityPolytope][projectionStabilityPolyhedron] Initial Vertices: " << std::endl;
   for(auto d: initialDirections)
   {
-    bool validPoint = false;
-    while (!validPoint)
+    solveLP(d, point);
+    for (auto pt: initialPoints)
+    {
+      if ((point-pt).norm() < 0.001) //TODO allow the user to modify this threshold
       {
-        solveLP(d, point);
-        validPoint = true;
-	      for (auto pt: initialPoints)
-        {
-          if ((point-pt).norm() < 0.001)
-          {
-            validPoint = false;
-          }
-        }
+        // std::cout << "Point is too close, stopping" << std::endl;
+        return false;
       }
-      initialPoints.push_back(point);
-      newVertex = std::make_shared<Vertex>(point, d);
-      newVertex->show();
-      m_vertices.push_back(newVertex);
+    }
+    initialPoints.push_back(point);
+    newVertex = std::make_shared<Vertex>(point, d);
+    m_vertices.push_back(newVertex);
   }
 
-  
-  auto start = std::chrono::high_resolution_clock::now();
   buildInnerPoly();
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  m_innerConvexMicro += duration.count();
-
-  
-  start = std::chrono::high_resolution_clock::now();
   buildOuterPoly();
-  stop = std::chrono::high_resolution_clock::now();
-  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  m_outerConvexMicro += duration.count();
-
-  
   computeResidualFromScratch();
 
-  std::cout << "[RobustStabilityPolytope][projectionStabilityPolyhedron] Initialization done!" << std::endl;
+  bool ok;
+  if(m_error<0){
+    return false; //TODO
+  }
 
-  //while(false)
   while(!stopCriterion())
   {
-
     m_iteration++;
-    //std::cout << "Iteration number: " << m_iteration << ", error: " << m_error << '\n';
     auto dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesMeasure);
-
     solveLP(dirFace->get_normal(), point);
-
     newVertex = std::make_shared<Vertex>(point, dirFace->get_normal());
-    
-    start = std::chrono::high_resolution_clock::now();
-    updateInnerPoly(newVertex, dirFace);
-    stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    m_innerConvexMicro += duration.count();
-
-    start = std::chrono::high_resolution_clock::now();
-    updateOuterPoly(newVertex, dirFace);
-    stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    m_outerConvexMicro += duration.count();
-
-    start = std::chrono::high_resolution_clock::now();
+    ok = updateInnerPoly(newVertex, dirFace);
+    if(!ok)
+    {
+      return false;
+    }
+    if(m_faces.size()==0)
+    {
+      return false;
+    }
+    ok = updateOuterPoly(newVertex, dirFace);
+    if(!ok)
+    {
+      return false;
+    }
     updateSupportFunctions(dirFace);
-    stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    m_supportFunctionMicro += duration.count();
-
     // à modifier -> à ne pas refaire de zéro
     computeResidualFromScratch();
   }
-
-  auto structStop = std::chrono::high_resolution_clock::now();
-  auto structDuration = std::chrono::duration_cast<std::chrono::microseconds>(structStop - structStart);
-
-  m_structTime = structDuration.count() - m_LPTime;
+  return true;
 }
 
 Eigen::Vector3d RobustStabilityPolytope::computeInnerPoint()
@@ -308,18 +198,22 @@ void RobustStabilityPolytope::buildInnerPoly()
   }
 }
 
-void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace)
+bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace)
 {
   std::list<std::shared_ptr<Face>> consideredFaces;
   std::vector<std::shared_ptr<Face>> currentNeighbors;
 
-  // if the new point is in the inner approximation (that should not happen) or on the last face (this can happen), then there is 2 possibilities: i- reject the point but still update the outer approximation ii- split the search face in 3
+  // if the new point is in the inner approximation (that should not happen) or on the last face (this can happen), 
+  // then there is 2 possibilities: 
+  //   i- reject the point but still update the outer approximation 
+  //   ii- split the search face in 3
   // For now I am rejecting the point but still updating the outer approximation
   if (dirFace->pointInHalfSpace(newVertex->get_coordinates()))
     {
-      dirFace->show();
-      newVertex->show();
-      throw std::range_error("[Stabiliplus][UpdateInnerPoly] New point not in the right halfspace of the search face");
+      // dirFace->show();
+      // newVertex->show();
+      // throw std::range_error("[Stabiliplus][UpdateInnerPoly] New point not in the right halfspace of the search face");
+      return false; //TODO false because the point is not added
     }
     
   m_vertices.push_back(newVertex);
@@ -459,9 +353,13 @@ void RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
     // newEdge2->get_index() << '\n'; showPoly();
     newFace =
         std::make_shared<Face>(newVertex, it->get_vertex1(), it->get_vertex2(), it, newEdge1, newEdge2, m_innerPoint);
-    newFace->init();
+    bool ok = newFace->init();
+    if(!ok){
+      return false;
+    }
     m_faces.push_back(newFace);
   }
+  return true;
 }
 
 void RobustStabilityPolytope::buildOuterPoly()
@@ -512,7 +410,7 @@ void RobustStabilityPolytope::buildOuterPoly()
   newOuterEdge = nullptr;
 }
 
-void RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace)
+bool RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVertex, std::shared_ptr<Face> & dirFace)
 {
   // --------- Double Description Method ---------
   std::vector<std::shared_ptr<OuterVertex>> U_0; // outer vertex on the plane
@@ -539,7 +437,7 @@ void RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
   double d1(0), d2(0);
   Eigen::Vector3d coord;
 
-  // auto start = std::chrono::high_resolution_clock::now();
+
   // std::cout << "dot 1" << '\n';
   auto currentPoint = consideredPoints.begin();
 
@@ -582,6 +480,7 @@ void RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
             }
             else
             {
+              return false;
               std::cerr << "Outer Edge as already been removed!" << '\n';
             }
           }
@@ -621,6 +520,7 @@ void RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
       }
       else
       {
+        return false;
         std::cerr << "Outer Vertex has already been removed!" << '\n';
       }
     }
@@ -629,10 +529,8 @@ void RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
     currentPoint++;
     // std::cout << "Nani 1!" << '\n';
   }
-  // auto stop = std::chrono::high_resolution_clock::now();
-  // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
   // std::cout << "Number of considered points: " << consideredPoints.size() << " with " << U_minus.size() << " points
-  // out" << '\n'; std::cout << "First part duration: " << duration.count() << " microseconds" << '\n';
 
   // ---- creating the new stuff: 1 new face, some new edges and as many new vertex.
   // by construction 1 outer face may have any number of edges but each outer
@@ -640,7 +538,7 @@ void RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
 
   std::shared_ptr<OuterEdge> newOuterEdge;
 
-  // start = std::chrono::high_resolution_clock::now()
+
   for(auto it : F_0)
   {
     std::shared_ptr<OuterVertex> outerVertex1, outerVertex2;
@@ -678,6 +576,7 @@ void RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
     newOuterEdge->init();
     m_outerEdges.push_back(newOuterEdge);
   }
+  return true;
 }
 
 void RobustStabilityPolytope::updateSupportFunctions(std::shared_ptr<Face> & dirFace)
@@ -691,6 +590,7 @@ void RobustStabilityPolytope::updateSupportFunctions(std::shared_ptr<Face> & dir
     consideredFaces.push_back(dirFace);
   }
 
+    // std::cout << "############ DEBUG m_faces.size() = " << m_faces.size() << std::endl;
   consideredFaces.push_back(m_faces.back());
 
   auto currentFace = consideredFaces.begin();
@@ -998,6 +898,18 @@ std::vector<double> RobustStabilityPolytope::get_innerFaceOffsets() const
     innerFaceOffsets.push_back(face->get_offset());
   }
   return innerFaceOffsets;
+}
+
+const std::vector<Eigen::Vector3d> RobustStabilityPolytope::getInnerVertices() const
+{
+  std::vector<Eigen::Vector3d> vertices;
+  for(auto it : m_vertices)
+  {
+    // std::cout << "cor " << it->get_coordinates().transpose() << std::endl;
+    // std::cout << "dir " << it->get_direction().transpose() << std::endl;
+    vertices.push_back( it->get_coordinates() );
+  }
+  return vertices;
 }
 
 Eigen::Vector3d RobustStabilityPolytope::chebichevCenter() const

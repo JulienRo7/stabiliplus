@@ -35,19 +35,22 @@ bool Edge::isSame(const Edge & b) const
   return m_index == b.m_index;
 }
 
-void Edge::addFace(const std::shared_ptr<Face> & face)
+bool Edge::addFace(const std::shared_ptr<Face> & face)
 {
 
   if(!m_face1)
   {
     m_face1 = face;
+    return true;
   }
   else if(!m_face2)
   {
     m_face2 = face;
+    return true;
   }
   else
   {
+    return false;
     std::cerr << "Error: The edge " << m_index << " already has two faces" << '\n';
     std::cerr << "Face " << m_face1->get_index() << " and " << m_face2->get_index() << " cannot add face "
               << face->get_index() << " ." << '\n';
