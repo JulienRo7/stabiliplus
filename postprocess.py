@@ -57,13 +57,11 @@ class polytope:
         pass
 
 class staticPoly(polytope):
-    def __init__(self, file_name="/tmp/static_res.txt"):
+    def __init__(self):
         self.innerVertices = [] # inner vertices
         self.searchDirs = [] # search directions
         self.outerVertices = [] # outer vertices
         self.normals = [] # inner sides normals
-
-        self.readFile(file_name)
         
     def readFile(self, file_name):
         file = open(file_name, 'r')
@@ -80,6 +78,26 @@ class staticPoly(polytope):
                 self.normals.append([float(line[1]),float(line[2])])
             else:
                 print("Unknown value")
+
+    def loadStaticPointXML(self, xmlPoint):
+        for child in xmlPoint:
+            if (child.tag == "InnerVertex"):
+                self.innerVertices.append([float(child.attrib['x']), float(child.attrib['y'])])
+            elif (child.tag == "SearchDirection"):
+                self.searchDirs.append([float(child.attrib['x']), float(child.attrib['y'])])
+            elif (child.tag == "OuterVertex"):
+                self.outerVertices.append([float(child.attrib['x']), float(child.attrib['y'])])
+            elif (child.tag == "Normal"):
+                self.normals.append([float(child.attrib['x']), float(child.attrib['y'])])
+            else:
+                raise NameError("Unrecognized static point tag: "+child.tag)
+
+    def loadXML(self, xmlPoly):
+        for child in xmlPoly:
+            if (child.tag == "staticPoint"):
+                self.loadStaticPointXML(child)
+            else:
+                print("Unrecognized static polytope tag: ", child.tag)
 
                 
     def dispInner(self, ax, display_innerVertices = True, display_searchDirs = True, display_normals = True):
@@ -123,18 +141,16 @@ class staticPoly(polytope):
         return lines
 
     def display(self, ax, dispInner = True, dispOuter = False):
-
-        
         lines = []
         if dispInner:
-            lines.extend(self.dispInner(ax))
+            lines.extend(self.dispInner(ax, display_innerVertices = True, display_searchDirs = False, display_normals = False))
 
         if dispOuter:
             lines.extend(self.dispOuter(ax))
 
         # ax.set_aspect('equal')
-        ax.set_xbound(-2, 2)
-        ax.set_ybound(-2, 2)
+        # ax.set_xbound(-2, 2)
+        # ax.set_ybound(-2, 2)
         return lines
         
 class robustPoly(polytope):
@@ -237,6 +253,10 @@ class robustPoly(polytope):
             for e in self.innerEdges:
                 ax.plot(e[0], e[1], e[2], color=color)
 
+        dispSides = False
+        if dispSides:
+            self.sideDisplay(ax)
+
         return innerline
 
     def dispOuter(self, ax, dispEdges=True, color="xkcd:purple"):
@@ -292,14 +312,14 @@ class robustPoly(polytope):
         convex = ConvexHull(points.T)
         # create the triangulation object in order to get the edges in a simple way...
         triangle = Triangulation(self.innerX, self.innerY, convex.simplices)
-        light = LightSource(0, 70) 
+        # light = LightSource(0, 70) 
         # cmap=plt.get_cmap('gist_earth')
         # rgb = light.shade(self.innerZ, cmap)
-        print(self.innerX)
-        print(self.innerY)
-        print(self.innerZ)
+        # print(self.innerX)
+        # print(self.innerY)
+        # print(self.innerZ)
 
-        print(convex.points.T)
+        # print(convex.points.T)
         
         points = [c for c in convex.points.T]
         ax.plot_trisurf(self.innerX, self.innerY, convex.simplices, self.innerZ,
@@ -385,9 +405,14 @@ class ComputationPoint:
                     poly2 = robustPoly()
                     poly2.loadXML(compPtRoot[1])
                     self.polytopes.append(poly2)
+                
+                elif (self.polyType == "static"):
+                    poly = staticPoly()
+                    poly.loadXML(compPtRoot)
+                    self.polytopes.append(poly)
                     
                 else:
-                    pass
+                    raise NameError("Unknown polytope type")
                 
             elif child.tag == "robot":
                 self.contactSet = Robot.load_from_file(child.attrib['file_name'])
@@ -492,15 +517,16 @@ class PostProcessor:
             poly_static.project_static_stability()
             
             # ----------- display of static stability -----------
-            x1 = [v[0] for v in poly_static.inner_vertices]
+            x1 = [v[0][0] for v in poly_static.inner_vertices]
             x1.append(x1[0])
-            y1 = [v[1] for v in poly_static.inner_vertices]
+            y1 = [v[1][0] for v in poly_static.inner_vertices]
             y1.append(y1[0])
             ax.plot(x1, y1, color="xkcd:red")
             # ax.plot(x1, y1, color="r")
 
+        print(len(self.computationPoints[0].polytopes))
         self.computationPoints[0].polytopes[0].display(ax, dispInner=True, dispOuter=False)
-
+        
         # Displaying the points
         for ptName in self.computationPoints[0].points.keys():
             coord = self.computationPoints[0].points[ptName]
@@ -513,13 +539,13 @@ class PostProcessor:
                 color = "xkcd:red"
             
             ax.plot([x],[y],[z], 'o-', color = color)
-        
-        ax.set_xlim(-0.0, 1.5)
-        ax.set_ylim(-0.0, 1.5)
+
+        # ax.set_xlim(-0.0, 1.5)
+        # ax.set_ylim(-0.0, 1.5)
+        # # ax.set_zlim(-0.1, 2)
+        # # ax.set_xlim(-0.5, 0.5)
+        # ax.set_ylim(-0.5, 0.5)
         # ax.set_zlim(-0.1, 2)
-        # ax.set_xlim(-0.5, 0.5)
-        ax.set_ylim(-0.5, 0.5)
-        ax.set_zlim(-0.1, 2)
         
         ax.set_xlabel("x", size="xx-large")
         ax.set_ylabel("y", size="xx-large")

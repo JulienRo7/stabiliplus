@@ -13,18 +13,7 @@ void ComputationPoint::compute() {
   auto start = std::chrono::high_resolution_clock::now();
   if (robust_)
     {
-      // if (contactSet->hasConstrainedContact())
-      // 	{
-      // 	  std::cout << "Constrained Equilibrium Polytope!" << std::endl;
-      // 	  polytope = std::make_shared<ConstrainedEquilibriumPolytope> (contactSet, 50, 0.05, m_solver);
-      // 	}
-      // else
-      // 	{
-      // 	  std::cout << "Robust Equilibrium Polytope!" << std::endl;
-      // 	  polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
-      // 	}
-      polytope_ = std::make_shared<RobustStabilityPolytope> (contactSet_, 50, 0.05, solver_);
-      
+      polytope_ = std::make_shared<RobustStabilityPolytope> (contactSet_, 20, 0.05, solver_);
     }
   else
     {
@@ -43,11 +32,11 @@ void ComputationPoint::compute() {
   totalTime_ = duration.count();
 
   // Compute the points that need to be saved using the lambda functions
-  computeOptimQP();
-  for (auto& cptPt: computerPoints_)
-    {
-      computedPoints_[cptPt.first] = cptPt.second(this);
-    }
+  // computeOptimQP();
+  // for (auto& cptPt: computerPoints_)
+  //   {
+  //     computedPoints_[cptPt.first] = cptPt.second(this);
+  //   }
 }
 
 void ComputationPoint::display() const
@@ -279,14 +268,12 @@ void Experimenter::run_exp1()
   std::cout << "Running Experiment for mode 1!" << '\n';
 
   std::shared_ptr<ComputationPoint> compPt;
-  compPt = std::make_shared<ComputationPoint> (m_contactSetFileName, m_numFrictionSides, m_solver, m_robust);
+  compPt = std::make_shared<ComputationPoint>(m_contactSetFileName, m_numFrictionSides, m_solver, m_robust);
 
   computationPoints_.push_back(compPt);
   
   compPt->compute();
-  // compPt->printTimings();
-      
-      
+  // compPt->printTimings();    
   
 }
 
