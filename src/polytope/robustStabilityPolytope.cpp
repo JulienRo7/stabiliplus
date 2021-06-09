@@ -231,6 +231,8 @@ Eigen::Vector3d RobustStabilityPolytope::computeInnerPoint()
     m_innerPoint += it->get_coordinates();
   }
   m_innerPoint /= m_vertices.size();
+
+  return m_innerPoint;
 }
 
 void RobustStabilityPolytope::buildInnerPoly()
@@ -746,6 +748,7 @@ double RobustStabilityPolytope::computeResidualFromScratch()
   {
     m_error += it->get_area() * it->get_supportFunction();
   }
+  return m_error;
 }
 
 // ----------- output and display functions ----------
@@ -913,11 +916,14 @@ const std::vector<Eigen::Vector3d> RobustStabilityPolytope::getInnerVertices() c
 const void RobustStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector3d & point) const
 {
   point.setZero();
-  const double dist = ((double) rand() / (RAND_MAX)); //random number between 0 (=point on origin) and 1 (=point on convex hull)
+
   Eigen::VectorXd weights = Eigen::VectorXd::Random(m_vertices.size());
+  // The coefficients must be positive:
   weights = weights.cwiseAbs();
-  weights.normalize();
-  weights = weights * dist;
+  // The sum of coefficient must be equal to 1.0 :
+  const double sum = Eigen::VectorXd::Ones(m_vertices.size()).transpose()*weights; 
+  weights /= sum;
+
   int counter = 0;
   for(auto it : m_vertices)
   {

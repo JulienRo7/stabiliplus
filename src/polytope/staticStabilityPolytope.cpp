@@ -273,20 +273,19 @@ const std::vector<Eigen::Vector2d> StaticStabilityPolytope::getOuterVertices() c
 
 const void StaticStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector2d & point) const
 {
-  auto it_pt = m_points.begin();
-  auto pt = (*it_pt)->next();
-  
   point.setZero();
-  const double dist = ((double) rand() / (RAND_MAX)); //random number between 0 (=point on origin) and 1 (=point on convex hull)
+  
   Eigen::VectorXd weights = Eigen::VectorXd::Random(m_points.size());
+  // The coefficients must be positive:
   weights = weights.cwiseAbs();
-  weights.normalize();
-  weights = weights * dist;
+  // The sum of coefficient must be equal to 1.0 :
+  const double sum = Eigen::VectorXd::Ones(m_points.size()).transpose()*weights; 
+  weights /= sum;
+
   int counter = 0;
-  while(pt != *it_pt)
+  for (auto pt: m_points) // the ordering of the vertices does not matter as the weights are random
   {
     point += weights(counter) * pt->innerVertex();
-    pt = pt->next();
-    counter++;
+    counter ++;
   }
 }
