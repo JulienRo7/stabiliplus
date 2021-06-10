@@ -239,7 +239,7 @@ class robustPoly(polytope):
         # ----------- display of inner polyhedron -----------
         innerline = []
         if dispVertexes:
-            innerline = ax.plot(self.innerX, self.innerY, self.innerZ, color=color, marker='o')
+            innerline.append(ax.scatter(self.innerX, self.innerY, self.innerZ, color=color, marker='o'))
 
         if dispInnerNormals:
             scale = 0.2

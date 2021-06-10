@@ -168,21 +168,16 @@ void RobustStabilityPolytope::buildInnerPoly()
   computeInnerPoint();
   // std::cout << "Inner Point: " << m_innerPoint << '\n';
 
-  std::shared_ptr<Edge> newEdge;
+  //std::shared_ptr<Edge> newEdge;
   std::shared_ptr<Face> newFace;
 
-  newEdge = std::make_shared<Edge>(m_vertices[0], m_vertices[1]);
-  m_edges.push_back(newEdge);
-  newEdge = std::make_shared<Edge>(m_vertices[0], m_vertices[2]);
-  m_edges.push_back(newEdge);
-  newEdge = std::make_shared<Edge>(m_vertices[0], m_vertices[3]);
-  m_edges.push_back(newEdge);
-  newEdge = std::make_shared<Edge>(m_vertices[1], m_vertices[2]);
-  m_edges.push_back(newEdge);
-  newEdge = std::make_shared<Edge>(m_vertices[1], m_vertices[3]);
-  m_edges.push_back(newEdge);
-  newEdge = std::make_shared<Edge>(m_vertices[2], m_vertices[3]);
-  m_edges.push_back(newEdge);
+  // newEdge = std::make_shared<Edge>();
+  m_edges.emplace_back(new Edge(m_vertices[0], m_vertices[1]));
+  m_edges.emplace_back(new Edge(m_vertices[0], m_vertices[2]));
+  m_edges.emplace_back(new Edge(m_vertices[0], m_vertices[3]));
+  m_edges.emplace_back(new Edge(m_vertices[1], m_vertices[2]));
+  m_edges.emplace_back(new Edge(m_vertices[1], m_vertices[3]));
+  m_edges.emplace_back(new Edge(m_vertices[2], m_vertices[3]));
 
   newFace = std::make_shared<Face>(m_vertices[0], m_vertices[1], m_vertices[2], m_edges[0], m_edges[1], m_edges[3],
                                    m_innerPoint);
@@ -209,42 +204,28 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
   std::list<std::shared_ptr<Face>> consideredFaces;
   std::vector<std::shared_ptr<Face>> currentNeighbors;
 
-  // if the new point is in the inner approximation (that should not happen) or on the last face (this can happen), 
-  // then there is 2 possibilities: 
-  //   i- reject the point but still update the outer approximation 
-  //   ii- split the search face in 3
-  // For now I am rejecting the point but still updating the outer approximation
-  if (dirFace->pointInHalfSpace(newVertex->get_coordinates())) // if the vertex is on the plane then it is considered in...
-    {
-      double d = dirFace->get_normal().dot(newVertex->get_coordinates()) - dirFace->get_offset();
-      if (d<-1e-10)
-      {
-        std::cerr << "The distance to the plane is: " << d << std::endl;
-        return false;
-      }
-      else
-      {
+  std::vector<std::shared_ptr<Face>> visibleFaces;
+  std::vector<std::shared_ptr<Edge>> visibleEdges;
 
-        newVertex->set_coordinates(newVertex->get_coordinates() + d * dirFace->get_normal());
-        // std::cout << "It is ok, the vertex is on the face. Let's split the face" << std::endl;
-      }
+  // if the point is inside the convex it is not good
+  // the threshold of -1e10 is used to maje sure the point is strictly inside
+  if (dirFace->pointInHalfSpace(newVertex->get_coordinates(), -1e-10)) // if the vertex is on the plane then it is considered in...
+    {
+      return false;
     }
     
   m_vertices.push_back(newVertex);
-  
   consideredFaces.push_back(dirFace);
-  
-  std::vector<std::shared_ptr<Face>> visibleFaces;
-  std::vector<std::shared_ptr<Edge>> visibleEdges;
-  
+    
   auto currentFace = consideredFaces.begin();
 
   // consider all the faces to be considered
   while(currentFace != consideredFaces.end())
   {
-    // if the current face does not put the new point inside the inner polyhedron
+    // if the current face does not put the new point stricly inside the inner polyhedron
     // then  it has to be removed
-    if(!(*currentFace)->pointInHalfSpace(newVertex->get_coordinates()))
+    // if the new vertex is on the face then the face is considered as visible -> 1e-10 threshold
+    if(!(*currentFace)->pointInHalfSpace(newVertex->get_coordinates(), -1e-10)) 
     {
       visibleFaces.push_back(*currentFace);
 
@@ -274,9 +255,6 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
     currentFace++;
   }
 
-  
-
-  
   // the discrimination of the edges that should be remove could be done in the previous loop
   std::vector<std::shared_ptr<Edge>> edges_to_keep;
   std::vector<std::shared_ptr<Edge>> edges_to_delete;
@@ -296,8 +274,6 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
       edges_to_keep.push_back(it);
     }
   }
-
-  
   
   // remove old faces
   for(auto it : visibleFaces)
@@ -322,7 +298,7 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
     auto posEdge = find(m_edges.begin(), m_edges.end(), it);
     if(posEdge != m_edges.end())
     {
-      *posEdge = nullptr;
+      // *posEdge = nullptr;
       m_edges.erase(posEdge);
     }
     else
@@ -330,7 +306,6 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
       std::cout << "Visible edge not found!" << '\n';
     }
   }
-
   
   // ---- create and add the new faces and edges of the inner polyhedron
   std::shared_ptr<Face> newFace;
@@ -373,6 +348,7 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
     }
     m_faces.push_back(newFace);
   }
+
   return true;
 }
 
@@ -809,7 +785,7 @@ tinyxml2::XMLElement * RobustStabilityPolytope::xmlPolytope(tinyxml2::XMLDocumen
   // adding the edges to the poly
   auto innerEdgesXML = doc.NewElement("innerEdges");
   xmlPoly->InsertEndChild(innerEdgesXML);
-  
+
   for (auto edge: m_edges)
     {
       innerEdgesXML->InsertEndChild(xmlEdge(edge));
@@ -862,6 +838,11 @@ Eigen::Vector3d RobustStabilityPolytope::baryPoint() const
 int RobustStabilityPolytope::get_numberOfVertices() const
 {
   return m_vertices.size();
+}
+
+int RobustStabilityPolytope::get_numberOfEdges() const
+{
+  return m_edges.size();
 }
 
 int RobustStabilityPolytope::get_numberOfFaces() const

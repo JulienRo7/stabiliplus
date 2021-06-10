@@ -53,6 +53,7 @@ public:
 
   // ----------- getters ----------
   int get_numberOfVertices() const;
+  int get_numberOfEdges() const;
   int get_numberOfFaces() const;
   int get_numberOfOuterVertices() const;
   int get_numberOfOuterFaces() const;

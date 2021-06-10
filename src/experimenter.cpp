@@ -34,6 +34,7 @@ void ComputationPoint::compute() {
   }
   std::cout << "Error: " << polytope_->getError() << " precision: " << polytope_->getMaxError() << std::endl;
   std::cout << "Iteration: " << polytope_->getIteration() << " maxIt: " << polytope_->getMaxIteration() << std::endl;
+
   auto stop = std::chrono::high_resolution_clock::now();
   
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop -start);
