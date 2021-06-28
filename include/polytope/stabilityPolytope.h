@@ -87,6 +87,14 @@ public:
   /*!
    * \brief return the H-Rep of the projected convex
    * 
+   * `Aineq` represents half-planes and `bineq` represents offsets.
+   *
+   */
+  virtual void computeHrep(Eigen::MatrixXd & Aineq, Eigen::VectorXd & bineq) const = 0;
+  
+  /*!
+   * \brief return the H-Rep of the projected convex
+   * 
    * Each `Eigen::Vector4d` represents one hyperplane of the projected convex. 
    * The first 3 coordinates represent the normal of the hyperplane toward the outside of the polytope
    * The 4th coodinate is the offset.

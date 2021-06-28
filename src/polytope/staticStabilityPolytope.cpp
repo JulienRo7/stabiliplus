@@ -194,6 +194,19 @@ void StaticStabilityPolytope::writeToStream(std::ofstream & stream) const
   }
 }
 
+void StaticStabilityPolytope::computeHrep(Eigen::MatrixXd & Aineq, Eigen::VectorXd & bineq) const
+{
+  Aineq = Eigen::MatrixXd::Zero(m_points.size(),projectedPolytopeDim);
+  bineq = Eigen::VectorXd::Zero(m_points.size());
+  int counter = 0;
+  for(auto pt : m_points)
+  {
+    Aineq.row(counter) = pt->plane().head(2).transpose(); //NOTE: use .head(2) because the third dimension is always zero!
+    bineq(counter) = pt->plane()[3];
+    counter++;
+  }
+}
+
 std::vector<Eigen::Vector4d> StaticStabilityPolytope::constraintPlanes() const
 {
   std::vector<Eigen::Vector4d> planes;
@@ -287,5 +300,79 @@ const void StaticStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector2d & poi
   {
     point += weights(counter) * pt->innerVertex();
     counter ++;
+  }
+}
+
+const bool StaticStabilityPolytope::getUniformRandomFeasiblePoint(Eigen::Vector2d & point) const
+{
+  //compute the hyper-cube that encloses the polytope
+  Eigen::Vector2d maximums = (-1)*std::numeric_limits<double>::max()*Eigen::Vector2d::Ones();
+  Eigen::Vector2d minimums = (+1)*std::numeric_limits<double>::max()*Eigen::Vector2d::Ones();
+  for(auto pt: m_points)
+  {
+    for(int dim=0; dim<projectedPolytopeDim; dim++)
+    {
+      if(maximums[dim] < pt->innerVertex()[dim])
+      {
+        maximums[dim] = pt->innerVertex()[dim];
+      }
+      if(minimums[dim] > pt->innerVertex()[dim])
+      {
+        minimums[dim] = pt->innerVertex()[dim];
+      }
+    }
+  }
+  double volumeCube = 0;
+  Eigen::Vector2d ranges = Eigen::Vector2d::Zero();
+  for(int dim=0; dim<projectedPolytopeDim; dim++)
+  {
+    ranges[dim] = maximums[dim] - minimums[dim];
+    if(dim==0){
+      volumeCube = ranges[dim];
+    }
+    else{
+      volumeCube *= ranges[dim];
+    }
+  }
+  const double volumePolytope = volumeCube; //TODO: how to obtain the projected polytope volume?
+  const double ratio = volumePolytope / volumeCube;
+  // std::cout << "ratio " << ratio << std::endl;
+  if (ratio < 0.01){
+    return false; //if the ratio is very small, then this uniform-sampling approach will take a long time...
+  }
+
+  //uniformly sample points from the enclosing hypercube until a valid point is found
+  bool valid = false;
+  int counter = 0;
+  const int maxSamplingAttempts = 100;
+  while(!valid)
+  {
+    // std::cout << counter+1 << ". sampling attempt from hypercube" << std::endl;
+    for(int dim=0; dim<projectedPolytopeDim; dim++)
+    {
+      double r = ((double) rand() / (RAND_MAX)); //generate a random number between 0 and 1
+      point[dim] = minimums[dim] + r * ranges[dim];
+    }
+    valid = isPointFeasible(point);
+    counter++;
+    if(counter >= maxSamplingAttempts){
+      return false;
+    }
+  }
+  return true;
+}
+
+const bool StaticStabilityPolytope::isPointFeasible(Eigen::Vector2d & point) const
+{
+  Eigen::MatrixXd Aineq;
+  Eigen::VectorXd bineq;
+  this->computeHrep(Aineq, bineq);
+  Eigen::VectorXd res = Eigen::VectorXd::Zero(bineq.size());
+  res = Aineq * point - bineq;
+  if(res.maxCoeff() > 0.0){
+    return false;
+  }
+  else{
+    return true;
   }
 }

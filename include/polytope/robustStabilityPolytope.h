@@ -45,6 +45,7 @@ public:
   // ----------- output and display functions ----------
   void writeToStream(std::ofstream & stream) const override;
   void showPoly() const;
+  void computeHrep(Eigen::MatrixXd & Aineq, Eigen::VectorXd & bineq) const override;
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
   Eigen::Vector3d baryPoint() const override;
 
@@ -62,6 +63,8 @@ public:
   std::vector<double> get_innerFaceOffsets() const;
   const std::vector<Eigen::Vector3d> getInnerVertices() const;
   const void getRandomFeasiblePoint(Eigen::Vector3d & point) const;
+  const bool getUniformRandomFeasiblePoint(Eigen::Vector3d & point) const;
+  const bool isPointFeasible(Eigen::Vector3d & point) const;
 
   /*
   inline ProblemDescriptor * problemDescriptor() override
@@ -97,6 +100,7 @@ private:
   double m_innerConvexMicro=0;
   double m_outerConvexMicro=0;
   double m_supportFunctionMicro=0;
+  const int projectedPolytopeDim = 3;
 };
 
 #endif // ROBUST_STABILITY_POLYTOPE_H_INCLUDE

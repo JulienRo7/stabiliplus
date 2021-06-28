@@ -26,6 +26,7 @@ public:
 
   // ----- output -----
   void writeToStream(std::ofstream & stream) const override;
+  void computeHrep(Eigen::MatrixXd & Aineq, Eigen::VectorXd & bineq) const override;
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
   Eigen::Vector3d baryPoint() const override;
 
@@ -38,6 +39,8 @@ public:
   const std::vector<Eigen::Vector2d> getInnerVertices() const;
   const std::vector<Eigen::Vector2d> getOuterVertices() const;
   const void getRandomFeasiblePoint(Eigen::Vector2d & point) const;
+  const bool getUniformRandomFeasiblePoint(Eigen::Vector2d & point) const;
+  const bool isPointFeasible(Eigen::Vector2d & point) const;
   
   /*
   inline std::shared_ptr<ProblemDescriptor>* problemDescriptor() override
@@ -54,5 +57,6 @@ private:
 
   // std::shared_ptr<ContactSet>  m_contactSetPtr; // for now the contact set should not change
   std::vector<std::shared_ptr<StaticPoint>> m_points;
+  const int projectedPolytopeDim = 2;
 };
 #endif // STATIC_STABILITY_POLYTOPE_H_INCLUDE

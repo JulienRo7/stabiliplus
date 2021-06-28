@@ -816,6 +816,19 @@ void RobustStabilityPolytope::showPoly() const
   std::cout << '\n';
 }
 
+void RobustStabilityPolytope::computeHrep(Eigen::MatrixXd & Aineq, Eigen::VectorXd & bineq) const
+{
+  Aineq = Eigen::MatrixXd::Zero(m_faces.size(),projectedPolytopeDim);
+  bineq = Eigen::VectorXd::Zero(m_faces.size());
+  int counter = 0;
+  for(auto face : m_faces)
+  {
+    Aineq.row(counter) = face->get_normal().transpose();
+    bineq(counter) = face->get_offset();
+    counter++;
+  }
+}
+
 std::vector<Eigen::Vector4d> RobustStabilityPolytope::constraintPlanes() const
 {
   std::vector<Eigen::Vector4d> planes;
@@ -931,5 +944,81 @@ const void RobustStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector3d & poi
     counter++;
   }
 }
+
+const bool RobustStabilityPolytope::getUniformRandomFeasiblePoint(Eigen::Vector3d & point) const
+{
+  //compute the hyper-cube that encloses the polytope
+  Eigen::Vector3d maximums = (-1)*std::numeric_limits<double>::max()*Eigen::Vector3d::Ones();
+  Eigen::Vector3d minimums = (+1)*std::numeric_limits<double>::max()*Eigen::Vector3d::Ones();
+  for(auto it : m_vertices)
+  {
+    for(int dim=0; dim<projectedPolytopeDim; dim++)
+    {
+      if(maximums[dim] < it->get_coordinates()[dim])
+      {
+        maximums[dim] = it->get_coordinates()[dim];
+      }
+      if(minimums[dim] > it->get_coordinates()[dim])
+      {
+        minimums[dim] = it->get_coordinates()[dim];
+      }
+    }
+  }
+  double volumeCube = 0;
+  Eigen::Vector3d ranges = Eigen::Vector3d::Zero();
+  for(int dim=0; dim<projectedPolytopeDim; dim++)
+  {
+    ranges[dim] = maximums[dim] - minimums[dim];
+    if(dim==0){
+      volumeCube = ranges[dim];
+    }
+    else{
+      volumeCube *= ranges[dim];
+    }
+  }
+  const double volumePolytope = volumeCube; //TODO: how to obtain the projected polytope volume?
+  const double ratio = volumePolytope / volumeCube;
+  // std::cout << "ratio " << ratio << std::endl;
+  if (ratio < 0.01){
+    return false; //if the ratio is very small, then this uniform-sampling approach will take a long time...
+  }
+
+  //uniformly sample points from the enclosing hypercube until a valid point is found
+  bool valid = false;
+  int counter = 0;
+  const int maxSamplingAttempts = 100;
+  while(!valid)
+  {
+    // std::cout << counter+1 << ". sampling attempt from hypercube" << std::endl;
+    for(int dim=0; dim<projectedPolytopeDim; dim++)
+    {
+      double r = ((double) rand() / (RAND_MAX)); //generate a random number between 0 and 1
+      point[dim] = minimums[dim] + r * ranges[dim];
+    }
+    valid = isPointFeasible(point);
+    counter++;
+    if(counter >= maxSamplingAttempts){
+      return false;
+    }
+  }
+  return true;
+}
+
+const bool RobustStabilityPolytope::isPointFeasible(Eigen::Vector3d & point) const
+{
+  Eigen::MatrixXd Aineq;
+  Eigen::VectorXd bineq;
+  this->computeHrep(Aineq, bineq);
+  Eigen::VectorXd res = Eigen::VectorXd::Zero(bineq.size());
+  res = Aineq * point - bineq;
+  if(res.maxCoeff() > 0.0){
+    return false;
+  }
+  else{
+    return true;
+  }
+}
+
+
 
 // ------------------ setter -----------------------
