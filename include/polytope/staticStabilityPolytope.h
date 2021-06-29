@@ -28,8 +28,12 @@ public:
 
   // ----- output -----
   void writeToStream(std::ofstream & stream) const override;
+
   tinyxml2::XMLElement * xmlPolytope(tinyxml2::XMLDocument & doc) const override;
   void showPoly() const;
+
+  void computeHrep(Eigen::MatrixXd & Aineq, Eigen::VectorXd & bineq) const override;
+
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
   std::vector<Eigen::Vector3d> vertices() const override;
   
@@ -43,6 +47,9 @@ public:
   int get_numberOfVertices() const;
   const std::vector<Eigen::Vector2d> getInnerVertices() const;
   const std::vector<Eigen::Vector2d> getOuterVertices() const;
+  const void getRandomFeasiblePoint(Eigen::Vector2d & point) const;
+  const bool getUniformRandomFeasiblePoint(Eigen::Vector2d & point) const;
+  const bool isPointFeasible(Eigen::Vector2d & point) const;
   
   inline const std::vector<std::shared_ptr<StaticPoint>> getStaticPoints() const
   {
@@ -66,5 +73,8 @@ private:
   std::vector<std::shared_ptr<StaticPoint>> m_points;
 
   int error_ = -1;
+
+  const int projectedPolytopeDim = 2;
+
 };
 #endif // STATIC_STABILITY_POLYTOPE_H_INCLUDE

@@ -46,6 +46,7 @@ public:
   void writeToStream(std::ofstream & stream) const override;
   tinyxml2::XMLElement * xmlPolytope(tinyxml2::XMLDocument & doc) const override;
   void showPoly() const;
+  void computeHrep(Eigen::MatrixXd & Aineq, Eigen::VectorXd & bineq) const override;
   std::vector<Eigen::Vector4d> constraintPlanes() const override;
   std::vector<Eigen::Vector3d> vertices() const override;
   
@@ -65,6 +66,9 @@ public:
   std::vector<Eigen::Vector3d> get_innerFaceNormals() const;
   std::vector<double> get_innerFaceOffsets() const;
   const std::vector<Eigen::Vector3d> getInnerVertices() const;
+  const void getRandomFeasiblePoint(Eigen::Vector3d & point) const;
+  const bool getUniformRandomFeasiblePoint(Eigen::Vector3d & point) const;
+  const bool isPointFeasible(Eigen::Vector3d & point) const;
 
   Eigen::Vector3d chebichevCenter() const override;
   
@@ -117,6 +121,7 @@ private:
   double m_innerConvexMicro=0;
   double m_outerConvexMicro=0;
   double m_supportFunctionMicro=0;
+  const int projectedPolytopeDim = 3;
 };
 
 #endif // ROBUST_STABILITY_POLYTOPE_H_INCLUDE
