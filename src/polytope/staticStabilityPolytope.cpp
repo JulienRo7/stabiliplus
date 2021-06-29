@@ -364,15 +364,6 @@ const bool StaticStabilityPolytope::getUniformRandomFeasiblePoint(Eigen::Vector2
 
 const bool StaticStabilityPolytope::isPointFeasible(Eigen::Vector2d & point) const
 {
-  Eigen::MatrixXd Aineq;
-  Eigen::VectorXd bineq;
-  this->computeHrep(Aineq, bineq);
-  Eigen::VectorXd res = Eigen::VectorXd::Zero(bineq.size());
-  res = Aineq * point - bineq;
-  if(res.maxCoeff() > 0.0){
-    return false;
-  }
-  else{
-    return true;
-  }
+  // the point is feasible if it is in the half space of all the faces of the inner polytope.
+  return std::all_of(m_points.begin(), m_points.end(), [&point](std::shared_ptr<StaticPoint> p){return p->pointInHalfSpace(point);});
 }

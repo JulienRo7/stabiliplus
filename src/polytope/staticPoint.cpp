@@ -162,3 +162,9 @@ bool StaticPoint::operator()(const std::shared_ptr<StaticPoint> p1, const std::s
 {
   return p1->measure() < p2->measure();
 }
+
+// ----- tests -----
+const bool StaticPoint::pointInHalfSpace(Eigen::Vector2d const &point, double const eps) const
+{
+  return m_normal.dot(point-m_innerVertex) < eps;
+}

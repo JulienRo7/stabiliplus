@@ -67,6 +67,9 @@ public:
   // ----- operator overload -----
   bool operator()(const std::shared_ptr<StaticPoint> p1, const std::shared_ptr<StaticPoint> p2);
 
+  // ----- tests -----
+  const bool pointInHalfSpace(Eigen::Vector2d const &point, double const eps = 0.0) const;
+
 private:
   Eigen::Vector2d m_innerVertex;
   Eigen::Vector2d m_searchDir;

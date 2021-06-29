@@ -1006,19 +1006,7 @@ const bool RobustStabilityPolytope::getUniformRandomFeasiblePoint(Eigen::Vector3
 
 const bool RobustStabilityPolytope::isPointFeasible(Eigen::Vector3d & point) const
 {
-  Eigen::MatrixXd Aineq;
-  Eigen::VectorXd bineq;
-  this->computeHrep(Aineq, bineq);
-  Eigen::VectorXd res = Eigen::VectorXd::Zero(bineq.size());
-  res = Aineq * point - bineq;
-  if(res.maxCoeff() > 0.0){
-    return false;
-  }
-  else{
-    return true;
-  }
+  // the point is feasible if it is in the half space of all the faces of the inner polytope.
+  return std::all_of(m_faces.begin(), m_faces.end(), [&point](std::shared_ptr<Face> f){return f->pointInHalfSpace(point);});
 }
 
-
-
-// ------------------ setter -----------------------
