@@ -63,7 +63,7 @@ public:
   std::vector<double> get_innerFaceOffsets() const;
   const std::vector<Eigen::Vector3d> getInnerVertices() const;
   const void getRandomFeasiblePoint(Eigen::Vector3d & point) const;
-  const bool getUniformRandomFeasiblePoint(Eigen::Vector3d & point) const;
+  const bool getUniformRandomFeasiblePoint(Eigen::Vector3d & point, const int maxSamplingAttempts = 100) const;
   const bool isPointFeasible(Eigen::Vector3d & point) const;
 
   /*

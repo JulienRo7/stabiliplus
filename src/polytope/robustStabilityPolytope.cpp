@@ -928,9 +928,14 @@ const std::vector<Eigen::Vector3d> RobustStabilityPolytope::getInnerVertices() c
 
 const void RobustStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector3d & point) const
 {
+  //This method samples feasible points within the projected polytope in an efficient and fast manner.
+  //However, the sampling does not enforce a uniform distribution!
+  //
+  //In future, one may choose a specific distribution of weights (i.e. uniform, normal, exponential, ...) 
+  //as this affects the distribution of drawn points.
   point.setZero();
 
-  Eigen::VectorXd weights = Eigen::VectorXd::Random(m_vertices.size());
+  Eigen::VectorXd weights = Eigen::VectorXd::Random(m_vertices.size()); //any distribution of weights results in a feasible point
   // The coefficients must be positive:
   weights = weights.cwiseAbs();
   // The sum of coefficient must be equal to 1.0 :
@@ -945,8 +950,13 @@ const void RobustStabilityPolytope::getRandomFeasiblePoint(Eigen::Vector3d & poi
   }
 }
 
-const bool RobustStabilityPolytope::getUniformRandomFeasiblePoint(Eigen::Vector3d & point) const
+const bool RobustStabilityPolytope::getUniformRandomFeasiblePoint(Eigen::Vector3d & point, const int maxSamplingAttempts) const
 {
+  //This method samples feasible points within the projected polytope.
+  //Drawn points are uniformly distributed.
+  //The function's efficiency depends on the ratio between the volume of the enclosing hypercube and the volume of the projected polytope.
+  //Therefore, the function may return false if 
+
   //compute the hyper-cube that encloses the polytope
   Eigen::Vector3d maximums = (-1)*std::numeric_limits<double>::max()*Eigen::Vector3d::Ones();
   Eigen::Vector3d minimums = (+1)*std::numeric_limits<double>::max()*Eigen::Vector3d::Ones();
@@ -964,29 +974,15 @@ const bool RobustStabilityPolytope::getUniformRandomFeasiblePoint(Eigen::Vector3
       }
     }
   }
-  double volumeCube = 0;
   Eigen::Vector3d ranges = Eigen::Vector3d::Zero();
   for(int dim=0; dim<projectedPolytopeDim; dim++)
   {
     ranges[dim] = maximums[dim] - minimums[dim];
-    if(dim==0){
-      volumeCube = ranges[dim];
-    }
-    else{
-      volumeCube *= ranges[dim];
-    }
-  }
-  const double volumePolytope = volumeCube; //TODO: how to obtain the projected polytope volume?
-  const double ratio = volumePolytope / volumeCube;
-  // std::cout << "ratio " << ratio << std::endl;
-  if (ratio < 0.01){
-    return false; //if the ratio is very small, then this uniform-sampling approach will take a long time...
   }
 
   //uniformly sample points from the enclosing hypercube until a valid point is found
   bool valid = false;
   int counter = 0;
-  const int maxSamplingAttempts = 100;
   while(!valid)
   {
     // std::cout << counter+1 << ". sampling attempt from hypercube" << std::endl;
@@ -998,6 +994,7 @@ const bool RobustStabilityPolytope::getUniformRandomFeasiblePoint(Eigen::Vector3
     valid = isPointFeasible(point);
     counter++;
     if(counter >= maxSamplingAttempts){
+      point.setZero();
       return false;
     }
   }
