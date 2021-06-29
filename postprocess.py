@@ -155,6 +155,10 @@ class staticPoly(polytope):
         
 class robustPoly(polytope):
     def __init__(self):
+
+        # index of the inner vertices
+        self.innerIndex = []
+
         # coordinates of the inner points
         self.innerX = []
         self.innerY = []
@@ -176,6 +180,11 @@ class robustPoly(polytope):
 
         # list of outer edges, each edge is represented using a 2x3 matrix and each column gives the coordinates of one point
         self.outerEdges = []
+
+        # list of the inner faces vertices (each inner face is a triangle and is reprensented by the index of its 3 vertices)
+        self.innerFaces = []
+        self.innerFacesNormals = []
+        self.innerFacesOffsets = []
 
         #self.readFile(file_name)
 
@@ -211,6 +220,7 @@ class robustPoly(polytope):
                 print("Unrecognise type :", line[0])
 
     def loadVertexXML(self, xmlVertex):
+        self.innerIndex.append(int(xmlVertex.attrib['i']))
         self.innerX.append(float(xmlVertex.attrib['x']))
         self.innerY.append(float(xmlVertex.attrib['y']))
         self.innerZ.append(float(xmlVertex.attrib['z']))
@@ -223,6 +233,30 @@ class robustPoly(polytope):
                                 [float(xmlEdge.attrib['y1']), float(xmlEdge.attrib['y2'])],
                                 [float(xmlEdge.attrib['z1']), float(xmlEdge.attrib['z2'])]])
     
+    def loadFaceXML(self, xmlFace):
+        self.innerFaces.append([int(xmlFace.attrib[a]) for a in ['v1', 'v2', 'v3']])
+        self.innerFacesNormals.append(np.array([float(xmlFace.attrib[a]) for a in ['x', 'y', 'z']]))
+        self.innerFacesOffsets.append(float(xmlFace.attrib['offset']))
+
+    def getVertexPos(self, index): 
+        return self.innerIndex.index(index)
+
+    def reOrderFaceIndexes(self):
+        # swap faces vertices' index to make sure they are in counter clockwise order 
+        innerVertices = [np.array([x, y, z]) for x, y, z in zip(self.innerX, self.innerY, self.innerZ)]
+        
+        for face, n in zip(self.innerFaces, self.innerFacesNormals):
+            v1 = innerVertices[self.getVertexPos(face[0])]
+            v2 = innerVertices[self.getVertexPos(face[1])]
+            v3 = innerVertices[self.getVertexPos(face[2])]
+
+            norm = np.cross(v2-v1, v3-v1)
+            if (np.dot(n, norm)<0):
+                i = face[2]
+                face[2] = face[1]
+                face[1] = i
+
+
     def loadXML(self, xmlPoly):
         for child in xmlPoly:
             if (child.tag == "innerVertices"):
@@ -232,6 +266,10 @@ class robustPoly(polytope):
             elif (child.tag == "innerEdges"):
                 for xmlEdge in child:
                     self.loadEdgeXML(xmlEdge)
+
+            elif (child.tag == "innerFaces"):
+                for xmlFace in child:
+                    self.loadFaceXML(xmlFace)
             else:
                 print("Unrecognized robust polytope tag: ", child.tag)
                 
@@ -253,7 +291,7 @@ class robustPoly(polytope):
             for e in self.innerEdges:
                 ax.plot(e[0], e[1], e[2], color=color)
 
-        dispSides = False
+        dispSides = True
         if dispSides:
             self.sideDisplay(ax)
 
@@ -301,65 +339,17 @@ class robustPoly(polytope):
 
     def sideDisplay(self, ax, color="xkcd:green", name=""):
         # build the triangulation object
-        # to get the list of triangular faces -> scipy.spatial.ConvexHull
-        # self.innerX
-        # self.innerY
-        # self.innerZ
-        numPts = len(self.innerX)
-        points = np.array([self.innerX, self.innerY, self.innerZ])
-        np.reshape(points, (numPts, 3))
-        
-        convex = ConvexHull(points.T)
-        # create the triangulation object in order to get the edges in a simple way...
-        triangle = Triangulation(self.innerX, self.innerY, convex.simplices)
-        # light = LightSource(0, 70) 
-        # cmap=plt.get_cmap('gist_earth')
-        # rgb = light.shade(self.innerZ, cmap)
-        # print(self.innerX)
-        # print(self.innerY)
-        # print(self.innerZ)
+        self.reOrderFaceIndexes()
 
-        # print(convex.points.T)
-        
-        points = [c for c in convex.points.T]
-        ax.plot_trisurf(self.innerX, self.innerY, convex.simplices, self.innerZ,
+        def getVerticePos(listI): return [self.getVertexPos(i) for i in listI]
+        faces = [getVerticePos(f) for f in self.innerFaces]
+
+        triangles = Triangulation(self.innerX, self.innerY, faces)
+
+        ax.plot_trisurf(triangles, self.innerZ,
         # ax.plot_trisurf(self.innerX, self.innerY, self.innerZ, 
-                         color=color, alpha=0.6, shade=True)
-        # plotting the edges:
-        # for e in triangle.edges:
-        #     edge = [e[0], e[1]]
-        #     ax.plot([self.innerX[e[0]], self.innerX[e[1]]],
-        #             [self.innerY[e[0]], self.innerY[e[1]]],
-        #             [self.innerZ[e[0]], self.innerZ[e[1]]],
-        #             color=color, linewidth=0.3)
+                         color=color, alpha=0.4, shade=True)
 
-        # # plotting the normals...
-        # scale = 0.2
-        # X = []
-        # Y = []
-        # Z = []
-
-        # U = []
-        # V = []
-        # W = []
-        
-        # for simplice, equation in zip( convex.simplices, convex.equations):
-        #     X.append(sum([self.innerX[i] for i in simplice])/3)
-        #     Y.append(sum([self.innerY[i] for i in simplice])/3)
-        #     Z.append(sum([self.innerZ[i] for i in simplice])/3)
-
-        #     U.append(equation[0])
-        #     V.append(equation[1])
-        #     W.append(equation[2])
-
-        # ax.quiver(X, Y, Z, U, V, W, color="xkcd:salmon")
-
-            
-            
-            
-        
-        
-    
     
 class ComputationPoint:
     def __init__(self):

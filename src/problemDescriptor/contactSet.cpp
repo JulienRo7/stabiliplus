@@ -10,9 +10,9 @@ ContactSet::ContactSet(bool staticCase): ProblemDescriptor("ContactSet_1"),
   if (staticCase_)
     {
       m_dim = 2;
-      Eigen::Vector3d gravity;
-      gravity << 0, 0, -9.81;
-      m_accelerations.push_back(gravity);
+      // Eigen::Vector3d gravity;
+      // gravity << 0, 0, -9.81;
+      // m_accelerations.push_back(gravity);
     }
   else
     {
@@ -329,7 +329,6 @@ void ContactSet::loadContactSet(std::string const & file_name)
 
         while(childXML)
         {
-          //++m_numberOfAccelerations;
           // std::cout << "Add Acceleration!" << '\n';
           childType = childXML->Value();
           if(std::strcmp(childType.c_str(), "matrix") == 0)
@@ -340,7 +339,6 @@ void ContactSet::loadContactSet(std::string const & file_name)
             lineXML->FirstChildElement("v")->QueryDoubleText(&acceleration(1));
             lineXML = lineXML->NextSiblingElement("line");
             lineXML->FirstChildElement("v")->QueryDoubleText(&acceleration(2));
-
             // std::cout << "New acceleration: " << '\n' << acceleration << '\n';
 
             m_accelerations.push_back(acceleration);
@@ -361,7 +359,6 @@ void ContactSet::loadContactSet(std::string const & file_name)
       mainXML = mainXML->NextSiblingElement();
     }
 
-    // cout << robot_name << " loaded !" << std::endl;
   }
   else
   {

@@ -80,7 +80,7 @@ void StaticStabilityPolytope::solveLP(Eigen::Vector2d const & direction, Eigen::
 void StaticStabilityPolytope::projectionStabilityPolyhedron()
 {
   if(!this->computeProjectionStabilityPolyhedron()){
-    throw std::runtime_error("method failed!");
+    throw std::runtime_error("Stabiliplus static projection failed: " + std::to_string(error_));
   }
 }
 
@@ -94,14 +94,14 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   dir << 1.0, 0.0;
   vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
-  std::shared_ptr<StaticPoint> p1(new StaticPoint(dir, vertex));
+  std::shared_ptr<StaticPoint> p1 = std::make_shared<StaticPoint>(dir, vertex);
   m_points.push_back(p1);
 
 
   dir << cos(2 * M_PI / 3), sin(2 * M_PI / 3);
   vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
-  std::shared_ptr<StaticPoint> p2(new StaticPoint(dir, vertex));
+  std::shared_ptr<StaticPoint> p2 = std::make_shared<StaticPoint>(dir, vertex);
   m_points.push_back(p2);
   p1->next(p2);
   p2->prec(p1);
@@ -109,7 +109,7 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   dir << cos(4 * M_PI / 3), sin(4 * M_PI / 3);
   vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
-  std::shared_ptr<StaticPoint> p3(new StaticPoint(dir, vertex));
+  std::shared_ptr<StaticPoint> p3 = std::make_shared<StaticPoint>(dir, vertex);
   m_points.push_back(p3);
   p2->next(p3);
   p3->prec(p2);
@@ -121,11 +121,13 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   m_error = p1->measure() + p2->measure() + p3->measure();
 
   if(m_error==0){
+    error_ = 1;
     return false; //NOTE the constraints might correspond to an empty set?
     // if we have an empty set, it should be checked using the area of the initial inner region
     // and maybe use the area of the outer region as a double check
   }
   if(m_error<-1e-10){
+    error_ = 2;
     return false; //TODO this should not happen or the set is not convex
   }
   //std::cout<<"Initial projection error: "<<m_error<<std::endl;
@@ -159,6 +161,7 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
     m_error += p_max->measure();
     m_error += p->measure();
     if(m_error<-1e-10){
+      error_ = 3;
       return false; //TODO
     }
     

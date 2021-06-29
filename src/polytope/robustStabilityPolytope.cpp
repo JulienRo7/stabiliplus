@@ -24,33 +24,10 @@ RobustStabilityPolytope::~RobustStabilityPolytope()
 // ----------- main class methods ----------
 void RobustStabilityPolytope::initSolver()
 {
-  // m_contactSetPtr = static_cast<ContactSet*>(m_pdPtr);
 
-
-  /*
-    m_lp->buildProblem(m_contactSetPtr->buildVectorB(),
-             m_contactSetPtr->buildMatrixA(),
-             m_contactSetPtr->buildFrictionF(),
-             m_contactSetPtr->buildFrictionVectorf());
-  */
-  /*
-    m_lp->buildProblem(m_pdPtr->buildVectorB(), m_pdPtr->buildMatrixA(), m_pdPtr->buildFrictionF(),
-                       m_pdPtr->buildFrictionVectorf());
-           */
   m_pdPtr->update();
   m_lp->buildProblem(m_pdPtr->getVectorB(), m_pdPtr->getMatrixA(), m_pdPtr->getFrictionF(),
                      m_pdPtr->getFrictionVectorf());
-
-  // Eigen::VectorXd b = m_pdPtr->getVectorB();
-  // Eigen::MatrixXd A = m_pdPtr->getMatrixA();
-  // Eigen::MatrixXd Ab(A.rows(), A.cols()+1);
-  // Ab << A, b;
-  // Eigen::MatrixXd F = m_pdPtr->getFrictionF();
-  // Eigen::VectorXd f = m_pdPtr->getFrictionVectorf();
-  // Eigen::MatrixXd Ff(F.rows(), F.cols()+1);
-  // Ff << F, f;
-  // std::cout << "Equalities: \n" << Ab << std::endl;
-  // std::cout << "Friction: \n" << Ff << std::endl;
 }
 
 void RobustStabilityPolytope::solveLP(Eigen::Vector3d const & direction, Eigen::Vector3d & vertex)
@@ -741,6 +718,7 @@ tinyxml2::XMLElement * RobustStabilityPolytope::xmlPolytope(tinyxml2::XMLDocumen
     auto dir = vertex->get_direction();
     auto vertexXML = doc.NewElement("vertex");
 
+    vertexXML->SetAttribute("i", vertex->get_index());
     vertexXML->SetAttribute("x", coord[0]);
     vertexXML->SetAttribute("y", coord[1]);
     vertexXML->SetAttribute("z", coord[2]);
@@ -769,6 +747,22 @@ tinyxml2::XMLElement * RobustStabilityPolytope::xmlPolytope(tinyxml2::XMLDocumen
     return edgeXML;
   };
 
+  auto xmlFace = [&doc](std::shared_ptr<Face> face){
+    auto faceXML = doc.NewElement("face");
+
+    faceXML->SetAttribute("offset", face->get_offset());
+    auto normal = face->get_normal();
+    faceXML->SetAttribute("x", normal[0]);
+    faceXML->SetAttribute("y", normal[1]);
+    faceXML->SetAttribute("z", normal[2]);
+
+    faceXML->SetAttribute("v1", face->get_vertex1()->get_index());
+    faceXML->SetAttribute("v2", face->get_vertex2()->get_index());
+    faceXML->SetAttribute("v3", face->get_vertex3()->get_index());
+
+    return faceXML;
+  };
+
   // creating the xml element corresponding to the polytope
   auto xmlPoly = doc.NewElement("polytope");
   xmlPoly->SetAttribute("type", "robust");
@@ -791,6 +785,14 @@ tinyxml2::XMLElement * RobustStabilityPolytope::xmlPolytope(tinyxml2::XMLDocumen
       innerEdgesXML->InsertEndChild(xmlEdge(edge));
     }
   
+  auto innerFacesXML = doc.NewElement("innerFaces");
+  xmlPoly->InsertEndChild(innerFacesXML);
+
+  for (auto face: m_faces)
+  {
+    innerFacesXML->InsertEndChild(xmlFace(face));
+  }
+
   return xmlPoly; 
 }
 

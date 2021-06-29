@@ -9,6 +9,8 @@
 #include "polytope/stabilityPolytope.h"
 #include "polytope/staticPoint.h"
 
+#include "problemDescriptor/contactSet.h"
+
 class StaticStabilityPolytope : public StabilityPolytope
 {
 public:
@@ -19,7 +21,7 @@ public:
 
   // ----- main class methods ------
   void initSolver() override;
-  void solveLP(Eigen::Vector2d const & direction, Eigen::Vector2d & vertex);
+  void solveLP(Eigen::Vector2d const & direction, Eigen::Vector2d & vertex);  
 
   void projectionStabilityPolyhedron() override;
   bool computeProjectionStabilityPolyhedron();
@@ -62,5 +64,7 @@ private:
 
   // std::shared_ptr<ContactSet>  m_contactSetPtr; // for now the contact set should not change
   std::vector<std::shared_ptr<StaticPoint>> m_points;
+
+  int error_ = -1;
 };
 #endif // STATIC_STABILITY_POLYTOPE_H_INCLUDE

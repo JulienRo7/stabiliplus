@@ -627,29 +627,33 @@ void Experimenter::run_exp6()
       // auto contact = m_contactSets.at(0);
       std::cout << "Computing contactSet: " << contact->get_name() << std::endl;
 
-      auto compute = [this](std::shared_ptr<RobustStabilityPolytope> polytope){
-	// polytope->initSolver();
-	polytope->projectionStabilityPolyhedron();
-	// polytope->endSolver();
-	// polytope->showPoly();
+      auto compute = [this](std::shared_ptr<StaticStabilityPolytope> polytope){
+      // polytope->initSolver();
+      polytope->projectionStabilityPolyhedron();
+      // polytope->endSolver();
+      // polytope->showPoly();
       };
 
-      std::shared_ptr<RobustStabilityPolytope> polyNormal, polyThread;
-      polyNormal = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, this->m_solver);
-      polyThread = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, this->m_solver);
+      std::shared_ptr<StaticStabilityPolytope> polyNormal, polyThread;
+      polyNormal = std::make_shared<StaticStabilityPolytope> (contactSet, 10, 0.05, this->m_solver);
+      polyThread = std::make_shared<StaticStabilityPolytope> (contactSet, 10, 0.05, this->m_solver);
 
       polyThread->initSolver();
-      std::thread myThread(compute, polyThread);
+      auto myThread = std::thread(compute, polyThread);
       myThread.join();
-      polyThread->endSolver();
 
       polyNormal->initSolver();
       compute(polyNormal);
-      polyNormal->endSolver();
+      // polyNormal->endSolver();
+
+      // myThread.join();
+      // polyThread->endSolver();
+
+
       
       std::cout << "Computations done!" << std::endl;
-      std::cout << "Let's compare the results:" << std::endl;
-      polyNormal->showPoly();
+      // std::cout << "Let's compare the results:" << std::endl;
+      // polyNormal->showPoly();
       // polyThread->showPoly();
       // 0- checkbasic stuff
       if (polyNormal->get_numberOfVertices() != polyThread->get_numberOfVertices())
@@ -658,8 +662,8 @@ void Experimenter::run_exp6()
 	  throw 42;
 	}
       // 1- check that the indexes are different for edges, vertices, faces
-      auto vertices1 = polyNormal->vertices();
-      auto vertices2 = polyThread->vertices();
+      // auto vertices1 = polyNormal->vertices();
+      // auto vertices2 = polyThread->vertices();
       
       // 2- check the position of the points
       // 3- check if the structure is the same
