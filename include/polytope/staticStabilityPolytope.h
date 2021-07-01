@@ -72,8 +72,6 @@ private:
   // std::shared_ptr<ContactSet>  m_contactSetPtr; // for now the contact set should not change
   std::vector<std::shared_ptr<StaticPoint>> m_points;
 
-  int error_ = -1;
-
   const int projectedPolytopeDim = 2;
 
 };

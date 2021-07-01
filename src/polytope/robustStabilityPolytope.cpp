@@ -41,9 +41,10 @@ void RobustStabilityPolytope::solveLP(Eigen::Vector3d const & direction, Eigen::
 
 void RobustStabilityPolytope::projectionStabilityPolyhedron()
 {
-  bool ok = this->computeProjectionStabilityPolyhedron();
-  if(ok==false){
-    std::cout << "\n method failed!" << std::endl; //TODO How to deal with this case?
+  if(!this->computeProjectionStabilityPolyhedron()){
+    saveToFile("/tmp/stabiliplus_fail_polytope.xml");
+    // std::cout << m_error << std::endl;
+    throw std::runtime_error("Stabiliplus robust projection failed: " + std::to_string(errorCode_));
   }
 }
 
@@ -76,6 +77,7 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
       if ((point-pt).norm() < 1e-5) //TODO allow the user to modify this threshold
       {
         std::cout << "Point is too close, stopping" << std::endl;
+        errorCode_ = 0;
         return false;
       }
     }
@@ -91,6 +93,7 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
   bool ok;
   if(m_error<0){
     std::cerr << "[Stabiliplus][RobustStabilityPolytope] Found negative error after initialization" << std::endl;
+    errorCode_ = 1;
     return false; //TODO
   }
 
@@ -110,12 +113,14 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
     if(m_faces.size()==0)
     {
       std::cerr << "[Stabiliplus][RobustStabilityPolytope] No faces after updating inner polytope" << std::endl;
+      errorCode_ = 3;
       return false;
     }
 
     if(!updateOuterPoly(newVertex, dirFace))
     {
       std::cerr << "[Stabiliplus][RobustStabilityPolytope] Failled to update the outer polytope" << std::endl;
+      errorCode_ = 4;
       return false;
     }
 
@@ -188,6 +193,7 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
   // the threshold of -1e10 is used to maje sure the point is strictly inside
   if (dirFace->pointInHalfSpace(newVertex->get_coordinates(), -1e-10)) // if the vertex is on the plane then it is considered in...
     {
+      errorCode_ = 20;
       return false;
     }
     
@@ -321,6 +327,7 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
         std::make_shared<Face>(newVertex, it->get_vertex1(), it->get_vertex2(), it, newEdge1, newEdge2, m_innerPoint);
     bool ok = newFace->init();
     if(!ok){
+      errorCode_ = 21;
       return false;
     }
     m_faces.push_back(newFace);

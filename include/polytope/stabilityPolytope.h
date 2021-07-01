@@ -215,4 +215,7 @@ protected:
   double m_initTime;
   double m_structTime;
 
+  // errors
+  int errorCode_=-1;
+
 }; // class StabilityPolytope
