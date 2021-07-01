@@ -277,7 +277,7 @@ class robustPoly(polytope):
         # ----------- display of inner polyhedron -----------
         innerline = []
         if dispVertexes:
-            innerline.append(ax.scatter(self.innerX, self.innerY, self.innerZ, color=color, marker='o'))
+            innerline.append(ax.scatter(self.innerX, self.innerY, self.innerZ, color=color, marker='.'))
 
         if dispInnerNormals:
             scale = 0.2
@@ -289,7 +289,7 @@ class robustPoly(polytope):
 
         if dispEdges:
             for e in self.innerEdges:
-                ax.plot(e[0], e[1], e[2], color=color)
+                ax.plot(e[0], e[1], e[2], color=color, linewidth=0.1)
 
         dispSides = True
         if dispSides:
@@ -502,7 +502,8 @@ class PostProcessor:
         # print("There are {} inner vertices and {} outer vertices".format(len(self.polytopes[0].innerVertices), len(self.polytopes[0].outerVertices)))
         ax, lines = self.computationPoints[0].contactSet.display_robot_configuration()
 
-        if self.robust:
+        displayStatic = False
+        if self.robust and displayStatic:
             poly_static = static_stability.static_stability_polyhedron(self.computationPoints[0].contactSet, 0.001, 100, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
             poly_static.project_static_stability()
             
@@ -532,21 +533,20 @@ class PostProcessor:
 
         # ax.set_xlim(-0.0, 1.5)
         # ax.set_ylim(-0.0, 1.5)
-        # # ax.set_zlim(-0.1, 2)
-        # # ax.set_xlim(-0.5, 0.5)
-        # ax.set_ylim(-0.5, 0.5)
         # ax.set_zlim(-0.1, 2)
+        ax.set_xlim(-0.8, 1.2)
+        ax.set_ylim(-1.0, 1.0)
+        ax.set_zlim(0.0, 2.0)
         
-        ax.set_xlabel("x", size="xx-large")
-        ax.set_ylabel("y", size="xx-large")
-        ax.set_zlabel("z", size="xx-large")
+        ax.set_xlabel("X", size="xx-large")
+        ax.set_ylabel("Y", size="xx-large")
+        ax.set_zlabel("Z", size="xx-large")
 
-        ax.xaxis.set_label_coords(10, 10)
-
-        
-        ax.xaxis.set_tick_params(labelsize="xx-large")
-        ax.yaxis.set_tick_params(labelsize="xx-large")
-        ax.zaxis.set_tick_params(labelsize="xx-large")
+        ax.xaxis.set_label_coords(1, 1)
+       
+        ax.xaxis.set_tick_params(labelsize="large")
+        ax.yaxis.set_tick_params(labelsize="large")
+        ax.zaxis.set_tick_params(labelsize="large")
         
         ax.grid(True)
 

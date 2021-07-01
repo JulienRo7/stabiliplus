@@ -96,15 +96,17 @@ class Robot():
         y.append(y[0])
         return x, y
 
-    def display_robot_configuration(self, ax=None, subplot_conf=111):
+    def display_robot_configuration(self, ax=None, subplot_conf=111, dispSupport = False):
         # create a 3D view of the configuration
         # fig = plt.figure()
         if ax == None:
             ax = plt.subplot(subplot_conf, projection='3d')
 
-        x_support, y_support = self.support_polygon()
         lines = []
-        lines.extend(ax.plot(x_support, y_support, 0, label="Support Polygon"))
+        
+        if (dispSupport):
+            x_support, y_support = self.support_polygon()
+            lines.extend(ax.plot(x_support, y_support, 0, label="Support Polygon"))
 
         x_feet = [foot[0, 3] for foot in self.feet]
         y_feet = [foot[1, 3] for foot in self.feet]
@@ -123,9 +125,9 @@ class Robot():
             R = self.feet[i]
             circle = np.matmul(R, Circle)
 
-            lines.append(ax.plot_trisurf(circle[0, :], circle[1, :], circle[2, :], color='k', alpha=0.5))
+            lines.append(ax.plot_trisurf(circle[0, :], circle[1, :], circle[2, :], color='k', alpha=0.2))
             lines.append(ax.quiver(R[0, 3], R[1, 3], R[2, 3], -R[0, 2], -R[1, 2], -
-                             R[2, 2], length=3*radius, arrow_length_ratio=0.1, pivot='tip', colors=['k']))
+                             R[2, 2], length=radius, arrow_length_ratio=0.2, pivot='tip', colors=['k']))
 
         # ax.axis('scaled')
         ax.set_xlim(-1.5, 1.5)
