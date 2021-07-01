@@ -102,6 +102,8 @@ class robust_stability_polyhedron():
         self.invalidate_time = 0
         self.measure_time = 0
 
+        self.total_time = 0
+
     def init_robust_stability_problem(self):
         self.robot.set_P_matrix()
 
@@ -266,7 +268,6 @@ class robust_stability_polyhedron():
             return self.solve_SOCP(c)
 
     def init_facet_validity(self):
-        start = time.time()
 
         for ineq, points in zip(self.Y_inner.equations, self.Y_inner.simplices ):
             key = tuple(ineq)
@@ -277,11 +278,8 @@ class robust_stability_polyhedron():
                 self.validity[key] = True
             else:
                 self.validity[key] = False
-        end = time.time()
-        self.invalidate_time += end-start
 
     def check_facet_validity(self):
-        start = time.time()
 
         if self.measure == Measure.VOLUME:
             hs = self.halfspaces[-1]
@@ -340,12 +338,7 @@ class robust_stability_polyhedron():
         else:
             raise ValueError("Unknown measure, please use a value supplied in enum")
 
-        end = time.time()
-        self.invalidate_time += end-start
-
     def update_measures(self):
-        start = time.time()
-
         if self.measure == Measure.FACET_AREA:
             for ineq, facet_points in zip(self.Y_inner.equations, self.Y_inner.simplices):
                 key = tuple(ineq)
@@ -408,63 +401,8 @@ class robust_stability_polyhedron():
                 self.measures[key]=max(dist)/norm
                 self.validity[key] = True
 
-            # if not self.validity[key]:
-            #     G = matrix(np.array(self.halfspaces)[:,:3])
-            #     h = -matrix(np.array(self.halfspaces)[:,3])
-            #     normal = np.array(key[:3])
-            #     c = -matrix(normal)
-            #     res = cvxopt.solvers.lp(c, G, h)
-            #     assert res['x']!=None
-            #     self.measures[key]=(np.matmul(normal, np.array(res['x']))+key[-1])
-            #     assert self.measures[key] >= -1e-5
-            #     self.validity[key] = True
-
-            # for key in self.validity.keys():
-                # if not self.validity[key]:
-                #     normal = np.array(key[:-1]).reshape((1,3))
-                #     norm = np.linalg.norm(normal)
-                #
-                #     pt_index = choice(self.Y_outer.vertices)
-                #     pt = self.Y_outer.points[pt_index]
-                #
-                #     mes = np.matmul(normal, pt)
-                #
-                #     neighbors = [pt_index]
-                #     while not self.validity[key]:
-                #         # find the neighbors
-                #
-                #         best = pt_index
-                #         best_pt = pt
-                #         best_mes = mes
-                #
-                #         for simplice in self.Y_outer.simplices:
-                #             if pt_index in simplice:
-                #                 for ind in simplice:
-                #                     if ind not in neighbors:
-                #                         neighbors.append(ind)
-                #                         new_pt = self.Y_outer.points[ind]
-                #                         new_mes = np.matmul(normal, new_pt)
-                #                         if new_mes > best_mes:
-                #                             best = ind
-                #                             best_pt = new_pt
-                #                             best_mes = new_mes
-                #
-                #
-                #         # if it is the current points
-                #         if best == pt_index:
-                #             self.measures[key]=(best_mes+key[-1])/norm
-                #             self.validity[key] = True
-                #         else:# current point is the highest value
-                #             pt_index = best
-                #             pt = best_pt
-                #             mes = best_mes
-
         else:
-            raise ValueError("Unknown measure, please use a value supplied in enum")
-
-
-        end = time.time()
-        self.measure_time += end-start
+            raise ValueError("Unknown measure: {}, please use a value supplied in enum".format(self.measure))
 
     def build_inner_poly(self):
         self.Y_inner = ConvexHull(np.hstack(self.inner_vertices).T, incremental=True)
@@ -517,20 +455,17 @@ class robust_stability_polyhedron():
         EPS = 0.01 # -> the new point must be at least one cm away from the max facet
 
         if self.measure == Measure.FACET_AREA:
-                if offset+self.current_facet[-1]<EPS:
-                    self.measures[self.current_facet]=0
-                else:
-                    del self.measures[self.current_facet]
+            if offset+self.current_facet[-1]<EPS:
+                self.measures[self.current_facet]=0
+            else:
+                del self.measures[self.current_facet]
 
-                    self.directions.append(self.new_dir)
-                    self.inner_vertices.append(self.new_point)
+                self.directions.append(self.new_dir)
+                self.inner_vertices.append(self.new_point)
 
-                    # compute the new self.error
-                    start = time.time()
-                    self.Y_inner.add_points(self.new_point.T)
-                    innerVolume = self.Y_inner.volume
-                    end = time.time()
-                    self.Convex_time += end-start
+                # compute the new self.error
+                self.Y_inner.add_points(self.new_point.T)
+                innerVolume = self.Y_inner.volume
 
         elif self.measure == Measure.RANDOM:
             if offset+self.current_facet[-1]<EPS:
@@ -542,11 +477,8 @@ class robust_stability_polyhedron():
                 self.inner_vertices.append(self.new_point)
 
                 # compute the new self.error
-                start = time.time()
                 self.Y_inner.add_points(self.new_point.T)
                 innerVolume = self.Y_inner.volume
-                end = time.time()
-                self.Convex_time += end-start
 
         elif self.measure == Measure.VOLUME or self.measure == Measure.SUPPORT:
             del self.measures[self.current_facet]
@@ -557,11 +489,8 @@ class robust_stability_polyhedron():
             self.inner_vertices.append(self.new_point)
 
             # compute the new self.error
-            start = time.time()
             self.Y_inner.add_points(self.new_point.T)
             innerVolume = self.Y_inner.volume
-            end = time.time()
-            self.Convex_time += end-start
 
         else:
             raise ValueError("Unknown measure, please use a value supplied in enum")
@@ -573,12 +502,9 @@ class robust_stability_polyhedron():
         self.offsets.append(offset)
         self.halfspaces.append(hs.T)
 
-        start = time.time()
         main_feasible_point = sum(self.inner_vertices)/len(self.inner_vertices)
         self.outer_vertices = ut.compute_outer_convex(self.halfspaces, main_feasible_point)
         self.Y_outer = ConvexHull(self.outer_vertices)
-        end = time.time()
-        self.Convex_time += end-start
 
     def update_polys(self):
         self.update_inner_poly()
@@ -590,6 +516,7 @@ class robust_stability_polyhedron():
             self.update_outer_poly()
 
     def projection_robust_polyhedron(self):
+        mainTimeStart = time.time()
         start = time.time()
         self.build_problem()
 
@@ -608,6 +535,7 @@ class robust_stability_polyhedron():
             result = self.solve_problem(c)
             end = time.time()
             self.SOCP_time += end-start
+
             v = np.array(result['x'][-3:])
 
             self.directions.append(np.array(d))
@@ -626,8 +554,15 @@ class robust_stability_polyhedron():
         # Computations of the differents volumes between the inner and outer approximation
         ########
         if self.measure != Measure.FACET_AREA:
+            start = time.time()
             self.init_facet_validity()
+            end = time.time()
+            self.invalidate_time += end-start
+
+        start = time.time()
         self.update_measures()
+        end = time.time()
+        self.measure_time += end-start
         ########
         # iterations
         ########
@@ -645,11 +580,25 @@ class robust_stability_polyhedron():
             self.new_point = np.array(result['x'][-3:])
 
             # update the volumes for each facet
+            start = time.time()
             self.update_polys()
+            end = time.time()
+            self.Convex_time += end-start
+
+            start = time.time()
             self.check_facet_validity()
+            end = time.time()
+            self.invalidate_time += end - start
+
+            start = time.time()
             self.update_measures()
+            end = time.time()
+            self.measure_time += end-start
 
             self.iterations += 1
+
+        mainTimeStop = time.time()
+        self.total_time  = mainTimeStop - mainTimeStart
 
 
     def prism_intersection_polyhedron(self):
@@ -742,212 +691,3 @@ class robust_stability_polyhedron():
         self.robot.reset_gravity()
         self.robot.update_static_model()
 
-####################################################
-# Old version of the different functions
-####################################################
-
-# def barbaric_projection(self):
-#     start = time.time()
-#     self.build_problem()
-#
-#     # Choosing the initial directions
-#     initial_directions = [[[0], [0], [1.]]]
-#     n = 3
-#     for i in range(n):
-#         initial_directions.append([[np.cos(2*i*np.pi/n)], [np.sin(2*i*np.pi/n)], [-1]])
-#     self.init_time += time.time()-start
-#     # Finding the points corresponding to the initial direction
-#     for d in initial_directions:
-#         c = matrix(np.vstack((np.zeros((3*self.robot.n_feet*self.n_acc, 1)), -np.array(d))))
-#
-#         start = time.time()
-#         result = self.solve_problem(c)
-#         end = time.time()
-#         self.SOCP_time += end-start
-#         v = np.array(result['x'][-3:])
-#
-#         self.directions.append(np.array(d))
-#         self.inner_vertices.append(v)
-#
-#         self.iterations += 1
-#
-#     ########
-#     # Initialisation of inner hull
-#     ########
-#     start = time.time()
-#     self.Y_inner = ConvexHull(np.hstack(self.inner_vertices).T, incremental=True)
-#     # innerVolume = self.Y_inner.volume
-#     end = time.time()
-#     self.Convex_time += end-start
-#
-#     ######
-#     # Measures
-#     ######
-#     start = time.time()
-#
-#     for ineq, facet_points in zip(self.Y_inner.equations, self.Y_inner.simplices):
-#         key = tuple(ineq)
-#         if len(facet_points)== 3:
-#             # area of a 3d triangle -> slightly more complex than 2d
-#             c1 = self.Y_inner.points[facet_points[1]]-self.Y_inner.points[facet_points[0]]
-#             c2 = self.Y_inner.points[facet_points[2]]-self.Y_inner.points[facet_points[0]]
-#
-#             self.measures[key] = np.linalg.norm(np.cross(c1,c2))
-#             # print(self.measures[key])
-#
-#         else:
-#             print("Facet with {} vertices".format(len(facet_points)))
-#
-#     end = time.time()
-#     self.measure_time += end-start
-#
-#     ########
-#     # iterations
-#     ########
-#     while(self.stop_condition()):
-#         # find the max measure in the dict
-#         max_facet = max(self.measures.items(), key=operator.itemgetter(1))[0]
-#         # deduce the direction and pop the facet from the dict
-#         d = np.array(max_facet[:3]).reshape((3,1))
-#         # print("Norm of research direction :", np.linalg.norm(d))
-#         # use socp to find the new point
-#         c = matrix(np.vstack((np.zeros((3*self.robot.n_feet*self.n_acc, 1)), -np.array(d))))
-#         start = time.time()
-#         result = self.solve_problem(c)
-#         end = time.time()
-#         self.SOCP_time += end-start
-#
-#         v = np.array(result['x'][-3:])
-#
-#
-#         EPS = 0.01 # -> the new point must be at least one cm away from the max facet
-#         if not (np.matmul(d.T, v)+max_facet[-1]>EPS):
-#             self.measures[max_facet]=0
-#         else:
-#             del self.measures[max_facet]
-#
-#             self.directions.append(np.array(d))
-#             self.inner_vertices.append(v)
-#
-#             # compute the new self.error
-#             start = time.time()
-#             self.Y_inner.add_points(v.T)
-#             end = time.time()
-#             self.Convex_time += end-start
-#
-#             # update the volumes for each facet
-#             start = time.time()
-#             for ineq, facet_points in zip(self.Y_inner.equations, self.Y_inner.simplices):
-#                 key = tuple(ineq)
-#                 if key not in self.measures:
-#                     if len(facet_points)== 3:
-#                         # area of a 3d triangle -> slightly more complex than 2d
-#                         c1 = self.Y_inner.points[facet_points[1]]-self.Y_inner.points[facet_points[0]]
-#                         c2 = self.Y_inner.points[facet_points[2]]-self.Y_inner.points[facet_points[0]]
-#
-#                         self.measures[key] = np.linalg.norm(np.cross(c1,c2))
-#                         # print(self.measures[key])
-#
-#                     else:
-#                         print("Facet with {} vertices".format(len(facet_points)))
-#                         assert False
-#             end = time.time()
-#             self.measure_time += end-start
-#
-#         self.iterations += 1
-
-#
-# def random_projection(self):
-#     start = time.time()
-#     self.build_problem()
-#
-#     # Choosing the initial directions
-#     initial_directions = [[[0], [0], [1.]]]
-#     n = 3
-#     for i in range(n):
-#         initial_directions.append([[np.cos(2*i*np.pi/n)], [np.sin(2*i*np.pi/n)], [-1]])
-#     self.init_time += time.time()-start
-#     # Finding the points corresponding to the initial direction
-#     for d in initial_directions:
-#         c = matrix(np.vstack((np.zeros((3*self.robot.n_feet*self.n_acc, 1)), -np.array(d))))
-#
-#         start = time.time()
-#         result = self.solve_problem(c)
-#         end = time.time()
-#         self.SOCP_time += end-start
-#         v = np.array(result['x'][-3:])
-#
-#         self.directions.append(np.array(d))
-#         self.inner_vertices.append(v)
-#
-#         self.iterations += 1
-#
-#     ########
-#     # Initialisation of inner hull
-#     ########
-#     start = time.time()
-#     self.Y_inner = ConvexHull(np.hstack(self.inner_vertices).T, incremental=True)
-#     # innerVolume = self.Y_inner.volume
-#     end = time.time()
-#     self.Convex_time += end-start
-#
-#     ######
-#     # Measures
-#     ######
-#     start = time.time()
-#
-#     for ineq, facet_points in zip(self.Y_inner.equations, self.Y_inner.simplices):
-#         key = tuple(ineq)
-#         self.measures[key] = 1
-#
-#     end = time.time()
-#     self.measure_time += end-start
-#
-#     ########
-#     # iterations
-#     ########
-#     list_facets = [key for key in self.measures.keys() if self.measures[key]==1]
-#
-#     while(self.stop_condition() and len(list_facets)>=1):
-#         # find the max measure in the dict
-#         # print(len(list_facets))
-#         max_facet = choice(list_facets)
-#         # deduce the direction and pop the facet from the dict
-#         d = np.array(max_facet[:3]).reshape((3,1))
-#         # print("Norm of research direction :", np.linalg.norm(d))
-#         # use socp to find the new point
-#         c = matrix(np.vstack((np.zeros((3*self.robot.n_feet*self.n_acc, 1)), -np.array(d))))
-#         start = time.time()
-#         result = self.solve_problem(c)
-#         end = time.time()
-#         self.SOCP_time += end-start
-#
-#         v = np.array(result['x'][-3:])
-#
-#
-#         EPS = 0.01 # -> the new point must be at least 1cm away from the max facet
-#         if not (np.matmul(d.T, v)+max_facet[-1]>EPS):
-#             self.measures[max_facet]=0
-#         else:
-#             del self.measures[max_facet]
-#
-#             self.directions.append(np.array(d))
-#             self.inner_vertices.append(v)
-#
-#             # compute the new self.error
-#             start = time.time()
-#             self.Y_inner.add_points(v.T)
-#             end = time.time()
-#             self.Convex_time += end-start
-#
-#             # update the volumes for each facet
-#             start = time.time()
-#             for ineq, facet_points in zip(self.Y_inner.equations, self.Y_inner.simplices):
-#                 key = tuple(ineq)
-#                 if key not in self.measures:
-#                     self.measures[key] = 1
-#             end = time.time()
-#             self.measure_time += end-start
-#
-#         list_facets = [key for key in self.measures.keys() if self.measures[key]==1]
-#         self.iterations += 1
