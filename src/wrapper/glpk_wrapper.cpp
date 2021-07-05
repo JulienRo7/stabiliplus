@@ -129,25 +129,38 @@ void GlpkWrapper::buildOriginalProblem(const Eigen::VectorXd & B, const Eigen::M
   // glp_write_lp(m_lp, NULL, "export_lp.txt");
 }
 
-void GlpkWrapper::solveProblem()
+bool GlpkWrapper::solveProblem()
 {
-  solveOriginalProblem();
+  return solveOriginalProblem();
   //solveFactorizedProblem();
 }
 
-void GlpkWrapper::solveOriginalProblem()
+bool GlpkWrapper::solveOriginalProblem()
 {
-  glp_simplex(m_lp, NULL);
-
-  int numCols = glp_get_num_cols(m_lp);
-  Eigen::VectorXd z(numCols);
-
-  for(int i = 0; i < numCols; ++i)
+  auto ret = glp_simplex(m_lp, NULL);
+  //std::cout <<   << std::endl;
+  if (ret == 0)
   {
-    z[i] = glp_get_col_prim(m_lp, i + 1);
+    int numCols = glp_get_num_cols(m_lp);
+    Eigen::VectorXd z(numCols);
+
+    for(int i = 0; i < numCols; ++i)
+    {
+      z[i] = glp_get_col_prim(m_lp, i + 1);
+    }
+
+    m_result = z.tail(3);
+
+    return true;
+  }
+  else
+  {
+    m_result << 0.0, 0.0, 0.0;
+    std::cerr << "The solver failed with error: "<< ret << std::endl;
+    return false;
   }
 
-  m_result = z.tail(3);
+  
 }
 
 void GlpkWrapper::solveFactorizedProblem()

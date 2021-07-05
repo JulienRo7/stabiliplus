@@ -175,9 +175,9 @@ public:
     return m_iteration;
   }
 
-  inline double getError() const
+  inline int getErrorCode() const
   {
-    return m_error;
+    return errorCode_;
   }
 
   // ----------- setters ----------

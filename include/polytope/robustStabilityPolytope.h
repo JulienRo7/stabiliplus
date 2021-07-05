@@ -4,6 +4,7 @@
 // standard libraries
 #include <list>
 #include <map>
+#include <random>
 
 // libraries
 #include <Eigen/Dense>
@@ -26,7 +27,7 @@ public:
 
   // ----------- main class methods ----------
   void initSolver() override; // compute the reduced stability problem
-  void solveLP(Eigen::Vector3d const & direction, Eigen::Vector3d & vertex);
+  bool solveLP(Eigen::Vector3d const & direction, Eigen::Vector3d & vertex);
 
   void projectionStabilityPolyhedron() override;
   bool computeProjectionStabilityPolyhedron();

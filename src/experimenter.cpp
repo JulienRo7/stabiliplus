@@ -28,12 +28,13 @@ void ComputationPoint::compute() {
   }
   catch (const std::runtime_error& e)
   {
+  	std::cout << "Error code: " << polytope_->getErrorCode() << std::endl;
     std::cout << "Error: " << polytope_->getError() << " precision: " << polytope_->getMaxError() << std::endl;
     std::cout << "Iteration: " << polytope_->getIteration() << " maxIt: " << polytope_->getMaxIteration() << std::endl;
-    throw e;
+    // throw e;
   }
-  std::cout << "Error: " << polytope_->getError() << " precision: " << polytope_->getMaxError() << std::endl;
-  std::cout << "Iteration: " << polytope_->getIteration() << " maxIt: " << polytope_->getMaxIteration() << std::endl;
+  // std::cout << "Error: " << polytope_->getError() << " precision: " << polytope_->getMaxError() << std::endl;
+  // std::cout << "Iteration: " << polytope_->getIteration() << " maxIt: " << polytope_->getMaxIteration() << std::endl;
 
   auto stop = std::chrono::high_resolution_clock::now();
   
@@ -531,6 +532,7 @@ void Experimenter::run_exp5()
   // creating the ComputationPoint obejcts
   std::shared_ptr<ComputationPoint> compPt;
   
+  auto start = std::chrono::high_resolution_clock::now();
   for (auto name: contactSetNames)
     {
       compPt = std::make_shared<ComputationPoint> (name, m_numFrictionSides, m_solver, m_robust);
@@ -557,11 +559,14 @@ void Experimenter::run_exp5()
       
       computationPoints_.push_back(compPt);
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (end - start);
+    std::cout << "ContactSets loaded in " << duration.count() << " ms" << std::endl;
 
   std::cout << "Beginning computation of the equilibrium regions " << std::endl;
   float cpt(0), max(computationPoints_.size());
   
-  auto start = std::chrono::high_resolution_clock::now();
+  start = std::chrono::high_resolution_clock::now();
   for (auto compPt : computationPoints_)
     {
       compPt->compute();
@@ -570,8 +575,8 @@ void Experimenter::run_exp5()
       std::cout.flush();
     }
   
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop-start);
+  end = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds> (end-start);
   std::cout << "Computation of the equilibrium regions done in "<< duration.count() << " ms" << std::endl;
   
   std::cout << "#-----------------------------" << std::endl;
@@ -585,7 +590,7 @@ void Experimenter::run_exp6()
   std::cout << std::endl;
 
   std::cout << "Loading files from folder: " << m_contactSetFileName << std::endl;
-  auto start = std::chrono::high_resolution_clock::now();
+  
   
   std::vector<std::string> contactSetNames;
 
@@ -605,73 +610,62 @@ void Experimenter::run_exp6()
   };
   
   std::sort(contactSetNames.begin(), contactSetNames.end(), compFiles);
-
-  std::vector<std::shared_ptr<ContactSet>> contactSets;
-  std::shared_ptr<ContactSet> contactSet;
+  std::cout << "Found "<< contactSetNames.size() << " contactSet files" << std::endl;
   
-  for (auto name: contactSetNames)
-    {
-      contactSet = std::make_shared<ContactSet>(!m_robust, name, m_numFrictionSides);
-      contactSets.push_back(contactSet);
-    }
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop-start);
-    
-  std::cout << "Loaded "<< contactSets.size() <<  " contact Sets in " << duration.count() << "ms" << std::endl;
+  auto computerCoMQP = [](ComputationPoint * comptPt){
+    return comptPt->getOptimCoM();
+  };
 
-  std::cout << "Beginning computation of the equilibrium regions" << std::endl;
-  int cpt(0), max(contactSets.size());
+  auto forceLF = [](ComputationPoint * comptPt){
+    return comptPt->getForceLF();
+  };
 
-  for (auto contact: contactSets)
-    {
-      // auto contact = m_contactSets.at(0);
-      std::cout << "Computing contactSet: " << contact->get_name() << std::endl;
+  auto forceRF = [](ComputationPoint * comptPt){
+    return comptPt->getForceRF();
+  };
 
-      auto compute = [this](std::shared_ptr<StaticStabilityPolytope> polytope){
-      // polytope->initSolver();
-      polytope->projectionStabilityPolyhedron();
-      // polytope->endSolver();
-      // polytope->showPoly();
-      };
-
-      std::shared_ptr<StaticStabilityPolytope> polyNormal, polyThread;
-      polyNormal = std::make_shared<StaticStabilityPolytope> (contactSet, 10, 0.05, this->m_solver);
-      polyThread = std::make_shared<StaticStabilityPolytope> (contactSet, 10, 0.05, this->m_solver);
-
-      polyThread->initSolver();
-      auto myThread = std::thread(compute, polyThread);
-      myThread.join();
-
-      polyNormal->initSolver();
-      compute(polyNormal);
-      // polyNormal->endSolver();
-
-      // myThread.join();
-      // polyThread->endSolver();
+  auto forceRH = [](ComputationPoint * comptPt){
+    return comptPt->getForceRH();
+  };
 
 
-      
-      std::cout << "Computations done!" << std::endl;
-      // std::cout << "Let's compare the results:" << std::endl;
-      // polyNormal->showPoly();
-      // polyThread->showPoly();
-      // 0- checkbasic stuff
-      if (polyNormal->get_numberOfVertices() != polyThread->get_numberOfVertices())
-	{
-	  std::cout << "Wrong number of vertices!" << std::endl;
-	  throw 42;
-	}
-      // 1- check that the indexes are different for edges, vertices, faces
-      // auto vertices1 = polyNormal->vertices();
-      // auto vertices2 = polyThread->vertices();
-      
-      // 2- check the position of the points
-      // 3- check if the structure is the same
+  auto start = std::chrono::high_resolution_clock::now();
+  computationPoints_.resize(contactSetNames.size());
 
+  std::generate(std::execution::par, computationPoints_.begin(), computationPoints_.end(), [&, k = 0]() mutable { 
+    auto compPt = std::make_shared<ComputationPoint>(contactSetNames.at(k), m_numFrictionSides, m_solver, m_robust);
 
-      std::cout << "Everything seems fine\n" << std::endl;
-    }
+    compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
+    compPt->addLambda("forceLF", forceLF, "xkcd:red");
+    compPt->addLambda("forceRF", forceRF, "xkcd:blue");
+    compPt->addLambda("forceRH", forceRH, "xkcd:green");
 
+    return compPt;
+  });
+  auto end = std::chrono::high_resolution_clock::now();
+
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cout << "ContactSets loaded in " << duration.count() << " ms" << std::endl;
+
+  std::cout << "Beginning computation of the equilibrium regions " << std::endl;
+  float cpt(0), max(computationPoints_.size());
+ 
+  start = std::chrono::high_resolution_clock::now();
+  std::for_each(std::execution::par, computationPoints_.begin(), computationPoints_.end(), [&](auto& c){
+    c->compute();
+    cpt ++;
+    std::cout << 100*cpt/max << " %\r";
+    std::cout.flush();
+  });
+  //   std::for_each_n(std::execution::par, computationPoints_.begin(), 20, [&](auto& c){
+  //   c->compute();
+  //   cpt ++;
+  //   std::cout << 100*cpt/max << " %\r";
+  //   std::cout.flush();
+  // });
+  end = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cout << "Computation of the equilibrium regions done in "<< duration.count() << " ms" << std::endl;
   // if no one failed maybe start again
   
   std::cout << "#-----------------------------" << std::endl;

@@ -21,8 +21,8 @@ public:
   void buildProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd & A, const Eigen::MatrixXd & F, const Eigen::VectorXd &f) override;
   void buildFactorizedProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd & A, const Eigen::MatrixXd & F, const Eigen::VectorXd & f);
   void buildOriginalProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd A, const Eigen::MatrixXd & F, const Eigen::VectorXd & f);
-  void solveProblem() override;
-  void solveOriginalProblem();
+  bool solveProblem() override;
+  bool solveOriginalProblem();
   void solveFactorizedProblem();
 
   // ---------- getters -----------

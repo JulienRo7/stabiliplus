@@ -289,7 +289,7 @@ class robustPoly(polytope):
 
         if dispEdges:
             for e in self.innerEdges:
-                ax.plot(e[0], e[1], e[2], color=color, linewidth=0.1)
+                ax.plot(e[0], e[1], e[2], color=color, linewidth=0.3)
 
         dispSides = True
         if dispSides:

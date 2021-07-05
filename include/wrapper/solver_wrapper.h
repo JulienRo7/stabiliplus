@@ -25,7 +25,7 @@ public:
 
   // ---------- main functions -------------
   virtual void buildProblem(const Eigen::VectorXd & B, const Eigen::MatrixXd &A, const Eigen::MatrixXd &F, const Eigen::VectorXd & f) = 0;
-  virtual void solveProblem() = 0;
+  virtual bool solveProblem() = 0;
 
   // ---------- getters -----------
   Eigen::Vector3d get_result();

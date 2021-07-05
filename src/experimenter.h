@@ -22,9 +22,11 @@
 #include <typeinfo> // operator typeid
 #include <vector>
 
-#include <functional> // C++ 11
-
-#include <filesystem> // C++ 17
+// C++ 11
+#include <functional>
+// C++ 17
+#include <filesystem>
+#include <execution>
 
 class ComputationPoint
 {
@@ -81,7 +83,7 @@ class ComputationPoint
   std::string contactSetFileName_;
   int numFrictionSides_;
 
-  int maxIt_ = 20;
+  int maxIt_ = 11;
   double precision_ = 1e-2;
   Solver solver_ = Solver::GLPK;
 

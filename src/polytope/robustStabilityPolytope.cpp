@@ -30,13 +30,13 @@ void RobustStabilityPolytope::initSolver()
                      m_pdPtr->getFrictionVectorf());
 }
 
-void RobustStabilityPolytope::solveLP(Eigen::Vector3d const & direction, Eigen::Vector3d & vertex)
+bool RobustStabilityPolytope::solveLP(Eigen::Vector3d const & direction, Eigen::Vector3d & vertex)
 {
   m_lp->set_searchDirection(direction);
 
-  m_lp->solveProblem();
-
+  bool ret = m_lp->solveProblem(); // what if the problems comes from here... 
   vertex = m_lp->get_result();
+  return ret;
 }
 
 void RobustStabilityPolytope::projectionStabilityPolyhedron()
@@ -61,9 +61,16 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
 
   dir << 0, 0, 1; 
   initialDirections.push_back(dir);
+
+  // add some randomness to help avoiding some case (hopefully)...
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0.0, 2*M_PI);
+  theta = dis(gen);
+
   for(int i = 1; i < 4; ++i)
   {
-    dir << cos(2 * M_PI * (i - 1) / 3), sin(2 * M_PI * (i - 1) / 3), -1;
+    dir << cos(2 * M_PI * (i - 1) / 3 + theta), sin(2 * M_PI * (i - 1) / 3 + theta), -1;
     dir = dir.normalized();
     initialDirections.push_back(dir);
   }
@@ -72,6 +79,14 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
   for(auto d: initialDirections)
   {
     solveLP(d, point);
+
+    if (!solveLP(d, point))
+    {
+      std::cerr << "[Stabiliplus][RobustStabilityPolytope] solving the LP failed!" << std::endl;
+      errorCode_ = 10;
+      return false;
+    }
+
     for (auto pt: initialPoints)
     {
       if ((point-pt).norm() < 1e-5) //TODO allow the user to modify this threshold
@@ -100,8 +115,15 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
   while(!stopCriterion())
   {
     m_iteration++;
+    // std::cout << "Iteration: " << m_iteration << std::endl;
     auto dirFace = *max_element(m_faces.begin(), m_faces.end(), Face::compareFacesMeasure);
-    solveLP(dirFace->get_normal(), point);
+
+    if (!solveLP(dirFace->get_normal(), point))
+    {
+      std::cerr << "[Stabiliplus][RobustStabilityPolytope] solving the LP failed!" << std::endl;
+      errorCode_ = 10;
+      return false;
+    }
     newVertex = std::make_shared<Vertex>(point, dirFace->get_normal());
 
     if(!updateInnerPoly(newVertex, dirFace))
@@ -120,13 +142,13 @@ bool RobustStabilityPolytope::computeProjectionStabilityPolyhedron()
     if(!updateOuterPoly(newVertex, dirFace))
     {
       std::cerr << "[Stabiliplus][RobustStabilityPolytope] Failled to update the outer polytope" << std::endl;
-      errorCode_ = 4;
+      // errorCode_ = 4;
       return false;
     }
 
-    updateSupportFunctions(dirFace);
+    updateSupportFunctions(dirFace); // there is more than one face to update...
     // à modifier -> à ne pas refaire de zéro
-    computeResidualFromScratch();
+    computeResidualFromScratch(); // This also needs to be updated
   }
   return true;
 }
@@ -191,8 +213,14 @@ bool RobustStabilityPolytope::updateInnerPoly(std::shared_ptr<Vertex> & newVerte
 
   // if the point is inside the convex it is not good
   // the threshold of -1e10 is used to maje sure the point is strictly inside
-  if (dirFace->pointInHalfSpace(newVertex->get_coordinates(), -1e-10)) // if the vertex is on the plane then it is considered in...
+  if (dirFace->pointInHalfSpace(newVertex->get_coordinates(), -1e-5)) // if the vertex is on the plane then it is considered in...
     {
+
+      double dist = dirFace->get_normal().dot(newVertex->get_coordinates()) - dirFace->get_offset();
+      std::cout << "dirFace: " << dirFace->get_normal().transpose() << " offset: " << dirFace->get_offset() << std::endl;
+      std::cout << "vertex: " << newVertex->get_coordinates() << std::endl;
+      std::cout << "The distance from newVertex to dirFace is " << dist << std::endl;
+
       errorCode_ = 20;
       return false;
     }
@@ -407,6 +435,13 @@ bool RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
 
   consideredPoints.push_back(dirFace->get_supportPoint());
 
+  auto support = dirFace->get_supportPoint();
+  if ((support->strictlyContainedInHalfspace(F_new))) 
+  {
+    errorCode_ = 40;
+    return false;
+  }
+
   std::shared_ptr<OuterVertex> newOuterVertex;
   double d1(0), d2(0);
   Eigen::Vector3d coord;
@@ -454,8 +489,9 @@ bool RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
             }
             else
             {
-              return false;
               std::cerr << "Outer Edge as already been removed!" << '\n';
+              errorCode_ = 41;
+              return false;
             }
           }
           else
@@ -485,23 +521,31 @@ bool RobustStabilityPolytope::updateOuterPoly(std::shared_ptr<Vertex> & newVerte
           }
         }
       }
-      // U_minus.push_back(*currentPoint);
-      auto posVert = find(m_outerVertices.begin(), m_outerVertices.end(), *currentPoint);
-      if(posVert != m_outerVertices.end())
-      {
-        *posVert = nullptr;
-        m_outerVertices.erase(posVert);
-      }
-      else
-      {
-        return false;
-        std::cerr << "Outer Vertex has already been removed!" << '\n';
-      }
+
+      U_minus.push_back(*currentPoint);
     }
     // std::cout << "Nani 1!" << '\n';
 
     currentPoint++;
     // std::cout << "Nani 1!" << '\n';
+  }
+
+
+  for (auto pt: U_minus)
+  {
+    auto posVert = find(m_outerVertices.begin(), m_outerVertices.end(), pt);
+    if(posVert != m_outerVertices.end())
+    { 
+      *posVert = nullptr;
+      m_outerVertices.erase(posVert);
+    }
+    else
+    {
+      std::cerr << "Outer Vertex has already been removed!" << '\n'; // some face still has a point that has been removed as support point...
+      errorCode_ = 42;
+      return false;
+        
+    }
   }
 
   // std::cout << "Number of considered points: " << consideredPoints.size() << " with " << U_minus.size() << " points
@@ -568,11 +612,11 @@ void RobustStabilityPolytope::updateSupportFunctions(std::shared_ptr<Face> & dir
   consideredFaces.push_back(m_faces.back());
 
   auto currentFace = consideredFaces.begin();
+  std::shared_ptr<OuterVertex> initPoint = m_outerVertices.back();
 
   while(currentFace != consideredFaces.end())
   {
     // m_innerOuterLink[it_face->get_vertex1()]; -> gives an outer face but don't give a starting point
-    auto initPoint = m_outerVertices.at(0);
     // std::cout << "Current Support Function: " << (*currentFace)->get_supportFunction() <<'\n';
 
     if(computeSupportFunction(*currentFace, initPoint))
@@ -597,8 +641,12 @@ void RobustStabilityPolytope::updateSupportFunctions(std::shared_ptr<Face> & dir
 bool RobustStabilityPolytope::computeSupportFunction(std::shared_ptr<Face> & face,
                                                      const std::shared_ptr<OuterVertex> & initPoint)
 {
+
+  // look for the support point in the list of outer vertices, if it is not in then the support funtion has to be updated
+
   // std::cout << "Computing support function for face " << face->get_index() << '\n';
   double prevSupportFunction = face->get_supportFunction();
+  std::shared_ptr<OuterVertex> prevSupport = face->get_supportPoint();
   auto currentOuterVertex = initPoint;
   double currentDistance = face->get_normal().dot(currentOuterVertex->get_coordinates()) - face->get_offset();
   double distance = 100;
@@ -630,7 +678,7 @@ bool RobustStabilityPolytope::computeSupportFunction(std::shared_ptr<Face> & fac
   }
   face->set_supportPoint(currentOuterVertex);
 
-  if(abs(prevSupportFunction - face->get_supportFunction()) < 0.00000001)
+  if(currentOuterVertex == prevSupport)
   {
     return false;
   }

@@ -129,6 +129,7 @@ target_link_libraries(main
   sch-core::sch-core
   eigen-quadprog::eigen-quadprog
   -lm
+  -ltbb
   )
 
 
