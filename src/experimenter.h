@@ -83,7 +83,7 @@ class ComputationPoint
   std::string contactSetFileName_;
   int numFrictionSides_;
 
-  int maxIt_ = 11;
+  int maxIt_ = 50;
   double precision_ = 1e-2;
   Solver solver_ = Solver::GLPK;
 

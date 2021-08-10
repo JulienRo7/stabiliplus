@@ -534,9 +534,9 @@ class PostProcessor:
         # ax.set_xlim(-0.0, 1.5)
         # ax.set_ylim(-0.0, 1.5)
         # ax.set_zlim(-0.1, 2)
-        ax.set_xlim(-0.8, 1.2)
-        ax.set_ylim(-1.0, 1.0)
-        ax.set_zlim(0.0, 2.0)
+        ax.set_xlim(-0.25, 0.75)
+        ax.set_ylim(-0.5, 0.5)
+        ax.set_zlim(0.0, 1.0)
         
         ax.set_xlabel("X", size="xx-large")
         ax.set_ylabel("Y", size="xx-large")
@@ -547,6 +547,8 @@ class PostProcessor:
         ax.xaxis.set_tick_params(labelsize="large")
         ax.yaxis.set_tick_params(labelsize="large")
         ax.zaxis.set_tick_params(labelsize="large")
+
+        ax.view_init(70, -130)
         
         ax.grid(True)
 
