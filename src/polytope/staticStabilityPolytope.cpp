@@ -62,12 +62,12 @@ void StaticStabilityPolytope::initSolver()
   m_initTime = duration.count();
 }
 
-void StaticStabilityPolytope::solveLP(Eigen::Vector2d const & direction, Eigen::Vector2d & vertex)
+bool StaticStabilityPolytope::solveLP(Eigen::Vector2d const & direction, Eigen::Vector2d & vertex)
 {
   auto start = std::chrono::high_resolution_clock::now();
   m_lp->set_staticSearchDirection(direction);
 
-  m_lp->solveProblem();
+  bool ret = m_lp->solveProblem();
 
   vertex = m_lp->get_staticResult();
 
@@ -75,6 +75,8 @@ void StaticStabilityPolytope::solveLP(Eigen::Vector2d const & direction, Eigen::
 
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   m_LPTime += duration.count();
+
+  return ret;
 }
 
 void StaticStabilityPolytope::projectionStabilityPolyhedron()
@@ -91,15 +93,21 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   // initialization of the algorithm
   Eigen::Vector2d dir, vertex;
 
+  // add some randomness to help avoiding some case (hopefully)...
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0.0, 2*M_PI);
+  double theta = dis(gen);
+
   // inner vertices
-  dir << 1.0, 0.0;
+  dir << cos(theta), sin(theta);
   vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
   std::shared_ptr<StaticPoint> p1 = std::make_shared<StaticPoint>(dir, vertex);
   m_points.push_back(p1);
 
 
-  dir << cos(2 * M_PI / 3), sin(2 * M_PI / 3);
+  dir << cos(2 * M_PI / 3 + theta), sin(2 * M_PI / 3 + theta);
   vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
   std::shared_ptr<StaticPoint> p2 = std::make_shared<StaticPoint>(dir, vertex);
@@ -107,7 +115,7 @@ bool StaticStabilityPolytope::computeProjectionStabilityPolyhedron()
   p1->next(p2);
   p2->prec(p1);
 
-  dir << cos(4 * M_PI / 3), sin(4 * M_PI / 3);
+  dir << cos(4 * M_PI / 3 + theta), sin(4 * M_PI / 3 + theta);
   vertex<< 0.0 , 0.0;
   solveLP(dir, vertex);
   std::shared_ptr<StaticPoint> p3 = std::make_shared<StaticPoint>(dir, vertex);

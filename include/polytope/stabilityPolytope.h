@@ -13,6 +13,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <random>
 
 // libraries
 #include <Eigen/Dense>

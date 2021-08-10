@@ -21,7 +21,7 @@ public:
 
   // ----- main class methods ------
   void initSolver() override;
-  void solveLP(Eigen::Vector2d const & direction, Eigen::Vector2d & vertex);  
+  bool solveLP(Eigen::Vector2d const & direction, Eigen::Vector2d & vertex);  
 
   void projectionStabilityPolyhedron() override;
   bool computeProjectionStabilityPolyhedron();
