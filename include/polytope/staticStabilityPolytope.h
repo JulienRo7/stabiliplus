@@ -48,7 +48,7 @@ public:
   const std::vector<Eigen::Vector2d> getInnerVertices() const;
   const std::vector<Eigen::Vector2d> getOuterVertices() const;
   const void getRandomFeasiblePoint(Eigen::Vector2d & point) const;
-  const bool getUniformRandomFeasiblePoint(Eigen::Vector2d & point) const;
+  const bool getUniformRandomFeasiblePoint(Eigen::Vector2d & point, const int maxSamplingAttempts = 100) const;
   const bool isPointFeasible(Eigen::Vector2d & point) const;
   
   inline const std::vector<std::shared_ptr<StaticPoint>> getStaticPoints() const
