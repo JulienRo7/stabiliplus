@@ -632,7 +632,8 @@ void Experimenter::run_exp6()
   auto start = std::chrono::high_resolution_clock::now();
   computationPoints_.resize(contactSetNames.size());
 
-  std::generate(std::execution::par, computationPoints_.begin(), computationPoints_.end(), [&, k = 0]() mutable { 
+  // std::generate(std::execution::par, computationPoints_.begin(), computationPoints_.end(), [&, k = 0]() mutable { 
+  std::generate(computationPoints_.begin(), computationPoints_.end(), [&, k = 0]() mutable { 
     auto compPt = std::make_shared<ComputationPoint>(contactSetNames.at(k), m_numFrictionSides, m_solver, m_robust);
 
     compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
@@ -651,7 +652,8 @@ void Experimenter::run_exp6()
   float cpt(0), max(computationPoints_.size());
  
   start = std::chrono::high_resolution_clock::now();
-  std::for_each(std::execution::par, computationPoints_.begin(), computationPoints_.end(), [&](auto& c){
+  // std::for_each(std::execution::par, computationPoints_.begin(), computationPoints_.end(), [&](auto& c){
+  std::for_each(computationPoints_.begin(), computationPoints_.end(), [&](auto& c){
     c->compute();
     cpt ++;
     std::cout << 100*cpt/max << " %\r";
