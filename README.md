@@ -1,8 +1,14 @@
 ## dependencies
 
+`C++`:
 ```bash
 apt install libeigen3-dev libglpk-dev libtinyxml2-dev
 ```
+`python3` (for displaying the tests results):
+* numpy
+* matplotlib
+* cvxopt
+* scipy
 
 ## build
 
@@ -23,8 +29,7 @@ Run the code in the build folder using:
 The options are:
 * --mode : choose the experiment mode for now the modes are:
   * 1 : (default) generate one robot and compute its stability polyhedron;
-  * 2 : Compare the different solvers (GLPK, LP_solve and Gurobi);
-  * 3 : Compute a sequence of stability polyhedron for the postprocess to generate an animation;
+  * 2 : compute the balance region for all robot in a folder given by `--robot`
 * --robot : allows to give the path to the desired robot xml files. Some exemples are available in /robots. (default 'rospack find stabiliplus'/robots/robot_8.xml);
 * --fric_sides : allows to choose the number of sides for the friction cone approximation (default 16).
 * --solver : allows to choose the desired solver among GLPK (default), LP_SOLVE and GUROBI.
@@ -35,8 +40,4 @@ Once the main program has been launched, the results can be displayed using:
 ```bash
 python3 postprocess.py
 ```
-Required libraries:
-* numpy
-* matplotlib
-* cvxopt
-* scipy
+The default output should look like: `default_output.png`
