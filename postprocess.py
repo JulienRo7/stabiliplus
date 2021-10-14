@@ -534,9 +534,9 @@ class PostProcessor:
         # ax.set_xlim(-0.0, 1.5)
         # ax.set_ylim(-0.0, 1.5)
         # ax.set_zlim(-0.1, 2)
-        ax.set_xlim(-0.25, 0.75)
-        ax.set_ylim(-0.5, 0.5)
-        ax.set_zlim(0.0, 1.0)
+        ax.set_xlim(-0.5, 1.5)
+        ax.set_ylim(-1.0, 1.0)
+        ax.set_zlim(0.0, 2.0)
         
         ax.set_xlabel("X", size="xx-large")
         ax.set_ylabel("Y", size="xx-large")
@@ -572,242 +572,9 @@ class PostProcessor:
         assert numPts != 0, "No point found for solver {} and robot {}".format(solver_name, robot_name)
         return (numPts, int(total/numPts), int(LP/numPts), int(init/numPts), int(struct/numPts))
 
+
     def display_mode_2(self):
-        solvers = set(self.solvers)
-        # robots = ["robot_1", "robot_2", "robot_3", "robot_4"]
-        robots = set(self.robot_names)
-
-        total_avg_per_sol = dict()
-        total_LP_per_sol = dict()
-        total_init_per_sol = dict()
-        total_struct_per_sol = dict()
-        
-        for sol in solvers:
-            sol_times = []
-            LP_times = []
-            init_times = []
-            struct_times = []
-            
-            for rob in robots:
-                timings = self.extract_timings(sol, rob)
-                sol_times.append(timings[1])
-                LP_times.append(timings[2])
-                init_times.append(timings[3])
-                struct_times.append(timings[4])
-                # print(sol, rob, timings)
-            total_avg_per_sol[sol]=sol_times
-            total_LP_per_sol[sol]=LP_times
-            total_init_per_sol[sol]=init_times
-            total_struct_per_sol[sol]=struct_times
-
-        print(total_avg_per_sol)
-        print(total_LP_per_sol)
-
-        x = np.arange(len(robots))  # the label locations
-        width = 0.20  # the width of the bars
-
-        # fig, axs = plt.subplots(2, 2)
-        
-        # ax_tot = axs[0,0]
-        # ax_LP = axs[0,1]
-        # ax_init = axs[1,0]
-        # ax_struct = axs[1,1]
-        fig_tot, ax_tot = plt.subplots()
-        fig_LP, ax_LP = plt.subplots()
-        fig_init, ax_init = plt.subplots()
-        fig_struct, ax_struct = plt.subplots()
-        
-        rects_tot = []
-        rects_LP = []
-        rects_init = []
-        rects_struct = []
-
-        total_num_solvers = len(solvers)
-        num_sol = 0
-        
-        for sol in solvers:
-            rects_tot.append(ax_tot.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_avg_per_sol[sol] , width, label=sol))
-            rects_LP.append(ax_LP.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_LP_per_sol[sol] , width, label=sol))
-            rects_init.append(ax_init.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_init_per_sol[sol] , width, label=sol))
-            rects_struct.append(ax_struct.bar(x - width*(total_num_solvers-1)/2 + num_sol*width, total_struct_per_sol[sol] , width, label=sol))
-            num_sol += 1
-
-        axes = (ax_tot, ax_LP, ax_init, ax_struct)
-
-        for ax in axes:
-            # Add some text for labels, title and custom x-axis tick labels, etc.
-            ax.set_xticks(x)
-            ax.set_xticklabels(robots)
-            ax.legend()
-
-        ax_tot.set_ylabel('time (µs)')
-        ax_tot.set_title('Comparison of different solvers: average stability region computation time')
-        
-        ax_LP.set_ylabel('time (µs)')
-        ax_LP.set_title('Comparison of different solvers: average time solving LP')
-        
-        ax_init.set_ylabel('time (µs)')
-        ax_init.set_title('Comparison of different solvers: average LP initialisation time')
-
-        ax_struct.set_ylabel('time (µs)')
-        ax_struct.set_title('Comparison of different solvers: average structural time')
-
-        def autolabel(rects, rect_ax):
-            """Attach a text label above each bar in *rects*, displaying its height."""
-            for rect in rects:
-                height = rect.get_height()
-                rect_ax.annotate('{}'.format(height),
-                            xy=(rect.get_x() + rect.get_width() / 2, height),
-                            xytext=(0, 3),  # 3 points vertical offset
-                            textcoords="offset points",
-                            ha='center', va='bottom')
-
-
-        for rect in rects_tot:
-            autolabel(rect, ax_tot)
-
-        for rect in rects_LP:
-            autolabel(rect, ax_LP)
-
-        for rect in rects_init:
-            autolabel(rect, ax_init)
-
-        for rect in rects_struct:
-            autolabel(rect, ax_struct)
-            
-        # fig.tight_layout()
-        plt.show()
-    
-    def display_mode_3(self):
-        fig = plt.figure()
-        ax = Axes3D(fig)
-
-        lines = []
-
-        # precomputing the static stability polyhedrons
-        print("Precomputing the static polyhedrons")
-        staticPolys = []
-        it = 0
-        for rob in self.robots:
-            poly_static = static_stability.static_stability_polyhedron(rob, 0.01, 50, measure=static_stability.Measure.AREA, linearization=False, friction_sides = 16, mode=static_stability.Mode.best)
-            poly_static.project_static_stability()
-            staticPolys.append(poly_static)
-            it+=1
-            printProgressBar( it, len(self.robots))
-        print("Precomputation done!")
-
-        def update(frame, lines, ax):
-            ax.cla()
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
-            ax, lines = self.robots[frame].display_robot_configuration(ax)
-
-            x1 = [v[0] for v in staticPolys[frame].inner_vertices]
-            x1.append(x1[0])
-            y1 = [v[1] for v in staticPolys[frame].inner_vertices]
-            y1.append(y1[0])
-            lines.extend(ax.plot(x1, y1, color="xkcd:red"))
-
-            lines.extend(self.polytopes[frame].display(ax))
-
-
-        ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax), interval=10, blit=False, repeat_delay=200, save_count=1)
-
-        # print("Saving the animation...")
-        # # moviewriter = FFMpegWriter(fps=20)
-        # # moviewriter.setup(fig=fig, outfile="res/video.mp4")
-        # ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
-        # # moviewriter.finnish()
-        # print("Animation saved!")
-        plt.show()        
-
-    def display_mode_4(self):
-
-        fig = plt.figure()
-        ax = Axes3D(fig)
-
-        lines = []
-
-        pointsData = {}
-        
-        def update(frame, lines, ax, pointsData):
-            ax.cla()
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
-            # ax, lines = self.computationPoints[frame].contactSet.display_robot_configuration(ax)
-            lines = []
-            # x1 = [v[0] for v in staticPolys[frame].inner_vertices]
-            # x1.append(x1[0])
-            # y1 = [v[1] for v in staticPolys[frame].inner_vertices]
-            # y1.append(y1[0])
-            # lines.extend(ax.plot(x1, y1, color="xkcd:red"))
-            
-                
-            # for ptName in self.computationPoints[frame].points.keys():
-            for ptName in ["comQP"]:
-                coord = self.computationPoints[frame].points[ptName]
-                x = coord[0][0]
-                y = coord[1][0]
-                z = coord[2][0]
-
-                if (ptName in self.computationPoints[frame].pointsColor.keys()):
-                    color = self.computationPoints[frame].pointsColor[ptName]
-                else:
-                    color = "xkcd:red"
-                
-                lines.extend(ax.plot([x],[y],[z], 'o-', color=color, label=ptName))
-
-                if (ptName in pointsData.keys()):
-                    data = pointsData[ptName]
-                    data[0].append(x)
-                    data[1].append(y)
-                    data[2].append(z)
-                else:
-                    data = ([x], [y], [z])
-                    pointsData[ptName] = data
-
-            # for ptName in pointsData.keys():
-            for ptName in ["comQP"]:
-                data = pointsData[ptName]
-
-                if (ptName in self.computationPoints[frame].pointsColor.keys()):
-                    color = self.computationPoints[frame].pointsColor[ptName]
-                else:
-                    color = "xkcd:red"
-
-                lines.extend(ax.plot(data[0], data[1], data[2], '-', color=color, alpha=0.2))
-
-                for (key1, key2) in self.computationPoints[frame].pairs.items():
-                    coord1 = self.computationPoints[frame].points[key1]
-                    coord2 = self.computationPoints[frame].points[key2]
-                    x = [coord1[0][0], coord2[0][0]]
-                    y = [coord1[1][0], coord2[1][0]]
-                    z = [coord1[2][0], coord2[2][0]]
-                    
-                    if (key1 in self.computationPoints[frame].pointsColor.keys()):
-                        color = self.computationPoints[frame].pointsColor[key1]
-                    else:
-                        color = "xkcd:red"
-                    
-                    lines.extend(ax.plot(x,y,z, '-', color=color))
-
-            lines.extend(self.computationPoints[frame].displayPolytopes(ax))
-            ax.set_xlim(-0.5, 1.0)
-            ax.set_ylim(-1.0, 0.5)
-            # ax.set_zlim(-0.1, 2)
-
-        ani = FuncAnimation(fig, update, self.numComputedPoints, fargs=(lines, ax, pointsData), interval=10, blit=False, repeat_delay=200, save_count=1)
-
-        # print("Saving the animation...")
-        # # moviewriter = FFMpegWriter(fps=20)
-        # # moviewriter.setup(fig=fig, outfile="res/video.mp4")
-        # ani.save("/home/julien/Desktop/video.mp4", fps=10, dpi=360)
-        # # moviewriter.finnish()
-        # print("Animation saved!")
-        plt.show()
-
-    def display_mode_5(self):
-        # print("Starting display mode 5")
+        print("Starting display mode 2")
         # total_times = [compPt.totalTime for compPt in self.computationPoints]
         # plt.plot(total_times)
         # plt.xlabel("Contact set number")
@@ -835,22 +602,22 @@ class PostProcessor:
                     pointsColor[name] = compPt.pointsColor[name]
 
         for name in pointsData.keys():
-            # if (name == "chebichev"):
-            #     data = pointsData[name]
-            #     color = pointsColor[name]
+            if (name == "chebichev"):
+                data = pointsData[name]
+                color = pointsColor[name]
 
-            #     plt.plot(data[0], data[1], '-', color=color, label=name)
+                plt.plot(data[0], data[1], '-', color=color, label=name)
                 
             # elif (name == "chebichev_Max"):
             #     data = pointsData[name]
             #     color = pointsColor[name]
 
             #     plt.plot(data[0], data[1], '-', color=color)
-            # elif (name == "baryPoint"):
-            #     data = pointsData[name]
-            #     color = pointsColor[name]
+            elif (name == "baryPoint"):
+                data = pointsData[name]
+                color = pointsColor[name]
 
-            #     plt.plot(data[0], data[1], '-', color=color, label=name)
+                plt.plot(data[0], data[1], '-', color=color, label=name)
                 
             # elif (name == "baryPoint_Max"):
             #     data = pointsData[name]
@@ -858,16 +625,6 @@ class PostProcessor:
 
             #     plt.plot(data[0], data[1], '-', color=color)
 
-            if (name == "comQP"):
-                data = pointsData[name]
-                color = pointsColor[name]
-
-                plt.plot(data[0], data[1], '-', color=color, label=name)
-            elif (name == "comQP_Max"):
-                data = pointsData[name]
-                color = pointsColor[name]
-
-                # plt.plot(data[0], data[1], '-', color=color)
 
         # plot the feet position...
         # NonConservativeContactSet_0 = self.computationPoints[0].contactSet
@@ -958,17 +715,8 @@ class PostProcessor:
 
         if self.mode == 1:
             self.display_mode_1()
-        # elif self.mode == 2:
-        #     self.display_mode_2()
-        # elif self.mode == 3:
-        #     self.display_mode_3()
-        elif self.mode == 4:
-            self.display_mode_4()
-        elif self.mode == 5:
-            # self.display_mode_4()
-            self.display_mode_5()
-        elif self.mode == 6:
-            self.display_mode_4()
+        elif self.mode == 2:
+            self.display_mode_2()
         else:
             assert False, "Unknown Mode {}".format(self.mode)
 

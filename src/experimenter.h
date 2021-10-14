@@ -6,9 +6,6 @@
 // #include "polytope/constrainedEquilibriumPolytope.h"
 #include "problemDescriptor/contactSet.h"
 
-#include "CoMQP.h"
-#include "PointProjector.h"
-
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -38,24 +35,6 @@ class ComputationPoint
 
   void display() const;
   void printTimings() const;
-
-  void computeOptimQP();
-  inline Eigen::Vector3d getForceLF() const
-  {
-    return forceLF_;
-  }
-  
-  inline Eigen::Vector3d getForceRF() const
-  {
-    return forceRF_;
-  }
-  
-  inline Eigen::Vector3d getForceRH() const
-  {
-    return forceRH_;
-  }
-  
-  Eigen::Vector3d getOptimCoM() const;
 
   // setter
   void addLambda(std::string name, std::function<Eigen::Vector3d(ComputationPoint*)> computer, std::string color="xkcd:red");
@@ -98,10 +77,6 @@ class ComputationPoint
   std::map<std::string, Eigen::Vector3d> computedPoints_;
   std::map<std::string, std::string> computedPointsColor_;
 
-  std::shared_ptr<CoMQP> comQP_;
-  Eigen::Vector3d forceLF_;
-  Eigen::Vector3d forceRF_;
-  Eigen::Vector3d forceRH_;
   
 }; // class ComputationPoint
 
@@ -125,31 +100,10 @@ public:
    */
   void run_exp1();
 
-  /* /\*! \brief Experiment 2 compares the computing times for the different LP solvers */
-  /*  * */
-  /*  * \note to work properly, this experiment requires LP_solve and gurobi to be installed */
-  /*  *\/ */
-  /* void run_exp2(); */
-
-  /* /\*! \brief Experiment 3 create an animation for a contact set with a moving contact */
-  /*  *  */
-  /*  *\/ */
-  /* void run_exp3(); */
-
-  /* /\*! \brief Experiment 4 dislay what happens when the limit force on a contact point changes */
-  /*  *  */
-  /*  *\/ */
-  /* void run_exp4(); */
-
   /*! \brief Experiment 5 take as input a folder of contact sets and compute the corresponding equilibrium region for each of them.
-   * The idea of this experiment is to consider different way of computing the equlibrium region with a given set of desired forces for some contact points
+   * 
    */
-  void run_exp5();
-
-  /*! \brief Similar to exp 5 but uses Threads
-   * thtis fucnction is used to find the bugs that appear when stabiliplus is used in a thred in the mc_box_pusher_controller
-   */
-  void run_exp6();
+  void run_exp2();
   
   // ---------- inputs and setters -----------
 

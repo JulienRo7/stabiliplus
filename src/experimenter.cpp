@@ -80,55 +80,6 @@ void ComputationPoint::printTimings() const
     }
 }
 
-void ComputationPoint::computeOptimQP()
-{
-  comQP_ = std::make_shared<CoMQP>();
-  comQP_->setContactSet(contactSet_);
-  comQP_->dontConsiderConstrained();
-
-  // objective CoM
-  // Eigen::Vector3d com =  poly->chebichevCenter();
-  Eigen::Vector3d com =  polytope_->baryPoint();
-  com(2) = 0.75;
-    
-  comQP_->solve(com);
-
-  // computing the contact forces.
-  auto result = comQP_->resultVector();
-
-  // the first 4x3 lines correspond to LF
-  forceLF_ = Eigen::Vector3d::Zero();
-  for (int i = 0; i < 4; i++)
-    {
-      forceLF_ += result.segment<3>(3*i);
-    }
-  
-  // the next 4x3 lines correspond to RF
-  forceRF_ = Eigen::Vector3d::Zero();
-  for (int i = 0; i<4; i++)
-    {
-      forceRF_ += result.segment<3>(4*3+3*i);
-    }
-  
-  // if there are more then 4x3 + 4x3 + 3 variable the next 5x3 variables correspond to RH
-  forceRH_ = Eigen::Vector3d::Zero();
-  if (result.size() > 27)
-    {
-      for (int i = 0; i<5; i++)
-	{
-	  forceRH_ += result.segment<3>(24 + 3 * i);
-	}
-    }
-}
-
-Eigen::Vector3d ComputationPoint::getOptimCoM() const
-{
-  auto com = comQP_->resultCoM();
-  std::cout << "The QP is solved, the result is " << com.transpose() << std::endl;
-  return com;
-}
-
-
 void ComputationPoint::addLambda(std::string name, std::function<Eigen::Vector3d(ComputationPoint*)> computer, std::string color)
 {
   computerPoints_[name]=computer;
@@ -254,21 +205,10 @@ void Experimenter::run()
     case 1:
       run_exp1();
       break;
-    // case 2:
-    //   run_exp2();
-    //   break;
-    // case 3:
-    //   run_exp3();
-    //   break;
-    // case 4:
-    //   run_exp4();
-    //   break;
-    case 5:
-      run_exp5();
+    case 2:
+      run_exp2();
       break;
-    case 6:
-      run_exp6();
-      break;
+
     default:
       std::cerr << "Unknown mode" << '\n';
   }
@@ -290,159 +230,10 @@ void Experimenter::run_exp1()
   
 }
 
-// void Experimenter::run_exp2()
-// {
-//   std::cout << "#-----------------------------" << std::endl;
-//   std::cout << "Running Experiment for mode 2!" << '\n';
-
-//   std::string robot_names[4] = {"./robots/robot_1.xml", "./robots/robot_2.xml", "./robots/robot_3.xml",
-//                                 "./robots/robot_4.xml"};
-//   int numTrials = 100;
-//   //Solver solvers[3] = {GLPK, LP_SOLVE, GUROBI};
-//   Solver solvers[1] = {GLPK};
-
-//   bool staticCase = !m_robust;
-
-//   for(auto solver : solvers)
-//   {
-//     for(auto rob_file : robot_names)
-//     {
-//       std::shared_ptr<ContactSet> rob = std::make_shared<ContactSet>(staticCase, rob_file, m_numFrictionSides);
-//       for(int i = 0; i < numTrials; i++)
-//       {
-//         std::cout << "Solver: " << solver << " ContactSet: " << rob_file << " Run: " << i + 1 << '/' << numTrials
-//                   << '\n';
-//         auto start = std::chrono::high_resolution_clock::now();
-
-// 	std::shared_ptr<StabilityPolytope> polytope;
-// 	if(m_robust)
-// 	  {
-// 	    polytope = std::make_shared<RobustStabilityPolytope> (rob, 50, 0.05, solver);
-// 	  }
-// 	else
-// 	  {
-// 	    polytope = std::make_shared<StaticStabilityPolytope> (rob, 50, 0.01, solver);
-// 	  }
-        
-
-//         polytope->initSolver();
-//         polytope->projectionStabilityPolyhedron();
-
-//         auto stop = std::chrono::high_resolution_clock::now();
-//         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-// 	m_contactSets.push_back(rob);
-//         m_polytopes.push_back(polytope);
-//         m_total_times.push_back(duration.count());
-//       }
-//     }
-//   }  
-// }
-
-// void Experimenter::run_exp3()
-// {
-//   std::cout << "#-----------------------------" << std::endl;
-//   std::cout << "Running Experiment for mode 3!" << '\n';
-
-//   std::shared_ptr<ContactSet> contactSet;
-//   std::shared_ptr<StabilityPolytope> polytope;
-
-//   Eigen::Vector3d dx;
-//   dx << 0.0, 0.01, 0.0;
-  
-//   // if(contactSet->get_name() == "robot_8")
-//   // {
-//   for(int i = 0; i < 50; i++)
-//     {
-//       contactSet = std::make_shared<ContactSet>(!m_robust, m_contactSetFileName, m_numFrictionSides);
-//       contactSet->translateContact(3, i*dx);
-      
-//       auto start = std::chrono::high_resolution_clock::now();
-      
-//       if(m_robust)
-// 	{
-// 	  polytope = std::make_shared<RobustStabilityPolytope> (contactSet, 50, 0.05, m_solver);
-// 	}
-//       else
-// 	{
-// 	  polytope = std::make_shared<StaticStabilityPolytope> (contactSet, 50, 0.01, m_solver);
-// 	}
-
-//       polytope->initSolver();
-//       polytope->projectionStabilityPolyhedron();
-
-//       auto stop = std::chrono::high_resolution_clock::now();
-//       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-
-//       m_contactSets.push_back(contactSet);
-//       m_polytopes.push_back(polytope);
-//       m_total_times.push_back(duration.count());
-//     }
-//   // }
-//   // else
-//   // {
-//   //   std::cerr << "This experiment requires robot 8 to be loaded!" << '\n';
-//   // }
-  
-// }
-
-// void Experimenter::run_exp4()
-// {
-//   std::cout << "#-----------------------------" << std::endl;
-//   std::cout << "Running experiment for mode 4!" << std::endl;
-
-//   std::shared_ptr<ContactSet> contactSet;
-  
-//   std::string contactName("contact_exp4");
-  
-//   Eigen::Matrix4d homTrans;
-//   homTrans << 1, 0, 0, 1,
-//     0, 1, 0, 1,
-//     0, 0, 1, 0,
-//     0, 0, 0, 1;
-
-//   double fmax(10);
-//   double df = fmax/20;
-//   int n_pts(60);
-
-//   auto f = [&] (int i) {
-//     if (i <= 20)
-//       {
-// 	return 0.;
-//       }
-//     else
-//       {
-// 	if (i>=40)
-// 	  {
-// 	    return fmax;
-// 	  }
-// 	else
-// 	  {
-// 	    return (i-20)*df;
-// 	  }
-//       }
-//   };
-
-  
-//   for (int i=0; i<= n_pts; i++)
-//     {
-//       // Load the contact set
-//       contactSet = std::make_shared<ContactSet> (!m_robust, m_contactSetFileName, m_numFrictionSides);
-  
-//       // Add a contact point with fmax to 0 
-//       contactSet->addContact(contactName, homTrans, 0.5, f(i), 0);
-
-//       computePoint(contactSet);
-      
-//       m_contactSets.push_back(contactSet);
-//     }
-// }
-
-
-void Experimenter::run_exp5()
+void Experimenter::run_exp2()
 {
   std::cout << "#-----------------------------" << std::endl;
-  std::cout << "Running experiment for mode 5!" << std::endl;
+  std::cout << "Running experiment for mode 2!" << std::endl;
   std::cout << std::endl;
 
   std::cout << "Loading files from folder: " << m_contactSetFileName << std::endl;
@@ -479,84 +270,15 @@ void Experimenter::run_exp5()
     return poly->chebichevCenter();
   };
 
-  // auto computerBaryPointMin = [](ComputationPoint * comptPt){
-  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-  //   return poly->baryPointMin();
-  // };
-
-  // auto computerBaryPointMax = [](ComputationPoint * comptPt){
-  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-  //   return poly->baryPointMax();
-  // };
-
-  // auto computerChebichevMin = [](ComputationPoint * comptPt){
-  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-  //   return poly->chebichevCenterMin();
-  // };
-  
-  // auto computerChebichevMax = [](ComputationPoint * comptPt){
-  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-  //   return poly->chebichevCenterMax();
-  // };  
-
-  auto computerCoMQP = [](ComputationPoint * comptPt){
-    return comptPt->getOptimCoM();
-  };
-
-  // auto computerCoMQPProjected = [](ComputationPoint * comptPt){
-        
-  //   auto contactSet = comptPt->contactSet();
-  //   auto comQP = CoMQP(contactSet);
-
-  //   auto poly = std::dynamic_pointer_cast<ConstrainedEquilibriumPolytope> (comptPt->polytope());
-  //   Eigen::Vector3d com = poly->chebichevCenterMax();
-  //   com(2) = 0.75;
-    
-  //   comQP.solve(com);
-    
-  //   return comQP.resultCoM();
-  // };
-
-  auto forceLF = [](ComputationPoint * comptPt){
-    return comptPt->getForceLF();
-  };
-
-  auto forceRF = [](ComputationPoint * comptPt){
-    return comptPt->getForceRF();
-  };
-
-  auto forceRH = [](ComputationPoint * comptPt){
-    return comptPt->getForceRH();
-  };
-  
   // creating the ComputationPoint obejcts
   std::shared_ptr<ComputationPoint> compPt;
   
   auto start = std::chrono::high_resolution_clock::now();
   for (auto name: contactSetNames)
     {
-      compPt = std::make_shared<ComputationPoint> (name, m_numFrictionSides, m_solver, m_robust);
-      // if (compPt->contactSet()->hasConstrainedContact())
-      // 	{
-      // 	  // compPt->addLambda("baryPoint_Min", computerBaryPointMin, "xkcd:red");
-      // 	  // compPt->addLambda("baryPoint_Max", computerBaryPointMax, "xkcd:red");
-      // 	  // compPt->addLambda("chebichev_Min", computerChebichevMin, "xkcd:blue");
-      // 	  // compPt->addLambda("chebichev_Max", computerChebichevMax, "xkcd:blue");
-      // 	  // compPt->addLambda("comQP_min", computerCoMQPProjected, "xkcd:purple");
-      // 	  compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
-      // 	}
-      // else
-      // 	{
-      // 	  // compPt->addLambda("baryPoint", computerBaryPoint, "xkcd:red");
-      // 	  // compPt->addLambda("chebichev", computerChebichev, "xkcd:blue");
-      // 	  compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
-      // 	}
-      compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
-      
-      compPt->addLambda("forceLF", forceLF, "xkcd:red");
-      compPt->addLambda("forceRF", forceRF, "xkcd:blue");
-      compPt->addLambda("forceRH", forceRH, "xkcd:green");
-      
+      compPt = std::make_shared<ComputationPoint> (name, m_numFrictionSides, m_solver, m_robust);   
+      compPt->addLambda("baryPoint", computerBaryPoint, "xkcd:red");
+      compPt->addLambda("chebichev", computerChebichev, "xkcd:blue");
       computationPoints_.push_back(compPt);
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -578,97 +300,6 @@ void Experimenter::run_exp5()
   end = std::chrono::high_resolution_clock::now();
   duration = std::chrono::duration_cast<std::chrono::milliseconds> (end-start);
   std::cout << "Computation of the equilibrium regions done in "<< duration.count() << " ms" << std::endl;
-  
-  std::cout << "#-----------------------------" << std::endl;
-  std::cout << std::endl;
-}
-
-void Experimenter::run_exp6()
-{
-  std::cout << "#-----------------------------" << std::endl;
-  std::cout << "Running experiment for mode 6!" << std::endl;
-  std::cout << std::endl;
-
-  std::cout << "Loading files from folder: " << m_contactSetFileName << std::endl;
-  
-  
-  std::vector<std::string> contactSetNames;
-
-  for (auto p: std::filesystem::directory_iterator(m_contactSetFileName))
-    {
-      contactSetNames.push_back(p.path().string());
-    }
-
-  auto grabNum = [](std::string file){
-    int under = file.find("_")+1;
-    int dot = file.find(".");
-    return std::stoi(file.substr(under, dot-under));
-  };
-
-  auto compFiles = [grabNum](std::string file1, std::string file2){
-    return grabNum(file1) < grabNum(file2);
-  };
-  
-  std::sort(contactSetNames.begin(), contactSetNames.end(), compFiles);
-  std::cout << "Found "<< contactSetNames.size() << " contactSet files" << std::endl;
-  
-  auto computerCoMQP = [](ComputationPoint * comptPt){
-    return comptPt->getOptimCoM();
-  };
-
-  auto forceLF = [](ComputationPoint * comptPt){
-    return comptPt->getForceLF();
-  };
-
-  auto forceRF = [](ComputationPoint * comptPt){
-    return comptPt->getForceRF();
-  };
-
-  auto forceRH = [](ComputationPoint * comptPt){
-    return comptPt->getForceRH();
-  };
-
-
-  auto start = std::chrono::high_resolution_clock::now();
-  computationPoints_.resize(contactSetNames.size());
-
-  // std::generate(std::execution::par, computationPoints_.begin(), computationPoints_.end(), [&, k = 0]() mutable { 
-  std::generate(computationPoints_.begin(), computationPoints_.end(), [&, k = 0]() mutable { 
-    auto compPt = std::make_shared<ComputationPoint>(contactSetNames.at(k), m_numFrictionSides, m_solver, m_robust);
-
-    compPt->addLambda("comQP", computerCoMQP, "xkcd:purple");
-    compPt->addLambda("forceLF", forceLF, "xkcd:red");
-    compPt->addLambda("forceRF", forceRF, "xkcd:blue");
-    compPt->addLambda("forceRH", forceRH, "xkcd:green");
-
-    return compPt;
-  });
-  auto end = std::chrono::high_resolution_clock::now();
-
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-  std::cout << "ContactSets loaded in " << duration.count() << " ms" << std::endl;
-
-  std::cout << "Beginning computation of the equilibrium regions " << std::endl;
-  float cpt(0), max(computationPoints_.size());
- 
-  start = std::chrono::high_resolution_clock::now();
-  // std::for_each(std::execution::par, computationPoints_.begin(), computationPoints_.end(), [&](auto& c){
-  std::for_each(computationPoints_.begin(), computationPoints_.end(), [&](auto& c){
-    c->compute();
-    cpt ++;
-    std::cout << 100*cpt/max << " %\r";
-    std::cout.flush();
-  });
-  //   std::for_each_n(std::execution::par, computationPoints_.begin(), 20, [&](auto& c){
-  //   c->compute();
-  //   cpt ++;
-  //   std::cout << 100*cpt/max << " %\r";
-  //   std::cout.flush();
-  // });
-  end = std::chrono::high_resolution_clock::now();
-  duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-  std::cout << "Computation of the equilibrium regions done in "<< duration.count() << " ms" << std::endl;
-  // if no one failed maybe start again
   
   std::cout << "#-----------------------------" << std::endl;
   std::cout << std::endl;
