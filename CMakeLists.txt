@@ -5,11 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(Stabiliplus VERSION 1.0.0)
 find_package(Eigen3 REQUIRED)
-# find_package(eigen-quadprog REQUIRED)
 # threads
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+### dependencies for extra LP solvers
 
 # add_subdirectory(lpsolve55)
 # find_package(lpsolve55 REQUIRED)
@@ -127,15 +127,6 @@ target_link_libraries(main
   -ltbb
   )
 
-# set_target_properties(main
-#   PROPERTIES
-#   CXX_STANDART 17
-#   CXX_EXTENSIONS OFF
-#   )
-# target_compile_features(main
-#   PRIVATE
-#   cxx_std_17
-#   )
 
 #### Exporting targets and installing ####
 

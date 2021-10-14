@@ -100,7 +100,7 @@ public:
    */
   void run_exp1();
 
-  /*! \brief Experiment 5 take as input a folder of contact sets and compute the corresponding equilibrium region for each of them.
+  /*! \brief Experiment 2 take as input a folder of contact sets and compute the corresponding equilibrium region for each of them.
    * 
    */
   void run_exp2();
