@@ -40,4 +40,14 @@ Once the main program has been launched, the results can be displayed using:
 ```bash
 python3 postprocess.py
 ```
-The default output should look like: `default_output.png`
+The default output should look like: ![default output](https://github.com/JulienRo7/stabiliplus/blob/master/default_output.png)
+
+## using the projection library
+
+The cmake code also generate a C++ library for projecting a high dimension convex to dimension 2 or 3. You can install it from the build folder using:
+```bash
+sudo make install
+```
+Then you should be able to import in you project using cmake. 
+
+The main class to project a convex are `staticStabilityPolytope` and `robustStabilityPolytope` for 2D and 3D respectively. The `problemDescriptor` class is used to give the equalities and inequalities that describe the higher dimension convex. The `contactSet` class is an example on how to use it. This project was first written for an application in balance of humanoid robots, and a paper has been published about it (TODO: add the link of the paper here).  
